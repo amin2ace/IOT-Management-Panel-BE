@@ -1,16 +1,18 @@
-import { Entity, Column, BeforeInsert, PrimaryColumn } from "typeorm";
-import { v4 as uuidv4 } from "uuid";
+import { ObjectId } from 'mongodb';
+import {
+  Entity,
+  Column,
+  BeforeInsert,
+  PrimaryColumn,
+  ObjectIdColumn,
+} from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 
 @Entity()
 export class Blacklist {
-  @PrimaryColumn()
-  id: string;
+  @ObjectIdColumn()
+  _id: ObjectId;
 
   @Column()
   token: string;
-
-  @BeforeInsert()
-  generateId() {
-    this.id = uuidv4();
-  }
 }

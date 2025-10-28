@@ -1,36 +1,26 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryColumn,
-  UpdateDateColumn,
-  BeforeInsert,
-} from 'typeorm';
+import { ObjectId } from 'mongodb';
+import { Column, Entity, ObjectIdColumn, BeforeInsert } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { IUser } from '../interface/user.interface';
 
 @Entity()
-export class User implements IUser {
-  @PrimaryColumn({ unique: true })
+export class User {
+  @ObjectIdColumn()
+  _id: ObjectId;
+
+  @Column({ unique: true })
   userId: string;
 
-  @Column({ nullable: false })
-  userName: string;
-
-  @Column({ nullable: false })
+  @Column({ unique: true })
   email: string;
 
-  @Column({ nullable: false })
+  @Column()
+  userName: string;
+
+  @Column()
   password: string;
 
-  @Column({ nullable: false, type: 'boolean', default: true })
+  @Column({ default: true, type: 'boolean' })
   isActive: boolean;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 
   @BeforeInsert()
   generateId() {

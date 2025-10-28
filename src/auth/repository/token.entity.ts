@@ -1,24 +1,17 @@
-import {
-  BeforeInsert,
-  Column,
-  Entity,
-  PrimaryColumn,
-} from "typeorm";
-import { v4 as uuidv4 } from "uuid";
+import { ObjectId } from 'mongodb';
+import { Entity, ObjectIdColumn, Column } from 'typeorm';
 
 @Entity()
 export class Token {
-  @PrimaryColumn()
-  id: string;
-
-  @Column({ nullable: false })
-  token: string;
+  @ObjectIdColumn()
+  _id: ObjectId;
 
   @Column()
   userId: string;
 
-  @BeforeInsert()
-  generateId() {
-    this.id = uuidv4();
-  }
+  @Column()
+  token: string;
+
+  @Column({ default: new Date() })
+  createdAt: Date;
 }
