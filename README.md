@@ -70,18 +70,37 @@ $ mau deploy
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
-## Resources
+## Modules Structure
+REST API Modules:
+auth - User authentication
+users - User management
+roles - Role management
+permissions - Permission management
+devices - Device management
+device-types - Device type templates
+device-groups - Device grouping
+sensor-readings - Historical sensor data
+sensor-types - Sensor type definitions
+system-config - System configuration
+sensor-config - Sensor-specific configuration
+protocol-config - Protocol settings
+alert-rules - Alarm rules configuration
+notifications - Notification management
+analytics - Data analytics
+reports - Report generation
+data-export - Data export functionality
+audit-logs - User action logs
+system-logs - System operation logs
+protocol-manager - Protocol management
 
-Check out a few resources that may come in handy when working with NestJS:
+WebSocket Gateway Modules:
+mqtt-handler - MQTT real-time data
+modbus-tcp-handler - Modbus TCP real-time data
+modbus-rtu-handler - Modbus RTU real-time data
+sensor-data - Real-time sensor data streaming
+alarms - Real-time alarm notifications
+dashboard - Real-time dashboard updates
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
 
 ## Support
 
