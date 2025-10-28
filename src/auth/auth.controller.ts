@@ -19,7 +19,7 @@ import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('Auth-Module')
-@Controller('auth')
+@Controller('/auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
