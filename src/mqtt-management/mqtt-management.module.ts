@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { MqttManagementService } from './mqtt-management.service';
-import { MqttManagementController } from './mqtt-management.controller';
+import { MqttManagerController } from './mqtt-management.controller';
+import { MqttClientService } from './mqtt-client.service';
 
 @Module({
-  controllers: [MqttManagementController],
-  providers: [MqttManagementService],
+  controllers: [MqttManagerController],
+  providers: [MqttManagementService, MqttClientService],
 })
 export class MqttManagementModule {}
