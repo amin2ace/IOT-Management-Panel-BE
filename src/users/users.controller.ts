@@ -27,22 +27,22 @@ export class UsersController {
     return this.usersService.findAllUsers();
   }
 
-  @Get('get-user-by-id:id')
+  @Get('/get-user-by-id:id')
   findById(@Param('id') id: string) {
     return this.usersService.findUserById(id);
   }
 
-  @Get('get-user-by-email:email')
+  @Get('/get-user-by-email:email')
   findByEmail(@Param('email') email: string) {
     return this.usersService.findUserByEmail(email);
   }
 
-  @Patch('update-user:id')
+  @Patch('/update-user:id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.updateUser(id, updateUserDto);
   }
 
-  @Delete('delete-user:id')
+  @Delete('/delete-user:id')
   remove(@Param('id') id: string) {
     return this.usersService.deleteUser(id);
   }

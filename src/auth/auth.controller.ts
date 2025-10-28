@@ -58,7 +58,7 @@ export class AuthController {
 
   @Post('logout')
   @ApiCookieAuth() // Use cookie auth for refresh token
-  @ApiBearerAuth('access-token') // Use bearer auth for access token
+  // @ApiBearerAuth('access-token') // Use bearer auth for access token
   async logout(@Req() req: Request, @Res() res: Response) {
     const { refreshToken } = await this.cookieService.getRefreshTokenFromCookie(
       req,
@@ -93,7 +93,8 @@ export class AuthController {
     return res.send(response);
   }
 
-  @ApiBearerAuth('access-token') // Use bearer auth for access token
+  // @ApiBearerAuth('access-token') // Use bearer auth for access token
+  @ApiCookieAuth() // Use cookie auth for refresh token
   @Post('change-password')
   async changePassword(
     @Req() req: Request,

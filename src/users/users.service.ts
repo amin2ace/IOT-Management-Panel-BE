@@ -38,8 +38,8 @@ export class UsersService implements IUserService {
     return { userId: userRecord.userId };
   }
 
-  findAllUsers() {
-    return `This action returns all users`;
+  async findAllUsers() {
+    return await this.userRepo.find();
   }
 
   async findUserById(userId: string): Promise<User> {
