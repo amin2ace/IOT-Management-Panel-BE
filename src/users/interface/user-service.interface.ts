@@ -5,8 +5,8 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 export interface IUserService {
   createUser(createUserDto: CreateUserDto): Promise<{ userId: string }>;
   findAllUsers();
-  findUserById(userId: string): Promise<User>;
-  findUserByEmail(email: string): Promise<User>;
+  findUserById(userId: string): Promise<User | null>;
+  findUserByEmail(email: string): Promise<User | null>;
   updateUser(userId: string, updateUserDto: UpdateUserDto): Promise<string>;
   deleteUser(userId: string): Promise<string>;
 }

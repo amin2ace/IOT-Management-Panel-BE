@@ -32,7 +32,7 @@ export class UsersService implements IUserService {
     });
 
     // Save the provided user record to the database
-    await this.userRepo.save(user);
+    await this.userRepo.save(userRecord);
 
     // Return a success message
     return { userId: userRecord.userId };
@@ -46,6 +46,7 @@ export class UsersService implements IUserService {
     const user = await this.userRepo.findOne({
       where: {
         userId,
+        isActive: true,
       },
     });
 
@@ -56,7 +57,7 @@ export class UsersService implements IUserService {
     return user;
   }
 
-  async findUserByEmail(email: string): Promise<User> {
+  async findUserByEmail(email: string): Promise<User | null> {
     // Check if a user with the provided email exists in the database
     const user = await this.userRepo.findOne({
       where: {
@@ -64,10 +65,7 @@ export class UsersService implements IUserService {
         isActive: true,
       },
     });
-    // console.log({ user });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+
     // Return the user if user exists
     return user;
   }
@@ -76,7 +74,12 @@ export class UsersService implements IUserService {
     userId: string,
     updateUserDto: UpdateUserDto,
   ): Promise<string> {
-    const user = this.findUserById(userId);
+    const user = this.userRepo.findOne({
+      where: {
+        userId,
+        isActive: true,
+      },
+    });
 
     if (!user) {
       throw new NotFoundException('User not Found');
@@ -90,6 +93,7 @@ export class UsersService implements IUserService {
     const user = await this.userRepo.findOne({
       where: {
         userId,
+        isActive: true,
       },
     });
 

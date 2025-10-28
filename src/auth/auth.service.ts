@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { SignupInputDto } from './dto/signup-input.dto';
 import { loginInputDto } from './dto/login-input.dto';
 import { IAuthService } from './interface/auth-service.interface';
@@ -167,6 +171,10 @@ export class AuthService implements IAuthService {
   ): Promise<{ resetToken: string }> {
     const { email } = forgetDto;
     const user = await this.usersService.findUserByEmail(email);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
     // Generate a password reset token and persist it
     const token = await this.tokenService.generatePasswordResetToken(

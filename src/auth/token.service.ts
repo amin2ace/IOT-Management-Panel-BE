@@ -48,7 +48,6 @@ export class TokenService implements ITokenService {
       token: Like(`%.${TokenType.REFRESH}`),
     });
     const tokenRecord = await this.tokenRepo.create({
-      generateId: uuidv4(),
       userId,
       token,
     });
@@ -57,7 +56,6 @@ export class TokenService implements ITokenService {
 
   async storeAccessTokenInBlacklist(accessToken: string) {
     const blacklistRecord = this.blacklistRepo.create({
-      generateId: uuidv4(),
       token: accessToken,
     });
 
@@ -102,7 +100,6 @@ export class TokenService implements ITokenService {
     const uuid = uuidv4();
     const token = uuid + '.reset';
     const tokenRecord = this.tokenRepo.create({
-      generateId: uuidv4(),
       userId,
       token,
     });
