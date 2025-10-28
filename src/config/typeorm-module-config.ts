@@ -9,7 +9,7 @@ const typeOrmModuleConfig: TypeOrmModuleAsyncOptions = {
     const url = configService.get<string>('DB_URI');
     if (!url) {
       throw new Error(
-        'DB_URI is not set. Please set DB_URI in your environment for MongoDB connection.'
+        'DB_URI is not set. Please set DB_URI in your environment for MongoDB connection.',
       );
     }
     const syncEnv = configService.get<string>('TYPEORM_SYNCHRONIZE');
@@ -24,10 +24,10 @@ const typeOrmModuleConfig: TypeOrmModuleAsyncOptions = {
       // Use a path-based glob so TypeORM loads all entity files in both TS and JS environments.
       entities: [join(__dirname, '..', '**', '*.entity.{ts,js}')],
       // Pass MongoDB driver options via `extra`
-      extra: {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      },
+      // extra: {
+      //   useNewUrlParser: true,
+      //   useUnifiedTopology: true,
+      // },
       // Make synchronize configurable via env; default preserved for local use.
       synchronize, // TODO: set false for production
       // Optional: enable logging for local debugging (set via env if needed)
