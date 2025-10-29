@@ -24,20 +24,16 @@ const configValidationSchema: joi.ObjectSchema = joi.object({
     .required()
     .valid('mongodb', 'mysql', 'postgres', 'sqlite'),
   DB_NAME: joi.string().required(),
-  DB_URI: joi
-    .string()
-    .when('DB_TYPE', {
-      is: 'mongodb',
-      then: joi.string().required(),
-      otherwise: joi.string().optional(),
-    }),
-  SQLITE_DB_NAME: joi
-    .string()
-    .when('DB_TYPE', {
-      is: 'sqlite',
-      then: joi.string().default('database.db'),
-      otherwise: joi.string().optional(),
-    }),
+  DB_URI: joi.string().when('DB_TYPE', {
+    is: 'mongodb',
+    then: joi.string().required(),
+    otherwise: joi.string().optional(),
+  }),
+  SQLITE_DB_NAME: joi.string().when('DB_TYPE', {
+    is: 'sqlite',
+    then: joi.string().default('database.db'),
+    otherwise: joi.string().optional(),
+  }),
 
   // Hashing
   ROUNDS: joi.number().default(10),
@@ -48,6 +44,11 @@ const configValidationSchema: joi.ObjectSchema = joi.object({
   SMTP_USER: joi.string().required(),
   SMTP_PASS: joi.string().required(),
   EMAIL_FROM: joi.string().email().required(),
+
+  // MQTT
+  MQTT_USERNAME: joi.string().required(),
+  MQTT_PASSWORD: joi.string().required(),
+  MQTT_BROKER_URL: joi.string().required(),
 });
 
 export default configValidationSchema;
