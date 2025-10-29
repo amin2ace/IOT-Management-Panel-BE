@@ -13,7 +13,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { EventEmitter } from 'events';
 import { ConfigService } from '@nestjs/config';
-import { QoS } from 'src/config/types/mqtt.types';
+import { QoS } from 'src/config/types/mqtt-qos.types';
 
 @Injectable()
 export class MqttClientService

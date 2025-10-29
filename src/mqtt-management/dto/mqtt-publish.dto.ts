@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { QoS } from 'src/config/types/mqtt.types';
+import { QoS } from 'src/config/types/mqtt-qos.types';
 
 export class MqttPublishDto {
   @ApiProperty({ default: 'test/topic' })

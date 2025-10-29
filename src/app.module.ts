@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -24,6 +23,6 @@ import configModuleOptions from './config/config-module.config';
     MqttGatewayModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MqttGatewayModule],
 })
 export class AppModule {}
