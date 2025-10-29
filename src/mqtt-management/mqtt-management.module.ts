@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
 import { MqttManagementService } from './mqtt-management.service';
-import { MqttManagerController } from './mqtt-management.controller';
 import { MqttClientService } from './mqtt-client.service';
+import { MqttManagementController } from './mqtt-management.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import MqttTopic from './repository/mqtt-topic.entity';
 
 @Module({
-  controllers: [MqttManagerController],
+  imports: [TypeOrmModule.forFeature([MqttTopic])],
+  controllers: [MqttManagementController],
   providers: [MqttManagementService, MqttClientService],
+  exports: [MqttClientService],
 })
 export class MqttManagementModule {}
