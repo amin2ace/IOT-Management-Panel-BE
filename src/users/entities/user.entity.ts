@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { Role } from 'src/config/types/roles.types';
 import { Column, Entity, ObjectIdColumn, BeforeInsert } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -21,6 +22,14 @@ export class User {
 
   @Column({ default: true, type: 'boolean' })
   isActive: boolean;
+
+  @Column({
+    type: 'enum',
+    enum: Role,
+    array: true,
+    default: [Role.VIEWER],
+  })
+  roles: Role[];
 
   @BeforeInsert()
   generateId() {

@@ -7,10 +7,12 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MqttManagementModule } from './mqtt-management/mqtt-management.module';
-import { MqttGatewayModule } from './mqtt-gateway/mqtt-gateway.module';
+import { MqttGatewayModule } from './mqtt-gateway/mqtt.module';
 import jwtModuleOptions from './config/jwt-module.config';
 import typeOrmModuleConfig from './config/typeorm-module-config';
 import configModuleOptions from './config/config-module.config';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './users/guard/roles.guard';
 
 @Module({
   imports: [
@@ -23,6 +25,13 @@ import configModuleOptions from './config/config-module.config';
     MqttGatewayModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MqttGatewayModule],
+  providers: [
+    AppService,
+    MqttGatewayModule,
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard, // Apply RolesGuard globally
+    },
+  ],
 })
 export class AppModule {}
