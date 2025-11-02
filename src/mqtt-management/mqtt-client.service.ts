@@ -14,13 +14,20 @@ import { Logger } from '@nestjs/common';
 import { EventEmitter } from 'events';
 import { ConfigService } from '@nestjs/config';
 import { QoS } from 'src/config/types/mqtt-qos.types';
+import { InjectRepository } from '@nestjs/typeorm';
+import MqttTopic from './repository/mqtt-topic.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class MqttClientService
   extends EventEmitter
   implements OnModuleInit, OnModuleDestroy
 {
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    @InjectRepository(MqttTopic)
+    private readonly topicRepo: Repository<MqttTopic>,
+    private readonly config: ConfigService,
+  ) {
     super();
   }
   private client: MqttClient;
@@ -99,14 +106,16 @@ export class MqttClientService
     }
   }
 
-  private resubscribeTopics() {
-    this.subscribedTopics.forEach((topic) => {
-      this.client.subscribe(topic, (err) => {
+  private async resubscribeTopics() {
+    const topics = await this.topicRepo.find();
+    topics.forEach((topic) => {
+      this.client.subscribe(topic.topic, (err) => {
         if (err) {
           this.logger.error(
             `Failed to resubscribe to ${topic}: ${err.message}`,
           );
         } else {
+          this.topicRepo.update(topic, { isActive: true });
           this.logger.log(`Resubscribed to topic: ${topic}`);
         }
       });
@@ -119,12 +128,16 @@ export class MqttClientService
     }
 
     return new Promise((resolve, reject) => {
-      this.client.subscribe(topic, { qos }, (err) => {
+      this.client.subscribe(topic, { qos }, async (err) => {
         if (err) {
           this.logger.error(`Failed to subscribe to ${topic}: ${err.message}`);
           reject(err);
         } else {
-          this.subscribedTopics.add(topic);
+          const topicRecord = this.topicRepo.create({
+            brokerUrl: this.getBrokerUrl(),
+            isActive: true,
+          });
+          await this.topicRepo.save(topicRecord);
           this.logger.log(`✅ Subscribed to topic: ${topic}`);
           resolve();
         }
@@ -142,7 +155,12 @@ export class MqttClientService
         if (err) {
           reject(err);
         } else {
-          this.subscribedTopics.delete(topic);
+          this.topicRepo.update(
+            { topic },
+            {
+              isActive: false,
+            },
+          );
           this.logger.log(`Unsubscribed from topic: ${topic}`);
           resolve();
         }
@@ -173,7 +191,7 @@ export class MqttClientService
     });
   }
 
-  getConnectionStatus(): boolean {
+  getIsConnected(): boolean {
     return this.isConnected;
   }
 
@@ -181,16 +199,20 @@ export class MqttClientService
     return this.client?.options?.hostname || 'unknown';
   }
 
-  getSubscribedTopics(): string[] {
-    return Array.from(this.subscribedTopics);
+  async getSubscribedTopics(): Promise<MqttTopic[]> {
+    return await this.topicRepo.find();
   }
 
-  getLastActivity(): Date {
+  getLastConnectionActivity(): Date {
     return this.lastActivity;
   }
 
   async disconnect() {
     try {
+      const topics = await this.topicRepo.find();
+      topics.forEach((topic) =>
+        this.topicRepo.update(topic, { isActive: false }),
+      );
       await this.onModuleDestroy();
     } catch (error) {
       throw new UnauthorizedException('Failed to disconnect MQTT');
