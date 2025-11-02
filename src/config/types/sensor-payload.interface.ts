@@ -1,3 +1,16 @@
+import { SensorType } from '../enum/sensor-type.enum';
+import {
+  AmmoniaPayload,
+  CO2Payload,
+  GPSPayload,
+  HumidityPayload,
+  LightPayload,
+  MotionPayload,
+  PressurePayload,
+  RelayPayload,
+  TemperaturePayload,
+} from './sensor-type.interface';
+
 export type SensorPayloadMap = {
   [SensorType.TEMPERATURE]: TemperaturePayload;
   [SensorType.HUMIDITY]: HumidityPayload;
