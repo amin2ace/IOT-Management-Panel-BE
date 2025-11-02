@@ -13,6 +13,7 @@ import typeOrmModuleConfig from './config/typeorm-module-config';
 import configModuleOptions from './config/config-module.config';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './users/guard/roles.guard';
+import { DeviceModule } from './device/device.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { RolesGuard } from './users/guard/roles.guard';
     UsersModule,
     MqttManagementModule,
     MqttGatewayModule,
+    DeviceModule,
   ],
   controllers: [AppController],
   providers: [
