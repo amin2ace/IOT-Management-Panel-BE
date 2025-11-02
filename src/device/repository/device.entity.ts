@@ -16,7 +16,7 @@ export enum DeviceState {
 }
 
 @Entity('devices')
-export class DeviceEntity {
+export class Device {
   @ObjectIdColumn()
   _id: ObjectId;
 

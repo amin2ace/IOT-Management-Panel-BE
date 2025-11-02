@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 
 @Entity('measurements')
-export class MeasurementEntity {
+export class Measurement {
   @ObjectIdColumn()
   _id: ObjectId;
 
