@@ -1,19 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class QueryDeviceDto {
+export class DeviceLocationDto {
   @ApiProperty()
   @IsOptional()
   @IsString()
-  state?: string;
+  site?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsNumber()
+  floor?: number;
 
   @ApiProperty()
   @IsOptional()
   @IsString()
-  assignedType?: string;
-
-  @ApiProperty()
-  @IsOptional()
-  @IsString()
-  clientId?: string;
+  unit?: string;
 }

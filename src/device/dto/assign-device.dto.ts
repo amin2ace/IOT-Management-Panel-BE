@@ -1,7 +1,10 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
+import { ProvisionState } from 'src/config/enum/device-state.enum';
 
 export class AssignDeviceDto {
-  @IsString()
+  @ApiProperty()
+  @IsEnum(ProvisionState)
   @IsNotEmpty()
-  assignedType: string;
+  assignedType: ProvisionState;
 }
