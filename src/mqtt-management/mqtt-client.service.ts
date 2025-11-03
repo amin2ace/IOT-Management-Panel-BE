@@ -45,7 +45,7 @@ export class MqttClientService
     await this.initConnection();
   }
 
-  async initConnection(): Promise<void> {
+  async initConnection(broker?: string): Promise<void> {
     const brokerUrl = this.config.getOrThrow<string>('MQTT_BROKER_URL'); // 'mqtt://localhost:1883';
 
     const options: IClientOptions = {
@@ -122,7 +122,11 @@ export class MqttClientService
     });
   }
 
-  async subscribe(topic: string, qos: QoS): Promise<void> {
+  async subscribe(
+    topic: string,
+    qos: QoS,
+    onMessage: (topic: string, message: Buffer) => void,
+  ): Promise<void> {
     if (!this.isConnected) {
       throw new Error('MQTT client not connected');
     }
@@ -139,6 +143,12 @@ export class MqttClientService
           });
           await this.topicRepo.save(topicRecord);
           this.logger.log(`✅ Subscribed to topic: ${topic}`);
+          // Attach message handler
+          this.client.on('message', async (msgTopic, message) => {
+            if (await this.matchTopic(topic, msgTopic)) {
+              onMessage(msgTopic, message);
+            }
+          });
           resolve();
         }
       });
@@ -185,6 +195,7 @@ export class MqttClientService
           reject(err);
         } else {
           this.lastActivity = new Date();
+
           resolve();
         }
       });
@@ -226,6 +237,16 @@ export class MqttClientService
     }
   }
 
+  private async matchTopic(
+    subscribedTopic: string,
+    incomingTopic: string,
+  ): Promise<boolean> {
+    // Quick conversion: MQTT wildcards to regex
+    const regex = new RegExp(
+      '^' + subscribedTopic.replace('+', '[^/]+').replace('#', '.+') + '$',
+    );
+    return regex.test(incomingTopic);
+  }
   // Event forwarding methods
   onMessage(callback: (topic: string, message: Buffer) => void) {
     this.on('message', callback);
