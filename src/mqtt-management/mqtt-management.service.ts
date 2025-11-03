@@ -48,14 +48,21 @@ export class MqttManagementService {
 
   async subscribeToTopic(topic: string, qos: QoS = QoS.AtMostOnce) {
     try {
-      await this.mqttClientService.subscribe(topic, qos);
-
-      return {
-        success: true,
+      await this.mqttClientService.subscribe(
         topic,
-        description: 'Subscribed to topic successfully',
-        timestamp: new Date(),
-      };
+        qos,
+        (msgTopic, message) => {
+          this.logger.log(
+            `Message received on topic ${msgTopic}: ${message.toString()}`,
+          );
+          return {
+            success: true,
+            topic,
+            description: 'Subscribed to topic successfully',
+            timestamp: new Date(),
+          };
+        },
+      );
     } catch (error) {
       return {
         success: false,
