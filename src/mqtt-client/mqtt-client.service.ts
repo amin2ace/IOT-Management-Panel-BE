@@ -11,28 +11,23 @@ import {
   IClientPublishOptions,
 } from 'mqtt';
 import { Logger } from '@nestjs/common';
-import { EventEmitter } from 'events';
 import { ConfigService } from '@nestjs/config';
 import { QoS } from 'src/config/types/mqtt-qos.types';
 import { InjectRepository } from '@nestjs/typeorm';
 import MqttTopic from './repository/mqtt-topic.entity';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
-export class MqttClientService
-  extends EventEmitter
-  implements OnModuleInit, OnModuleDestroy
-{
+export class MqttClientService implements OnModuleInit, OnModuleDestroy {
   constructor(
     @InjectRepository(MqttTopic)
     private readonly topicRepo: Repository<MqttTopic>,
+    private eventEmitter: EventEmitter2,
     private readonly config: ConfigService,
-  ) {
-    super();
-  }
+  ) {}
   private client: MqttClient;
   private isConnected = false;
-  private subscribedTopics = new Set<string>();
   private lastActivity: Date;
   private connectionAttempts = 0;
   private readonly MAX_RECONNECTION_ATTEMPTS = 5;
@@ -43,6 +38,10 @@ export class MqttClientService
 
   async onModuleInit() {
     await this.initConnection();
+  }
+
+  async emitEvent(eventName: string, ...args: any[]) {
+    this.eventEmitter.emit(eventName, ...args);
   }
 
   async initConnection(broker?: string): Promise<void> {
@@ -66,28 +65,32 @@ export class MqttClientService
         this.lastActivity = new Date();
         this.logger.log(`✅ Connected to MQTT broker: ${brokerUrl}`);
 
-        // Resubscribe to previous topics
-        this.resubscribeTopics();
-
-        this.emit('connected');
+        this.emitEvent('connected', {
+          brokerUrl,
+          clientId: this.client.options.clientId,
+        });
       });
 
-      this.client.on('message', (topic: string, message: Buffer) => {
+      this.client.on('message', async (topic: string, message: Buffer) => {
         this.lastActivity = new Date();
-        this.emit('message', topic, message);
-        this.subscribedTopics.add(topic);
+        await this.addTopicToRepository(topic);
+        const { payload } = await this.handleMessage(topic, message);
+        this.emitEvent('mqtt.message', topic, payload);
       });
 
       this.client.on('error', (error) => {
         this.logger.error(`❌ MQTT error: ${error.message}`);
-        // this.emit('error', error);
+        // this.eventEmitter.emit('error', error);
       });
 
       this.client.on('close', () => {
         this.isConnected = false;
         this.logger.warn('🔌 Disconnected from MQTT broker');
-        this.emit('disconnected');
-        this.subscribedTopics.clear();
+        this.emitEvent('disconnected', {
+          brokerUrl,
+          clientId: this.client.options.clientId,
+        });
+        this.clearTopicsInRepository();
       });
 
       this.client.on('reconnect', () => {
@@ -106,27 +109,23 @@ export class MqttClientService
     }
   }
 
-  private async resubscribeTopics() {
-    const topics = await this.topicRepo.find();
-    topics.forEach((topic) => {
-      this.client.subscribe(topic.topic, (err) => {
-        if (err) {
-          this.logger.error(
-            `Failed to resubscribe to ${topic}: ${err.message}`,
-          );
-        } else {
-          this.topicRepo.update(topic, { isActive: true });
-          this.logger.log(`Resubscribed to topic: ${topic}`);
-        }
-      });
-    });
+  async reconnect() {
+    // Implementation for manual reconnection
+
+    if (!this.isConnected) {
+      this.initConnection();
+    }
+
+    this.logger.log('Manual reconnection requested');
+
+    return {
+      success: true,
+      message: 'Reconnection initiated',
+      timestamp: new Date(),
+    };
   }
 
-  async subscribe(
-    topic: string,
-    qos: QoS,
-    onMessage: (topic: string, message: Buffer) => void,
-  ): Promise<void> {
+  async subscribe(topic: string, qos: QoS): Promise<void> {
     if (!this.isConnected) {
       throw new Error('MQTT client not connected');
     }
@@ -134,76 +133,93 @@ export class MqttClientService
     return new Promise((resolve, reject) => {
       this.client.subscribe(topic, { qos }, async (err) => {
         if (err) {
-          this.logger.error(`Failed to subscribe to ${topic}: ${err.message}`);
+          this.logger.error(
+            `❌ Failed to subscribe to ${topic}: ${err.message}`,
+          );
           reject(err);
-        } else {
-          const topicRecord = this.topicRepo.create({
-            brokerUrl: this.getBrokerUrl(),
-            isActive: true,
-          });
-          await this.topicRepo.save(topicRecord);
-          this.logger.log(`✅ Subscribed to topic: ${topic}`);
-          // Attach message handler
-          this.client.on('message', async (msgTopic, message) => {
-            if (await this.matchTopic(topic, msgTopic)) {
-              onMessage(msgTopic, message);
-            }
-          });
-          resolve();
+          return;
         }
+
+        const record = this.topicRepo.create({
+          topic,
+          brokerUrl: this.getBrokerUrl(),
+          isActive: true,
+        });
+        await this.topicRepo.save(record);
+        this.logger.log(`✅ Subscribed to ${topic}`);
+        resolve();
       });
     });
   }
 
-  async unsubscribe(topic: string): Promise<void> {
+  async unsubscribe(topic: string): Promise<any> {
     if (!this.isConnected) {
       throw new Error('MQTT client not connected');
     }
 
-    return new Promise((resolve, reject) => {
-      this.client.unsubscribe(topic, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          this.topicRepo.update(
-            { topic },
-            {
-              isActive: false,
-            },
-          );
-          this.logger.log(`Unsubscribed from topic: ${topic}`);
-          resolve();
-        }
-      });
-    });
+    try {
+      await this.unsubscribe(topic);
+      this.topicRepo.update(
+        { topic },
+        {
+          isActive: false,
+        },
+      );
+      this.logger.log(`Unsubscribed from topic: ${topic}`);
+      return {
+        success: true,
+        topic,
+        description: 'Unsubscribed from topic successfully',
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      return {
+        success: false,
+        topic,
+        error: error.message,
+        timestamp: new Date(),
+      };
+    }
   }
 
   async publish(
     topic: string,
     message: string,
     options: Partial<IClientPublishOptions>,
-  ): Promise<void> {
+  ): Promise<any> {
     if (!this.isConnected) {
       throw new Error('MQTT client not connected');
     }
     const { qos, retain } = options;
 
-    return new Promise((resolve, reject) => {
-      this.client.publish(topic, message, { qos, retain }, (err) => {
-        if (err) {
-          this.logger.error(`Failed to publish to ${topic}: ${err.message}`);
-          reject(err);
-        } else {
-          this.lastActivity = new Date();
-
-          resolve();
-        }
+    try {
+      await this.client.publishAsync(topic, message, { qos, retain });
+      this.emitEvent('mqtt.publish.success', { topic, message });
+      return {
+        success: true,
+        topic,
+        message,
+        description: 'Message published successfully',
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      this.logger.error('failed to publish message', error.message);
+      this.emitEvent('mqtt.publish.error', {
+        topic,
+        message,
+        error: error.message,
       });
-    });
+    }
   }
 
-  getIsConnected(): boolean {
-    return this.isConnected;
+  async getConnectionStatus() {
+    return {
+      connected: this.isConnected,
+      brokerUrl: this.getBrokerUrl(),
+      subscribedTopics: this.getSubscribedTopics(),
+      lastActivity: this.getLastConnectionActivity(),
+      timestamp: new Date(),
+    };
   }
 
   getBrokerUrl(): string {
@@ -230,11 +246,33 @@ export class MqttClientService
     }
   }
 
+  async addTopicToRepository(topic: string): Promise<MqttTopic> {
+    const newTopic = this.topicRepo.create({
+      topic,
+      brokerUrl: this.getBrokerUrl(),
+      isActive: true,
+    });
+    await this.topicRepo.save(newTopic);
+    return newTopic;
+  }
+
+  async clearTopicsInRepository(): Promise<void> {
+    const topics = await this.topicRepo.find();
+    topics.forEach((topic) =>
+      this.topicRepo.update(topic, { isActive: false }),
+    );
+  }
+
   async onModuleDestroy() {
     if (this.client) {
       this.client.end();
       this.logger.log('MQTT client disconnected');
     }
+  }
+
+  private async handleMessage(topic: string, message: Buffer) {
+    const payload = await JSON.parse(message.toString());
+    return { topic, payload };
   }
 
   private async matchTopic(
@@ -248,12 +286,5 @@ export class MqttClientService
     return regex.test(incomingTopic);
   }
   // Event forwarding methods
-  onMessage(callback: (topic: string, message: Buffer) => void) {
-    this.on('message', callback);
-  }
-
-  onConnectionChange(callback: (connected: boolean) => void) {
-    this.on('connected', () => callback(true));
-    this.on('disconnected', () => callback(false));
-  }
+  onMessage(callback: (topic: string, message: Buffer) => void) {}
 }

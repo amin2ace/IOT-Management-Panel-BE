@@ -10,22 +10,22 @@ import {
 @Entity()
 export class MqttTopic {
   @ObjectIdColumn()
-  id!: ObjectId;
+  _id: ObjectId;
 
   @Column()
-  brokerUrl!: string;
+  brokerUrl: string;
 
   @Column({ unique: true })
-  topic!: string;
+  topic: string;
 
   @Column({ type: 'boolean', default: false })
   isActive: boolean;
 
   @CreateDateColumn()
-  createdAt!: Date;
+  createdAt: Date;
 
   @UpdateDateColumn()
-  lastActivity!: Date;
+  lastActivity: Date;
 }
 
 export default MqttTopic;
