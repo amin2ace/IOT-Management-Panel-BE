@@ -31,7 +31,6 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
   private lastActivity: Date;
   private connectionAttempts = 0;
   private readonly MAX_RECONNECTION_ATTEMPTS = 5;
-
   private readonly logger = new Logger(MqttClientService.name, {
     timestamp: true,
   });
@@ -40,8 +39,8 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     await this.initConnection();
   }
 
-  async emitEvent(eventName: string, ...args: any[]) {
-    this.eventEmitter.emit(eventName, ...args);
+  async emitEvent(eventName: string, payload: any) {
+    this.eventEmitter.emit(eventName, payload);
   }
 
   async initConnection(broker?: string): Promise<void> {
@@ -71,42 +70,50 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
         });
       });
 
-      this.client.on('message', async (topic: string, message: Buffer) => {
-        this.lastActivity = new Date();
-        await this.addTopicToRepository(topic);
-        const { payload } = await this.handleMessage(topic, message);
-        this.emitEvent('mqtt.message', topic, payload);
-      });
-
-      this.client.on('error', (error) => {
-        this.logger.error(`❌ MQTT error: ${error.message}`);
-        // this.eventEmitter.emit('error', error);
-      });
-
-      this.client.on('close', () => {
-        this.isConnected = false;
-        this.logger.warn('🔌 Disconnected from MQTT broker');
-        this.emitEvent('disconnected', {
-          brokerUrl,
-          clientId: this.client.options.clientId,
-        });
-        this.clearTopicsInRepository();
-      });
-
-      this.client.on('reconnect', () => {
-        if (this.connectionAttempts < this.MAX_RECONNECTION_ATTEMPTS) {
-          this.connectionAttempts++;
-          this.logger.log(
-            `🔄 Reconnecting to MQTT broker (attempt ${this.connectionAttempts})`,
-          );
-        }
-      });
+      await this.mqttEvents(brokerUrl);
     } catch (error) {
       this.logger.error(
         `❌ Failed to connect to MQTT broker: ${error.message}`,
       );
       throw error;
     }
+  }
+
+  async mqttEvents(brokerUrl: string) {
+    this.client.on('message', async (topic: string, message: Buffer) => {
+      // console.log(
+      //   `MQTT message received on topic: ${topic}`,
+      //   message.toString(),
+      // );
+      this.lastActivity = new Date();
+      // await this.addTopicToRepository(topic);
+      const { payload } = await this.handleMessage(topic, message);
+      this.emitEvent('mqtt.message', payload);
+    });
+
+    this.client.on('error', (error) => {
+      this.logger.error(`❌ MQTT error: ${error.message}`);
+      // this.eventEmitter.emit('error', error);
+    });
+
+    this.client.on('close', () => {
+      this.isConnected = false;
+      this.logger.warn('🔌 Disconnected from MQTT broker');
+      this.emitEvent('disconnected', {
+        brokerUrl,
+        clientId: this.client.options.clientId,
+      });
+      this.clearTopicsInRepository();
+    });
+
+    this.client.on('reconnect', () => {
+      if (this.connectionAttempts < this.MAX_RECONNECTION_ATTEMPTS) {
+        this.connectionAttempts++;
+        this.logger.log(
+          `🔄 Reconnecting to MQTT broker (attempt ${this.connectionAttempts})`,
+        );
+      }
+    });
   }
 
   async reconnect() {
@@ -140,12 +147,12 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
           return;
         }
 
-        const record = this.topicRepo.create({
-          topic,
-          brokerUrl: this.getBrokerUrl(),
-          isActive: true,
+        const existing = await this.topicRepo.find({
+          where: { topic },
         });
-        await this.topicRepo.save(record);
+        if (!existing.length) {
+          this.addTopicToRepository(topic);
+        }
         this.logger.log(`✅ Subscribed to ${topic}`);
         resolve();
       });
@@ -194,7 +201,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
 
     try {
       await this.client.publishAsync(topic, message, { qos, retain });
-      this.emitEvent('mqtt.publish.success', { topic, message });
+      this.emitEvent('mqtt.publish.success', [topic, message]);
       return {
         success: true,
         topic,

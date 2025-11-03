@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { DeviceService } from './device.service';
 import { QueryDeviceDto } from './dto/query-device.dto';
-import { AssignDeviceDto } from './dto/assign-device.dto';
+import { SensorAssignTypeDto } from './dto/sensor-assign-type.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
 import { Device } from './repository/device.entity';
 import { DeviceDiscoveryDto } from './dto/discovery-params.dto';
@@ -42,7 +42,7 @@ export class DeviceController {
   @Put(':id/provision')
   async provisionDevice(
     @Param('id') id: string,
-    @Body() body: AssignDeviceDto,
+    @Body() body: SensorAssignTypeDto,
   ): Promise<string> {
     return await this.deviceService.provisionDevice(id, body);
   }

@@ -1,23 +1,26 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { QueryDeviceDto } from './dto/query-device.dto';
-import { AssignDeviceDto } from './dto/assign-device.dto';
+import { SensorAssignTypeDto } from './dto/sensor-assign-type.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Device } from './repository/device.entity';
 import { In, Not, Repository } from 'typeorm';
-import { MqttClientService } from 'src/mqtt-management/mqtt-client.service';
+import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 import { DeviceDiscoveryDto } from './dto/discovery-params.dto';
 import { plainToInstance } from 'class-transformer';
 import { SensorMessageDto } from './dto/sensor-message.dto';
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
-import { ProvisionState } from 'src/config/enum/device-state.enum';
+import { ProvisionState } from 'src/config/enum/provision-state.enum';
 
 @Injectable()
 export class DeviceService {
   constructor(
     @InjectRepository(Device) private readonly deviceRepo: Repository<Device>,
-    private readonly mqttService: MqttClientService,
   ) {}
+
+  private readonly logger = new Logger(DeviceService.name, {
+    timestamp: true,
+  });
 
   async getDevices(query: QueryDeviceDto): Promise<Device[]> {
     const { clientId, state, assignedType } = query;
@@ -38,45 +41,12 @@ export class DeviceService {
     return await qb.getMany();
   }
 
-  async discoverDevices(params: DeviceDiscoveryDto) {
-    const { mqttBrokerUrl, topicWildCard } = params;
+  async discoverDevices(params: DeviceDiscoveryDto) {}
 
-    await this.mqttService.initConnection(mqttBrokerUrl);
-    // Subscribe to MQTT topics ending with "compatibility"
-    await this.mqttService.subscribe(
-      topicWildCard || 'sensors/+/+/compatibility',
-      0,
-      async (topic, message) => {
-        try {
-          const payload = JSON.parse(message.toString());
-
-          const sensorMessage = await this.mapRawPayload(payload);
-          const { sensorId, publishTopic } = sensorMessage;
-
-          // Check if device already exists
-          let device = await this.deviceRepo.findOneBy({
-            sensorId,
-            isDeleted: false,
-          });
-
-          if (!device) {
-            await this.storeDeviceInDatabase(sensorMessage);
-            console.log(`Device saved/updated: ${publishTopic}`);
-          }
-        } catch (err) {
-          console.error(
-            `Failed to process MQTT message from topic: ${topic}`,
-            err.stack,
-          );
-        }
-      },
-    );
-  }
   async getUnassignedDevices(): Promise<Device[]> {
     const devices = await this.deviceRepo.find({
       where: {
         provisionState: ProvisionState.DISCOVERED,
-        assignedType: 'null',
         isDeleted: false,
       },
     });
@@ -86,16 +56,16 @@ export class DeviceService {
   async mapRawPayload(rawPayload: any): Promise<SensorMessageDto> {
     // Map raw payload to DTO
     const payload = plainToInstance(SensorMessageDto, {
-      clientId: rawPayload.clientId || 'unknown',
-      macAddress: rawPayload.macAddress || '00:00:00:00:00:00',
-      ipAddress: rawPayload.ipAddress || '0.0.0.0',
-      firmwareVersion: rawPayload.firmwareVersion || 'unknown',
-      deviceType: rawPayload.deviceType || 'unknown',
-      capabilities: rawPayload.capabilities || [], // array of SensorType
-      connectTime: rawPayload.connectTime || Date.now(),
-      state: rawPayload.state || ConnectionState.OFFLINE,
+      clientId: rawPayload.clientId,
+      macAddress: rawPayload.macAddress,
+      ipAddress: rawPayload.ipAddress,
+      firmwareVersion: rawPayload.firmwareVersion,
+      deviceType: rawPayload.deviceType,
+      capabilities: rawPayload.capabilities, // array of SensorType
+      connectTime: rawPayload.connectTime,
+      state: rawPayload.state,
       location: rawPayload.location,
-      protocol: rawPayload.protocol || 'MQTT',
+      protocol: rawPayload.protocol,
       broker: rawPayload.broker,
       additionalInfo: rawPayload.additionalInfo,
     });
@@ -103,7 +73,7 @@ export class DeviceService {
     return payload;
   }
 
-  private async storeDeviceInDatabase(
+  public async storeSensorInDatabase(
     sensorMessage: SensorMessageDto,
   ): Promise<string> {
     const {
@@ -121,24 +91,36 @@ export class DeviceService {
       publishTopic,
     } = sensorMessage;
 
-    const deviceRecord = this.deviceRepo.create({
-      sensorId,
-      capabilities,
-      deviceHardware,
-      firmware,
-      ip,
-      mac,
-      connectionState,
-      provisionState: ProvisionState.DISCOVERED,
-      connectedTime,
-      protocol,
-      broker,
-      location,
-      publishTopic,
+    const existingDevice = await this.deviceRepo.findOne({
+      where: { sensorId },
     });
 
     try {
-      await this.deviceRepo.save(deviceRecord);
+      if (existingDevice?.isDeleted) {
+        await this.deviceRepo.update({ sensorId }, { isDeleted: false });
+      }
+
+      if (!existingDevice) {
+        const deviceRecord = this.deviceRepo.create({
+          sensorId,
+          capabilities,
+          deviceHardware,
+          firmware,
+          ip,
+          mac,
+          connectionState,
+          provisionState: ProvisionState.DISCOVERED,
+          connectedTime,
+          isActuator: false,
+          isDeleted: false,
+          protocol,
+          broker,
+          location,
+          publishTopic,
+        });
+        await this.deviceRepo.save(deviceRecord);
+      }
+
       return 'Device saved to database';
     } catch (error) {
       console.error('Error saving device to database:', error.message);
@@ -163,7 +145,7 @@ export class DeviceService {
 
   async provisionDevice(
     sensorId: string,
-    provisionData: AssignDeviceDto,
+    provisionData: SensorAssignTypeDto,
   ): Promise<string> {
     const { assignedType } = provisionData;
     const device = await this.deviceRepo.findOne({
