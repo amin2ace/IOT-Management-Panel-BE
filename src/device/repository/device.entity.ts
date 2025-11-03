@@ -1,3 +1,6 @@
+import { ConnectionState } from 'src/config/enum/connection-state.enum';
+import { ProvisionState } from 'src/config/enum/device-state.enum';
+import { Protocol } from 'src/config/enum/protocol.enum';
 import {
   Entity,
   ObjectIdColumn,
@@ -6,14 +9,9 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  DeleteDateColumn,
 } from 'typeorm';
-
-export enum DeviceState {
-  DISCOVERED = 'discovered', // received capabilities but not assigned
-  ASSIGNED = 'assigned', // assigned a type, config sent
-  ACTIVE = 'active', // sending valid data
-  ERROR = 'error', // data invalid / offline
-}
+import { DeviceLocationDto } from '../dto/device-location.dto';
 
 @Entity('devices')
 export class Device {
@@ -22,38 +20,41 @@ export class Device {
 
   @Column()
   @Index({ unique: true })
-  deviceId: string; // ESP unique ID (MAC or custom ID)
-
-  @Column()
-  name?: string;
+  sensorId: string; // ESP unique ID (MAC or custom ID)
 
   @Column({ type: 'array', default: [] })
   capabilities: string[]; // e.g. ["temperature", "humidity"]
 
-  @Column({ nullable: true })
-  assignedType?: string; // selected from capabilities
+  @Column()
+  deviceHardware: string; // device model or hardware ID
+
+  @Column({ nullable: true, default: 'null' })
+  assignedType: string; // selected from capabilities
 
   @Column({ nullable: true })
-  publishTopic?: string; // like "sensors/<client>/temperature/<device>"
+  publishTopic: string; // like "sensors/<client>/temperature/<device>"
+
+  @Column()
+  location: object; // like { room: 'Greenhouse', floor: 1, unit: 'tomato-section' }
 
   @Column({
     type: 'enum',
-    enum: DeviceState,
-    default: DeviceState.DISCOVERED,
+    enum: ProvisionState,
+    default: ProvisionState.DISCOVERED,
   })
-  state: DeviceState;
+  provisionState: ProvisionState;
 
   @Column({ nullable: true })
-  clientId?: string; // multi-tenant support
+  clientId: string; // multi-tenant support
 
   @Column()
-  lastValue?: number; // useful for HMI snapshot
+  lastValue: number; // useful for HMI snapshot
 
   @Column({ nullable: true })
-  lastValueAt?: number; // timestamp of latest MQTT update
+  lastValueAt: number; // timestamp of latest MQTT update
 
-  @Column({ nullable: true })
-  status?: string; // ONLINE / OFFLINE / ERROR msg
+  @Column({ type: 'enum', enum: ConnectionState, nullable: true })
+  connectionState: ConnectionState; // ONLINE / OFFLINE / ERROR msg
 
   @Column({ default: false })
   isActuator: boolean; // distinguish sensor vs controller
@@ -62,13 +63,25 @@ export class Device {
   hasError: boolean;
 
   @Column({ nullable: true })
-  firmware?: string;
+  firmware: string;
 
   @Column({ nullable: true })
-  mac?: string;
+  mac: string;
+
+  @Column({ nullable: true })
+  ip: string;
+
+  @Column({ type: 'enum', enum: Protocol })
+  protocol: Protocol;
+
+  @Column()
+  broker: string;
+
+  @Column({ default: false })
+  isDeleted: boolean;
 
   @CreateDateColumn()
-  createdAt: Date;
+  connectedTime: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
