@@ -12,7 +12,7 @@ import { DeviceService } from './device.service';
 import { QueryDeviceDto } from './dto/query-device.dto';
 import { SensorAssignTypeDto } from './dto/sensor-assign-type.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
-import { Device } from './repository/device.entity';
+import { Sensor } from './repository/sensor.entity';
 import { DeviceDiscoveryDto } from './dto/discovery-params.dto';
 
 @Controller('devices')
@@ -20,7 +20,7 @@ export class DeviceController {
   constructor(private readonly deviceService: DeviceService) {}
 
   @Get('all')
-  async getDevices(@Query() query: QueryDeviceDto): Promise<Device[]> {
+  async getDevices(@Query() query: QueryDeviceDto): Promise<Sensor[]> {
     return await this.deviceService.getDevices(query);
   }
 
@@ -30,12 +30,12 @@ export class DeviceController {
   }
 
   @Get('unassigned')
-  async getUnassignedDevices(): Promise<Device[]> {
+  async getUnassignedDevices(): Promise<Sensor[]> {
     return await this.deviceService.getUnassignedDevices();
   }
 
   @Get(':id')
-  async getDeviceDetails(@Param('id') id: string): Promise<Device> {
+  async getDeviceDetails(@Param('id') id: string): Promise<Sensor> {
     return await this.deviceService.getDeviceById(id);
   }
 

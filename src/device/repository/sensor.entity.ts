@@ -13,7 +13,7 @@ import {
 import { DeviceCapabilities } from 'src/config/enum/device-capabilities.enum';
 
 @Entity('devices')
-export class Device {
+export class Sensor {
   @ObjectIdColumn()
   _id: ObjectId;
 

@@ -3,12 +3,12 @@ import { DeviceController } from './device.controller';
 import { DeviceService } from './device.service';
 import { MqttClientModule } from 'src/mqtt-client/mqtt-client.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Device } from './repository/device.entity';
+import { Sensor } from './repository/sensor.entity';
 import { Measurement } from './repository/measurement.entity';
 import { DeviceListener } from './device.listener.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Device, Measurement]), MqttClientModule],
+  imports: [TypeOrmModule.forFeature([Sensor, Measurement]), MqttClientModule],
   controllers: [DeviceController],
   providers: [DeviceService, DeviceListener],
 })

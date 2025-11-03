@@ -3,7 +3,7 @@ import { QueryDeviceDto } from './dto/query-device.dto';
 import { SensorAssignTypeDto } from './dto/sensor-assign-type.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Device } from './repository/device.entity';
+import { Sensor } from './repository/sensor.entity';
 import { In, Not, Repository } from 'typeorm';
 import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 import { DeviceDiscoveryDto } from './dto/discovery-params.dto';
@@ -15,18 +15,18 @@ import { ProvisionState } from 'src/config/enum/provision-state.enum';
 @Injectable()
 export class DeviceService {
   constructor(
-    @InjectRepository(Device) private readonly deviceRepo: Repository<Device>,
+    @InjectRepository(Sensor) private readonly sensorRepo: Repository<Sensor>,
   ) {}
 
   private readonly logger = new Logger(DeviceService.name, {
     timestamp: true,
   });
 
-  async getDevices(query: QueryDeviceDto): Promise<Device[]> {
+  async getDevices(query: QueryDeviceDto): Promise<Sensor[]> {
     const { clientId, state, assignedType } = query;
 
     // Build dynamic query
-    const qb = this.deviceRepo.createQueryBuilder('device');
+    const qb = this.sensorRepo.createQueryBuilder('device');
 
     if (state) {
       qb.andWhere('device.state = :state', { state });
@@ -43,13 +43,17 @@ export class DeviceService {
 
   async discoverDevices(params: DeviceDiscoveryDto) {}
 
-  async getUnassignedDevices(): Promise<Device[]> {
-    const devices = await this.deviceRepo.find({
+  async getUnassignedDevices(): Promise<Sensor[]> {
+    const devices = await this.sensorRepo.find({
       where: {
         provisionState: ProvisionState.DISCOVERED,
         isDeleted: false,
       },
     });
+    if (!devices.length) {
+      this.logger.log('No unassigned devices found');
+      throw new NotFoundException('No unassigned devices found');
+    }
     return devices;
   }
 
@@ -76,49 +80,25 @@ export class DeviceService {
   public async storeSensorInDatabase(
     sensorMessage: SensorMessageDto,
   ): Promise<string> {
-    const {
-      capabilities,
-      connectedTime,
-      deviceHardware,
-      firmware,
-      ip,
-      mac,
-      connectionState,
-      sensorId,
-      broker,
-      location,
-      protocol,
-      publishTopic,
-    } = sensorMessage;
+    const { sensorId } = sensorMessage;
 
-    const existingDevice = await this.deviceRepo.findOne({
+    const existingDevice = await this.sensorRepo.findOne({
       where: { sensorId },
     });
 
     try {
       if (existingDevice?.isDeleted) {
-        await this.deviceRepo.update({ sensorId }, { isDeleted: false });
+        await this.sensorRepo.update({ sensorId }, { isDeleted: false });
       }
 
       if (!existingDevice) {
-        const deviceRecord = this.deviceRepo.create({
-          sensorId,
-          capabilities,
-          deviceHardware,
-          firmware,
-          ip,
-          mac,
-          connectionState,
+        const deviceRecord = this.sensorRepo.create({
+          ...sensorMessage,
           provisionState: ProvisionState.DISCOVERED,
-          connectedTime,
           isActuator: false,
           isDeleted: false,
-          protocol,
-          broker,
-          location,
-          publishTopic,
         });
-        await this.deviceRepo.save(deviceRecord);
+        await this.sensorRepo.save(deviceRecord);
       }
 
       return 'Device saved to database';
@@ -128,8 +108,8 @@ export class DeviceService {
     }
   }
 
-  async getDeviceById(sensorId: string): Promise<Device> {
-    const device = await this.deviceRepo.findOne({
+  async getDeviceById(sensorId: string): Promise<Sensor> {
+    const device = await this.sensorRepo.findOne({
       where: {
         isDeleted: false,
         sensorId,
@@ -148,7 +128,7 @@ export class DeviceService {
     provisionData: SensorAssignTypeDto,
   ): Promise<string> {
     const { assignedType } = provisionData;
-    const device = await this.deviceRepo.findOne({
+    const device = await this.sensorRepo.findOne({
       where: {
         isDeleted: false,
         sensorId,
@@ -162,12 +142,12 @@ export class DeviceService {
     device.assignedType = assignedType;
     device.provisionState = ProvisionState.ASSIGNED;
 
-    await this.deviceRepo.save(device);
+    await this.sensorRepo.save(device);
     return `Device with id of ${sensorId} provisioned as ${assignedType}`;
   }
 
   async deleteDevice(sensorId: string): Promise<string> {
-    const device = await this.deviceRepo.findOne({
+    const device = await this.sensorRepo.findOne({
       where: {
         sensorId,
         isDeleted: false,
@@ -179,7 +159,7 @@ export class DeviceService {
     }
 
     device.isDeleted = true;
-    await this.deviceRepo.save(device);
+    await this.sensorRepo.save(device);
     return `Device with ID ${sensorId} marked as deleted`;
   }
 
@@ -187,8 +167,17 @@ export class DeviceService {
     return { message: 'Reconfigure sent', id };
   }
 
-  getLiveStatus(id: string) {
-    return { message: 'Live status', id };
+  async getLiveStatus(sensorId: string) {
+    const sensor = await this.sensorRepo.findOne({
+      where: {
+        sensorId,
+      },
+    });
+    if (!sensor) {
+      throw new NotFoundException(`Device with ID ${sensorId} not found`);
+    }
+
+    return { status: sensor.connectionState };
   }
 
   getDeviceHistory(id: string) {
@@ -199,7 +188,22 @@ export class DeviceService {
     return { message: 'Control command', id, data };
   }
 
-  getDeviceStatus(id: string) {
-    return { message: 'Status for device', id };
+  async getDeviceStatus(sensorId: string) {
+    const sensor = await this.sensorRepo.findOne({
+      where: {
+        sensorId,
+      },
+    });
+    if (!sensor) {
+      throw new NotFoundException(`Device with ID ${sensorId} not found`);
+    }
+
+    return {
+      id: sensor.sensorId,
+      state: sensor.provisionState,
+      error: sensor.hasError,
+      available: sensor.isDeleted ? false : true,
+      connection: sensor.connectionState,
+    };
   }
 }
