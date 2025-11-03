@@ -12,29 +12,39 @@ import { DeviceService } from './device.service';
 import { QueryDeviceDto } from './dto/query-device.dto';
 import { AssignDeviceDto } from './dto/assign-device.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
+import { Device } from './repository/device.entity';
+import { DeviceDiscoveryDto } from './dto/discovery-params.dto';
 
 @Controller('devices')
 export class DeviceController {
   constructor(private readonly deviceService: DeviceService) {}
 
-  @Get()
-  getDevices(@Query() query: QueryDeviceDto) {
-    return this.deviceService.getDevices(query);
+  @Get('all')
+  async getDevices(@Query() query: QueryDeviceDto): Promise<Device[]> {
+    return await this.deviceService.getDevices(query);
+  }
+
+  @Get('discover')
+  async discoverDevices(@Body() discoverParams: DeviceDiscoveryDto) {
+    return await this.deviceService.discoverDevices(discoverParams);
   }
 
   @Get('unassigned')
-  getUnassignedDevices() {
-    return this.deviceService.getUnassignedDevices();
+  async getUnassignedDevices(): Promise<Device[]> {
+    return await this.deviceService.getUnassignedDevices();
   }
 
   @Get(':id')
-  getDeviceDetails(@Param('id') id: string) {
-    return this.deviceService.getDeviceById(id);
+  async getDeviceDetails(@Param('id') id: string): Promise<Device> {
+    return await this.deviceService.getDeviceById(id);
   }
 
-  @Put(':id/assign')
-  assignDevice(@Param('id') id: string, @Body() body: AssignDeviceDto) {
-    return this.deviceService.assignDevice(id, body);
+  @Put(':id/provision')
+  async provisionDevice(
+    @Param('id') id: string,
+    @Body() body: AssignDeviceDto,
+  ): Promise<string> {
+    return await this.deviceService.provisionDevice(id, body);
   }
 
   @Delete(':id')
