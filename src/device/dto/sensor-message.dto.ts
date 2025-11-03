@@ -41,7 +41,7 @@ export class SensorMessageDto {
 
   @ApiProperty()
   @IsString()
-  publishTopic?: string; // like "sensors/<client>/temperature/<device>"
+  publishTopic: string; // like "sensors/<client>/temperature/<device>"
 
   @ApiProperty()
   @IsEnum(ConnectionState)
@@ -64,19 +64,16 @@ export class SensorMessageDto {
   connectedTime: Date;
 
   @ApiProperty()
-  @IsOptional()
   @IsObject()
-  location?: DeviceLocationDto;
+  location: DeviceLocationDto;
 
   @ApiProperty()
-  @IsOptional()
   @IsEnum(Protocol)
-  protocol?: Protocol;
+  protocol: Protocol;
 
   @ApiProperty()
-  @IsOptional()
   @IsString()
-  broker?: string;
+  broker: string;
 
   @ApiProperty()
   @IsOptional()
@@ -106,3 +103,29 @@ export const MOCK_SENSOR_MESSAGE: SensorMessageDto = {
     model: 'T1000',
   },
 };
+
+/**
+ * Example SensorMessageDto:
+{
+  "publishTopic": "sensors/client-123/temperature/sensor-001",
+  "sensorId": "sensor-001",
+  "mac": "A4:C1:38:2F:7B:9D",
+  "ip": "192.168.1.45",
+  "firmware": "v1.2.3",
+  "deviceHardware": "ESP32-DevKitC",
+  "capabilities": ["humidity", "temperature"],
+  "connectedTime": "2024-10-01T12:34:56.789Z",
+  "connectionState": "ONLINE",
+  "location": {
+    "site": "greenhouse-1",
+    "floor": 1,
+    "unit": "tomato-section"
+  },
+  "protocol": "MQTT",
+  "broker": "mqtt://192.168.1.10:1883",
+  "additionalInfo": {
+    "manufacturer": "Acme Sensors",
+    "model": "T1000"
+  }
+}
+ */

@@ -1,5 +1,5 @@
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
-import { ProvisionState } from 'src/config/enum/device-state.enum';
+import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import { Protocol } from 'src/config/enum/protocol.enum';
 import {
   Entity,
@@ -9,9 +9,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
-  DeleteDateColumn,
 } from 'typeorm';
-import { DeviceLocationDto } from '../dto/device-location.dto';
+import { DeviceCapabilities } from 'src/config/enum/device-capabilities.enum';
 
 @Entity('devices')
 export class Device {
@@ -28,8 +27,13 @@ export class Device {
   @Column()
   deviceHardware: string; // device model or hardware ID
 
-  @Column({ nullable: true, default: 'null' })
-  assignedType: string; // selected from capabilities
+  @Column({
+    type: 'enum',
+    enum: DeviceCapabilities,
+    array: true,
+    nullable: true,
+  })
+  assignedType: DeviceCapabilities[]; // selected from capabilities
 
   @Column({ nullable: true })
   publishTopic: string; // like "sensors/<client>/temperature/<device>"
