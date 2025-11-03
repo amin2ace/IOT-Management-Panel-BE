@@ -87,8 +87,8 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
       // );
       this.lastActivity = new Date();
       // await this.addTopicToRepository(topic);
-      const { payload } = await this.handleMessage(topic, message);
-      this.emitEvent('mqtt.message', payload);
+      const { event, payload } = await this.handleMessage(topic, message);
+      await this.emitEvent(event, payload);
     });
 
     this.client.on('error', (error) => {
@@ -277,9 +277,27 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async handleMessage(topic: string, message: Buffer) {
+  private async handleMessage(
+    topic: string,
+    message: Buffer,
+  ): Promise<{ event: string; payload: any }> {
     const payload = await JSON.parse(message.toString());
-    return { topic, payload };
+    if (payload.publishTopic?.endsWith('/capabilities')) {
+      return { event: 'mqtt.message.capabilities', payload };
+    }
+    if (payload.publishTopic?.endsWith('/data')) {
+      return { event: 'mqtt.message.data', payload };
+    }
+    if (payload.publishTopic?.endsWith('/status')) {
+      return { event: 'mqtt.message.status', payload };
+    }
+    if (payload.publishTopic?.endsWith('/alert')) {
+      return { event: 'mqtt.message.alert', payload };
+    }
+    if (payload.publishTopic?.endsWith('/discovery ')) {
+      return { event: 'mqtt.message.discovery', payload };
+    }
+    return { event: 'mqtt.message.unknown', payload };
   }
 
   private async matchTopic(

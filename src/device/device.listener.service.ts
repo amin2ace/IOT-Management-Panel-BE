@@ -7,7 +7,7 @@ import { SensorMessageDto } from './dto/sensor-message.dto';
 export class DeviceListener {
   constructor(private readonly deviceService: DeviceService) {}
 
-  @OnEvent('mqtt.message')
+  @OnEvent('mqtt.message.capabilities')
   async handleDiscoveryEvent(payload: SensorMessageDto) {
     const { publishTopic, sensorId } = payload;
     console.log({ publishTopic, sensorId });
