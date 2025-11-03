@@ -17,4 +17,15 @@ export class DeviceListener {
     // const sensorMessage = await this.deviceService.mapRawPayload(payload);
     await this.deviceService.storeSensorInDatabase(payload);
   }
+
+  @OnEvent('mqtt.message')
+  async handleSensorDataEvent(payload: SensorMessageDto) {
+    const { publishTopic, sensorId } = payload;
+    console.log({ publishTopic, sensorId });
+
+    if (!publishTopic.endsWith('/data')) return;
+
+    // const sensorMessage = await this.deviceService.mapRawPayload(payload);
+    await this.deviceService.handleSensorData(payload);
+  }
 }

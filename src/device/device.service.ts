@@ -206,4 +206,8 @@ export class DeviceService {
       connection: sensor.connectionState,
     };
   }
+
+  handleSensorData(payload: SensorMessageDto) {
+    throw new Error('Method not implemented.');
+  }
 }
