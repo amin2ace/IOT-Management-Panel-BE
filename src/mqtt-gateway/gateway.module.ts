@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MqttGateway } from './mqtt.gateway';
-import { MqttGatewayService } from './mqtt.service';
+import { MqttGatewayService } from './gateway.service';
 import { MqttManagementModule } from '../mqtt-management/mqtt-management.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import MessageIncoming from './repository/message-incoming.entity';

@@ -7,7 +7,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
-import { MqttGatewayService } from './mqtt.service';
+import { MqttGatewayService } from './gateway.service';
 
 @WebSocketGateway(30005, {
   cors: {
