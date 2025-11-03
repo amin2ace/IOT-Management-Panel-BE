@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
-import { MqttClientService } from '../mqtt-management/mqtt-client.service';
+import { MqttClientService } from '../mqtt-client/mqtt-client.service';
 import { IClientPublishOptions } from 'mqtt';
 import { QoS } from 'src/config/types/mqtt-qos.types';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -279,25 +279,14 @@ export class MqttGatewayService implements OnModuleInit {
   }
   // Get current MQTT connection status
   async getMqttStatus() {
-    return {
-      connected: this.mqttClientService.getIsConnected(),
-      brokerUrl: this.mqttClientService.getBrokerUrl(),
-      subscribedTopics: await this.mqttClientService.getSubscribedTopics(),
-      lastActivity: this.mqttClientService.getLastConnectionActivity(),
-    };
+    return this.mqttClientService.getConnectionStatus();
   }
 
   // Subscribe to MQTT topics
   async subscribeToTopics(topics: string[]) {
     const qos: QoS = QoS.AtLeastOnce;
     for (const topic of topics) {
-      await this.mqttClientService.subscribe(
-        topic,
-        qos,
-        async (topic, message) => {
-          return { topic, message };
-        },
-      );
+      await this.mqttClientService.subscribe(topic, qos);
     }
   }
 

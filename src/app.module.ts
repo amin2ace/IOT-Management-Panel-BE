@@ -6,23 +6,40 @@ import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MqttManagementModule } from './mqtt-management/mqtt-management.module';
-import { MqttGatewayModule } from './mqtt-gateway/gateway.module';
+import { MqttClientModule } from './mqtt-client/mqtt-client.module';
+import { MqttGatewayModule } from './gateway/gateway.module';
 import jwtModuleOptions from './config/jwt-module.config';
 import typeOrmModuleConfig from './config/typeorm-module-config';
 import configModuleOptions from './config/config-module.config';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './users/guard/roles.guard';
 import { DeviceModule } from './device/device.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
     ConfigModule.forRoot(configModuleOptions),
     JwtModule.registerAsync(jwtModuleOptions),
     TypeOrmModule.forRootAsync(typeOrmModuleConfig),
+    EventEmitterModule.forRoot({
+      // set this to `true` to use wildcards
+      wildcard: false,
+      // the delimiter used to segment namespaces
+      delimiter: '.',
+      // set this to `true` if you want to emit the newListener event
+      newListener: false,
+      // set this to `true` if you want to emit the removeListener event
+      removeListener: false,
+      // the maximum amount of listeners that can be assigned to an event
+      maxListeners: 10,
+      // show event name in memory leak message when more than maximum amount of listeners is assigned
+      verboseMemoryLeak: false,
+      // disable throwing uncaughtException if an error event is emitted and it has no listeners
+      ignoreErrors: false,
+    }),
     AuthModule,
     UsersModule,
-    MqttManagementModule,
+    MqttClientModule,
     MqttGatewayModule,
     DeviceModule,
   ],
