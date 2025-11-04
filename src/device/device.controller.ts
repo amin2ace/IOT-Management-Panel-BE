@@ -20,13 +20,13 @@ export class DeviceController {
   constructor(private readonly deviceService: DeviceService) {}
 
   @Get('all')
-  async getDevices(@Query() query: QueryDeviceDto): Promise<Sensor[]> {
-    return await this.deviceService.getDevices(query);
+  async getSensors(@Query() query: QueryDeviceDto): Promise<Sensor[]> {
+    return await this.deviceService.getSensors(query);
   }
 
   @Get('discover')
-  async discoverDevices(@Body() discoverParams: DiscoveryRequestDto) {
-    return await this.deviceService.discoverDevices(discoverParams);
+  async discoverDevices(@Body() discoverRequest: DiscoveryRequestDto) {
+    return await this.deviceService.discoverDevices(discoverRequest);
   }
 
   @Get('unassigned')

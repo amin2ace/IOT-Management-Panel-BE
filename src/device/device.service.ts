@@ -4,25 +4,26 @@ import { SensorAssignTypeDto } from './dto/sensor-assign-type.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Sensor } from './repository/sensor.entity';
-import { In, Not, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
-import { DeviceDiscoveryDto } from './dto/discovery-params.dto';
 import { plainToInstance } from 'class-transformer';
 import { DiscoveryResponseDto } from './messages/discovery-response.dto';
-import { ConnectionState } from 'src/config/enum/connection-state.enum';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
+import { DiscoveryRequestDto } from './messages/discovery-request.dto';
+import { buildTopic } from 'src/config/topic-bulder';
 
 @Injectable()
 export class DeviceService {
   constructor(
     @InjectRepository(Sensor) private readonly sensorRepo: Repository<Sensor>,
+    private readonly mqttClientService: MqttClientService,
   ) {}
 
   private readonly logger = new Logger(DeviceService.name, {
     timestamp: true,
   });
 
-  async getDevices(query: QueryDeviceDto): Promise<Sensor[]> {
+  async getSensors(query: QueryDeviceDto): Promise<Sensor[]> {
     const { clientId, state, assignedType } = query;
 
     // Build dynamic query
@@ -41,7 +42,27 @@ export class DeviceService {
     return await qb.getMany();
   }
 
-  async discoverDevices(params: DeviceDiscoveryDto) {}
+  async discoverDevices(discoverRequest: DiscoveryRequestDto) {
+    const { isBroadcast, deviceId } = discoverRequest;
+
+    if (isBroadcast && !deviceId) {
+      this.mqttClientService.publish(
+        buildTopic.discoverBroadcast(),
+        JSON.stringify(discoverRequest),
+        { qos: 0, retain: false },
+      );
+      return { message: 'Discovery request broadcasted' };
+    }
+
+    if (deviceId && !isBroadcast) {
+      this.mqttClientService.publish(
+        buildTopic.discoverUnicast(deviceId),
+        JSON.stringify(discoverRequest),
+        { qos: 0, retain: false },
+      );
+      return { message: `Discovery request sent to device ${deviceId}` };
+    }
+  }
 
   async getUnassignedDevices(): Promise<Sensor[]> {
     const devices = await this.sensorRepo.find({
