@@ -7,14 +7,14 @@ import { DiscoveryResponseDto } from './messages/discovery-response.dto';
 export class DeviceListener {
   constructor(private readonly deviceService: DeviceService) {}
 
-  @OnEvent('mqtt.message.capabilities')
+  // Listen for MQTT discovery topic like: "sensors/+/discovery"
+  @OnEvent('mqtt.message.discovery')
   async handleDiscoveryEvent(payload: DiscoveryResponseDto) {
     const { publishTopic, deviceId: sensorId } = payload;
     console.log({ publishTopic, sensorId });
 
-    if (!publishTopic.endsWith('/capabilities')) return;
+    if (!publishTopic.endsWith('/discovery')) return;
 
-    // const sensorMessage = await this.deviceService.mapRawPayload(payload);
     await this.deviceService.storeSensorInDatabase(payload);
   }
 
