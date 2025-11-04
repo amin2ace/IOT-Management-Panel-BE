@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { QueryDeviceDto } from './dto/query-device.dto';
-import { SensorAssignTypeDto } from './dto/sensor-assign-type.dto';
+import { SensorFunctionAssignDto } from './dto/sensor-assign-type.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Sensor } from './repository/sensor.entity';
@@ -146,7 +146,7 @@ export class DeviceService {
 
   async provisionDevice(
     sensorId: string,
-    provisionData: SensorAssignTypeDto,
+    provisionData: SensorFunctionAssignDto,
   ): Promise<string> {
     const { assignedType } = provisionData;
     const device = await this.sensorRepo.findOne({

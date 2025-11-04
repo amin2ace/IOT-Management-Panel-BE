@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { DeviceCapabilities } from 'src/config/enum/device-capabilities.enum';
+import { SensorType } from 'src/config/enum/sensor-type.enum';
 
 @Entity('devices')
 export class Sensor {
@@ -29,11 +29,11 @@ export class Sensor {
 
   @Column({
     type: 'enum',
-    enum: DeviceCapabilities,
+    enum: SensorType,
     array: true,
     nullable: true,
   })
-  assignedFunctionality: DeviceCapabilities[]; // selected from capabilities
+  assignedFunctionality: SensorType[]; // selected from capabilities
 
   @Column({ nullable: true })
   publishTopic: string; // like "sensors/<client>/temperature/<device>"
