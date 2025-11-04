@@ -6,6 +6,7 @@ import {
   IsString,
   ValidateNested,
   IsArray,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
@@ -38,6 +39,11 @@ export class DiscoveryRequestDto {
   @IsOptional()
   @IsString()
   deviceId?: string; // Request from specific device
+
+  @ApiProperty()
+  @IsBoolean()
+  @IsNotEmpty()
+  isBroadcast: boolean;
 
   @ApiProperty()
   @IsISO8601()
