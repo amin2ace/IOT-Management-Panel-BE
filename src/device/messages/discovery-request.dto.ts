@@ -8,12 +8,15 @@ import {
   IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
 
 class FilterDto {
+  @ApiProperty()
   @IsOptional()
   @IsString()
   subnet?: string;
 
+  @ApiProperty()
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -21,22 +24,27 @@ class FilterDto {
 }
 
 export class DiscoveryRequestDto {
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   requestId: string;
 
+  @ApiProperty()
   @IsNumber()
   @IsNotEmpty()
   requestCode: number; // Request Message Code
 
+  @ApiProperty()
   @IsOptional()
   @IsString()
   deviceId?: string; // Request from specific device
 
+  @ApiProperty()
   @IsISO8601()
   @IsNotEmpty()
   timestamp: string; // Epoch time: ISO8601
 
+  @ApiProperty()
   @IsOptional()
   @ValidateNested()
   @Type(() => FilterDto)
