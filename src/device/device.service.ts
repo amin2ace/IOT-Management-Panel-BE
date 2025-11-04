@@ -64,18 +64,18 @@ export class DeviceService {
     }
   }
 
-  async getUnassignedDevices(): Promise<Sensor[]> {
-    const devices = await this.sensorRepo.find({
+  async getUnassignedSensor(): Promise<Sensor[]> {
+    const sensors = await this.sensorRepo.find({
       where: {
         provisionState: ProvisionState.DISCOVERED,
         isDeleted: false,
       },
     });
-    if (!devices.length) {
+    if (!sensors.length) {
       this.logger.log('No unassigned devices found');
       throw new NotFoundException('No unassigned devices found');
     }
-    return devices;
+    return sensors;
   }
 
   async mapRawPayload(rawPayload: any): Promise<DiscoveryResponseDto> {
@@ -167,7 +167,7 @@ export class DeviceService {
     return `Device with id of ${sensorId} provisioned as ${assignedType}`;
   }
 
-  async deleteDevice(sensorId: string): Promise<string> {
+  async deleteSensor(sensorId: string): Promise<string> {
     const device = await this.sensorRepo.findOne({
       where: {
         sensorId,

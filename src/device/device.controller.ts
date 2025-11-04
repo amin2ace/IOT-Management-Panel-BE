@@ -30,8 +30,8 @@ export class DeviceController {
   }
 
   @Get('unassigned')
-  async getUnassignedDevices(): Promise<Sensor[]> {
-    return await this.deviceService.getUnassignedDevices();
+  async getUnassignedSensor(): Promise<Sensor[]> {
+    return await this.deviceService.getUnassignedSensor();
   }
 
   @Get(':id')
@@ -48,8 +48,8 @@ export class DeviceController {
   }
 
   @Delete(':id')
-  deleteDevice(@Param('id') id: string) {
-    return this.deviceService.deleteDevice(id);
+  async deleteSensor(@Param('id') id: string) {
+    return this.deviceService.deleteSensor(id);
   }
 
   @Post(':id/reconfigure')
