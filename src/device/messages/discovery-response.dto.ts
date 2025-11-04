@@ -10,7 +10,7 @@ import {
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
 import { Protocol } from 'src/config/enum/protocol.enum';
 import { SensorType } from 'src/config/enum/sensor-type.enum';
-import { DeviceLocationDto } from './device-location.dto';
+import { DeviceLocationDto } from '../dto/device-location.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AdditionalInfoDto {
@@ -25,7 +25,7 @@ export class AdditionalInfoDto {
   model?: string;
 }
 
-export class SensorMessageDto {
+export class DiscoveryResponseDto {
   @ApiProperty()
   @IsString()
   sensorId: string;
@@ -81,7 +81,7 @@ export class SensorMessageDto {
   additionalInfo?: AdditionalInfoDto;
 }
 
-export const MOCK_SENSOR_MESSAGE: SensorMessageDto = {
+export const MOCK_SENSOR_MESSAGE: DiscoveryResponseDto = {
   publishTopic: 'sensors/client-123/temperature/sensor-001',
   sensorId: 'sensor-001',
   mac: 'A4:C1:38:2F:7B:9D',

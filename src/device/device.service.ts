@@ -8,7 +8,7 @@ import { In, Not, Repository } from 'typeorm';
 import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 import { DeviceDiscoveryDto } from './dto/discovery-params.dto';
 import { plainToInstance } from 'class-transformer';
-import { SensorMessageDto } from './dto/sensor-message.dto';
+import { DiscoveryResponseDto } from './messages/discovery-response.dto';
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
 
@@ -57,9 +57,9 @@ export class DeviceService {
     return devices;
   }
 
-  async mapRawPayload(rawPayload: any): Promise<SensorMessageDto> {
+  async mapRawPayload(rawPayload: any): Promise<DiscoveryResponseDto> {
     // Map raw payload to DTO
-    const payload = plainToInstance(SensorMessageDto, {
+    const payload = plainToInstance(DiscoveryResponseDto, {
       clientId: rawPayload.clientId,
       macAddress: rawPayload.macAddress,
       ipAddress: rawPayload.ipAddress,
@@ -78,7 +78,7 @@ export class DeviceService {
   }
 
   public async storeSensorInDatabase(
-    sensorMessage: SensorMessageDto,
+    sensorMessage: DiscoveryResponseDto,
   ): Promise<string> {
     const { sensorId } = sensorMessage;
 
@@ -207,7 +207,7 @@ export class DeviceService {
     };
   }
 
-  handleSensorData(payload: SensorMessageDto) {
+  handleSensorData(payload: DiscoveryResponseDto) {
     throw new Error('Method not implemented.');
   }
 }

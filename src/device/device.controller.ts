@@ -13,7 +13,7 @@ import { QueryDeviceDto } from './dto/query-device.dto';
 import { SensorAssignTypeDto } from './dto/sensor-assign-type.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
 import { Sensor } from './repository/sensor.entity';
-import { DeviceDiscoveryDto } from './dto/discovery-params.dto';
+import { DiscoveryRequestDto } from './messages/discovery-request.dto';
 
 @Controller('devices')
 export class DeviceController {
@@ -25,7 +25,7 @@ export class DeviceController {
   }
 
   @Get('discover')
-  async discoverDevices(@Body() discoverParams: DeviceDiscoveryDto) {
+  async discoverDevices(@Body() discoverParams: DiscoveryRequestDto) {
     return await this.deviceService.discoverDevices(discoverParams);
   }
 
