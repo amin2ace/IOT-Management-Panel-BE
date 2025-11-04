@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { DeviceService } from './device.service';
-import { DiscoveryResponseDto } from './messages/discovery-response.dto';
+import { DiscoveryResponseDto } from './messages/discovery.response.dto';
 
 @Injectable()
 export class DeviceListener {
