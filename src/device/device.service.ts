@@ -80,7 +80,7 @@ export class DeviceService {
   public async storeSensorInDatabase(
     sensorMessage: DiscoveryResponseDto,
   ): Promise<string> {
-    const { sensorId } = sensorMessage;
+    const { deviceId: sensorId } = sensorMessage;
 
     const existingDevice = await this.sensorRepo.findOne({
       where: { sensorId },

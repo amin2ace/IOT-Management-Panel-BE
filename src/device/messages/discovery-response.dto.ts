@@ -28,7 +28,7 @@ export class AdditionalInfoDto {
 export class DiscoveryResponseDto {
   @ApiProperty()
   @IsString()
-  sensorId: string;
+  deviceId: string;
 
   @ApiProperty()
   @IsArray()
@@ -83,7 +83,7 @@ export class DiscoveryResponseDto {
 
 export const MOCK_SENSOR_MESSAGE: DiscoveryResponseDto = {
   publishTopic: 'sensors/client-123/temperature/sensor-001',
-  sensorId: 'sensor-001',
+  deviceId: 'sensor-001',
   mac: 'A4:C1:38:2F:7B:9D',
   ip: '192.168.1.45',
   firmware: 'v1.2.3',

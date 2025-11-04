@@ -9,7 +9,7 @@ export class DeviceListener {
 
   @OnEvent('mqtt.message.capabilities')
   async handleDiscoveryEvent(payload: DiscoveryResponseDto) {
-    const { publishTopic, sensorId } = payload;
+    const { publishTopic, deviceId: sensorId } = payload;
     console.log({ publishTopic, sensorId });
 
     if (!publishTopic.endsWith('/capabilities')) return;
@@ -20,7 +20,7 @@ export class DeviceListener {
 
   @OnEvent('mqtt.message.data')
   async handleSensorDataEvent(payload: DiscoveryResponseDto) {
-    const { publishTopic, sensorId } = payload;
+    const { publishTopic, deviceId: sensorId } = payload;
     console.log({ publishTopic, sensorId });
 
     if (!publishTopic.endsWith('/data')) return;
