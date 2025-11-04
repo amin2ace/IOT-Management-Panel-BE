@@ -1,6 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { QueryDeviceDto } from './dto/query-device.dto';
-import { SensorFunctionAssignDto } from './dto/sensor-assign-type.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Sensor } from './repository/sensor.entity';
@@ -11,6 +10,7 @@ import { DiscoveryResponseDto } from './messages/discovery.response.dto';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import { DiscoveryRequestDto } from './messages/discovery.request.dto';
 import { buildTopic } from 'src/config/topic-bulder';
+import { SensorFunctionalityRequestDto } from './messages/sensor-functionality.request.dto';
 
 @Injectable()
 export class DeviceService {
@@ -146,9 +146,9 @@ export class DeviceService {
 
   async provisionDevice(
     sensorId: string,
-    provisionData: SensorFunctionAssignDto,
+    provisionData: SensorFunctionalityRequestDto,
   ): Promise<string> {
-    const { assignedType } = provisionData;
+    const { functionality } = provisionData;
     const device = await this.sensorRepo.findOne({
       where: {
         isDeleted: false,
@@ -160,11 +160,11 @@ export class DeviceService {
       throw new NotFoundException(`Device with ID ${sensorId} not found`);
     }
 
-    device.assignedFunctionality = assignedType;
+    device.assignedFunctionality = functionality;
     device.provisionState = ProvisionState.ASSIGNED;
 
     await this.sensorRepo.save(device);
-    return `Device with id of ${sensorId} provisioned as ${assignedType}`;
+    return `Device with id of ${sensorId} provisioned as ${functionality}`;
   }
 
   async deleteSensor(sensorId: string): Promise<string> {
