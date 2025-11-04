@@ -33,7 +33,7 @@ export class Sensor {
     array: true,
     nullable: true,
   })
-  assignedType: DeviceCapabilities[]; // selected from capabilities
+  assignedFunctionality: DeviceCapabilities[]; // selected from capabilities
 
   @Column({ nullable: true })
   publishTopic: string; // like "sensors/<client>/temperature/<device>"

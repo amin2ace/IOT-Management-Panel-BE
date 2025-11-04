@@ -160,7 +160,7 @@ export class DeviceService {
       throw new NotFoundException(`Device with ID ${sensorId} not found`);
     }
 
-    device.assignedType = assignedType;
+    device.assignedFunctionality = assignedType;
     device.provisionState = ProvisionState.ASSIGNED;
 
     await this.sensorRepo.save(device);
