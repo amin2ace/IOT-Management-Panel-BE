@@ -35,7 +35,7 @@ export class SensorFunctionalityRequestDto {
   @IsString()
   deviceId: string; // Request from specific device
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Time of the request', example: '' })
   @IsDate()
   @IsNotEmpty()
   timestamp: Date; // Epoch time: ISO8601
