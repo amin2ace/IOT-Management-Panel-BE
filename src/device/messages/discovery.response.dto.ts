@@ -11,6 +11,7 @@ import { Protocol } from 'src/config/enum/protocol.enum';
 import { SensorType } from 'src/config/enum/sensor-type.enum';
 import { DeviceLocationDto } from '../dto/device-location.dto';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsValidEpochMillis } from 'src/config/decorator/uptime.decorator';
 
 export class AdditionalInfoDto {
   @ApiProperty()
@@ -58,9 +59,8 @@ export class DiscoveryResponseDto {
   @IsString()
   ip: string;
 
-  @ApiProperty()
-  @IsDate()
-  upTime: Date;
+  @IsValidEpochMillis({ message: 'Uptime must be valid epoch milliseconds' })
+  uptime: number;
 
   @ApiProperty()
   @IsObject()
@@ -80,29 +80,6 @@ export class DiscoveryResponseDto {
   additionalInfo?: AdditionalInfoDto;
 }
 
-export const MOCK_SENSOR_MESSAGE: DiscoveryResponseDto = {
-  publishTopic: 'sensors/client-123/temperature/sensor-001',
-  deviceId: 'sensor-001',
-  mac: 'A4:C1:38:2F:7B:9D',
-  ip: '192.168.1.45',
-  firmware: 'v1.2.3',
-  deviceHardware: 'ESP32-DevKitC',
-  capabilities: [SensorType.HUMIDITY, SensorType.TEMPERATURE],
-  upTime: new Date(),
-  connectionState: ConnectionState.ONLINE,
-  location: {
-    site: 'greenhouse-1',
-    floor: 1,
-    unit: 'tomato-section',
-  },
-  protocol: Protocol.MQTT,
-  broker: 'mqtt://192.168.1.10:1883',
-  additionalInfo: {
-    manufacturer: 'Acme Sensors',
-    model: 'T1000',
-  },
-};
-
 /**
  * Example SensorMessageDto:
 {
@@ -113,7 +90,7 @@ export const MOCK_SENSOR_MESSAGE: DiscoveryResponseDto = {
   "firmware": "v1.2.3",
   "deviceHardware": "ESP32-DevKitC",
   "capabilities": ["humidity", "temperature"],
-  "connectedTime": "2024-10-01T12:34:56.789Z",
+  "uptime": "2024-10-01T12:34:56.789Z",
   "connectionState": "ONLINE",
   "location": {
     "site": "greenhouse-1",
