@@ -2,17 +2,25 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class DeviceLocationDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Site name',
+    required: false,
+    example: 'greenhouse-1',
+  })
   @IsOptional()
   @IsString()
   site?: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Floor number', required: false, example: 1 })
   @IsOptional()
   @IsNumber()
   floor?: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Unit or section',
+    required: false,
+    example: 'tomato-section',
+  })
   @IsOptional()
   @IsString()
   unit?: string;
