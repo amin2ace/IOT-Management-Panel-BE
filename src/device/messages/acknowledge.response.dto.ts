@@ -44,7 +44,6 @@ export class AckResponseDto {
     description: 'The acknowledgement state of the request',
     enum: AckStatus, // the enum itself
     enumName: 'AckStatus', // optional but helps Swagger
-    isArray: true,
     example: [AckStatus.ACCEPTED], // optional example
   })
   @IsEnum(AckStatus)
