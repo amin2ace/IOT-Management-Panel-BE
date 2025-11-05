@@ -6,7 +6,7 @@ import {
   IsNumber,
   IsString,
 } from 'class-validator';
-import { IsValidEpochMillis } from 'src/config/decorator/uptime.decorator';
+import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
 
 export class HeartBeatDto {

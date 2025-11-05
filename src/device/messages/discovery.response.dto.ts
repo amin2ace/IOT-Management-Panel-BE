@@ -11,7 +11,7 @@ import { Protocol } from 'src/config/enum/protocol.enum';
 import { SensorType } from 'src/config/enum/sensor-type.enum';
 import { DeviceLocationDto } from '../dto/device-location.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsValidEpochMillis } from 'src/config/decorator/uptime.decorator';
+import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
 
 export class AdditionalInfoDto {
   @ApiProperty()

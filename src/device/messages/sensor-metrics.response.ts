@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { IsValidEpochMillis } from 'src/config/decorator/uptime.decorator';
+import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
 
 export class SensorMetricDto {
   @ApiProperty({
