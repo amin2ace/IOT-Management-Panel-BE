@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsString,
 } from 'class-validator';
+import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
 
@@ -39,6 +40,13 @@ export class HeartBeatDto {
 
   @IsValidEpochMillis({ message: 'Uptime must be valid epoch milliseconds' })
   uptime: number;
+
+  @ApiProperty({
+    description: 'Time of the request in epoch milli second',
+    example: '1762379573804',
+  })
+  @IsValidTimestampMillis() // 5min behind, 30sec ahead
+  timestamp: number;
 
   @ApiProperty({
     description: 'Wifi Received Signal Strength Indicator',

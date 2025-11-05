@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 
 class FilterDto {
   @ApiProperty()
@@ -45,10 +46,12 @@ export class DiscoveryRequestDto {
   @IsNotEmpty()
   isBroadcast: boolean;
 
-  @ApiProperty()
-  @IsISO8601()
-  @IsNotEmpty()
-  timestamp: string; // Epoch time: ISO8601
+  @ApiProperty({
+    description: 'Time of the request in epoch milli second',
+    example: '1762379573804',
+  })
+  @IsValidTimestampMillis() // 5min behind, 30sec ahead
+  timestamp: number;
 
   @ApiProperty()
   @IsOptional()

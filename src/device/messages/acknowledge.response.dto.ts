@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsString,
 } from 'class-validator';
+import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
 
 export class AckResponseDto {
@@ -50,10 +51,12 @@ export class AckResponseDto {
   @IsNotEmpty()
   ackStatus: AckStatus; //"ACCEPTED",
 
-  @ApiProperty({ description: 'Time of the request', example: '' })
-  @IsDate()
-  @IsNotEmpty()
-  timestamp: Date; // Epoch time: ISO8601
+  @ApiProperty({
+    description: 'Time of the request in epoch milli second',
+    example: '1762379573804',
+  })
+  @IsValidTimestampMillis() // 5min behind, 30sec ahead
+  timestamp: number;
 
   @ApiProperty({
     description: 'Response message',

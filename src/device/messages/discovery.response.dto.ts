@@ -12,6 +12,7 @@ import { SensorType } from 'src/config/enum/sensor-type.enum';
 import { DeviceLocationDto } from '../dto/device-location.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
+import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 
 export class AdditionalInfoDto {
   @ApiProperty()
@@ -61,6 +62,13 @@ export class DiscoveryResponseDto {
 
   @IsValidEpochMillis({ message: 'Uptime must be valid epoch milliseconds' })
   uptime: number;
+
+  @ApiProperty({
+    description: 'Time of the request in epoch milli second',
+    example: '1762379573804',
+  })
+  @IsValidTimestampMillis() // 5min behind, 30sec ahead
+  timestamp: number;
 
   @ApiProperty()
   @IsObject()
