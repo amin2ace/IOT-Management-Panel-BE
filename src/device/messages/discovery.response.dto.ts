@@ -60,7 +60,7 @@ export class DiscoveryResponseDto {
 
   @ApiProperty()
   @IsDate()
-  connectedTime: Date;
+  upTime: Date;
 
   @ApiProperty()
   @IsObject()
@@ -88,7 +88,7 @@ export const MOCK_SENSOR_MESSAGE: DiscoveryResponseDto = {
   firmware: 'v1.2.3',
   deviceHardware: 'ESP32-DevKitC',
   capabilities: [SensorType.HUMIDITY, SensorType.TEMPERATURE],
-  connectedTime: new Date(),
+  upTime: new Date(),
   connectionState: ConnectionState.ONLINE,
   location: {
     site: 'greenhouse-1',
