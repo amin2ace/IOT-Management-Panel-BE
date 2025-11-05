@@ -8,7 +8,7 @@ export class DeviceResponseDto {
     example: 'fw-20251104-status',
   })
   @IsString()
-  responsetId: string;
+  responseId: string;
 
   @ApiProperty({
     description: 'Response code from the device or system',
