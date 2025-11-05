@@ -48,7 +48,7 @@ export class AckResponseDto {
   })
   @IsEnum(AckStatus)
   @IsNotEmpty()
-  status: AckStatus; //"ACCEPTED",
+  ackStatus: AckStatus; //"ACCEPTED",
 
   @ApiProperty({ description: 'Time of the request', example: '' })
   @IsDate()
