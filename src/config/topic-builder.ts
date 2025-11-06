@@ -1,33 +1,35 @@
 export const buildTopic = {
-  discoverBroadcast: (broadcastTopic: string) => `${broadcastTopic}/discover`,
+  discoverBroadcast: (broadcastTopic: string): string =>
+    `${broadcastTopic}/discover`,
 
-  diagBroadcast: (broadcastTopic: string) => `${broadcastTopic}/diagnose`,
+  diagBroadcast: (broadcastTopic: string): string =>
+    `${broadcastTopic}/diagnose`,
 
-  discoverUnicast: (topicPrefix: string, deviceId: string) =>
+  discoverUnicast: (topicPrefix: string, deviceId: string): string =>
     `${topicPrefix}/${deviceId}/discover`,
 
-  diagUnicast: (topicPrefix: string, deviceId: string) =>
+  diagUnicast: (topicPrefix: string, deviceId: string): string =>
     `${topicPrefix}/${deviceId}/diagnose`,
 
-  firmwareUpgrade: (topicPrefix: string, deviceId: string) =>
+  firmwareUpgrade: (topicPrefix: string, deviceId: string): string =>
     `${topicPrefix}/${deviceId}/firmware/upgrade`,
 
-  heartbeat: (topicPrefix: string, deviceId: string) =>
+  heartbeat: (topicPrefix: string, deviceId: string): string =>
     `${topicPrefix}/${deviceId}/heartbeat`,
 
-  reboot: (topicPrefix: string, deviceId: string) =>
+  reboot: (topicPrefix: string, deviceId: string): string =>
     `${topicPrefix}/${deviceId}/reboot`,
 
-  config: (topicPrefix: string, deviceId: string) =>
+  config: (topicPrefix: string, deviceId: string): string =>
     `${topicPrefix}/${deviceId}/config`,
 
-  assign: (topicPrefix: string, deviceId: string) =>
+  assign: (topicPrefix: string, deviceId: string): string =>
     `${topicPrefix}/${deviceId}/assign`,
 
-  telemetry: (topicPrefix: string, deviceId: string) =>
+  telemetry: (topicPrefix: string, deviceId: string): string =>
     `${topicPrefix}/${deviceId}/telemetry`,
 
-  metrics: (topicPrefix: string, deviceId: string) =>
+  metrics: (topicPrefix: string, deviceId: string): string =>
     `${topicPrefix}/${deviceId}/metrics`,
 };
 
