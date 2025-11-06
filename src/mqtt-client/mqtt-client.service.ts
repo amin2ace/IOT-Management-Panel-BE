@@ -39,8 +39,21 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     await this.initConnection();
   }
 
-  async emitEvent(eventName: string, payload: any) {
-    this.eventEmitter.emit(eventName, payload);
+  async emitEvent(eventName: string, topic: string, payload: any) {
+    this.eventEmitter.emit(eventName, topic, payload);
+  }
+
+  async getBroadcastPrefix(): Promise<string> {
+    const broadcastTopic = await this.topicRepo.find({
+      where: {
+        name: 'broadcast',
+      },
+    });
+
+    if (!broadcastTopic || broadcastTopic.length != 1) {
+      this.logger.error('Broadcast topic retrieve failed');
+    }
+    return broadcastTopic[0].topic;
   }
 
   async initConnection(broker?: string): Promise<void> {
@@ -64,7 +77,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
         this.lastActivity = new Date();
         this.logger.log(`✅ Connected to MQTT broker: ${brokerUrl}`);
 
-        this.emitEvent('connected', {
+        this.eventEmitter.emit('connected', {
           brokerUrl,
           clientId: this.client.options.clientId,
         });
@@ -80,15 +93,15 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
   }
 
   async mqttEvents(brokerUrl: string) {
-    this.client.on('message', async (topic: string, message: Buffer) => {
+    this.client.on('message', async (topic: string, payload: Buffer) => {
       // console.log(
       //   `MQTT message received on topic: ${topic}`,
       //   message.toString(),
       // );
       this.lastActivity = new Date();
       // await this.addTopicToRepository(topic);
-      const { event, payload } = await this.handleMessage(topic, message);
-      await this.emitEvent(event, payload);
+      const { event, parsedPayload } = await this.handleMessage(topic, payload);
+      await this.emitEvent(event, topic, parsedPayload);
     });
 
     this.client.on('error', (error) => {
@@ -99,7 +112,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     this.client.on('close', () => {
       this.isConnected = false;
       this.logger.warn('🔌 Disconnected from MQTT broker');
-      this.emitEvent('disconnected', {
+      this.eventEmitter.emit('disconnected', {
         brokerUrl,
         clientId: this.client.options.clientId,
       });
@@ -191,7 +204,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
 
   async publish(
     topic: string,
-    message: string,
+    payload: string,
     options: Partial<IClientPublishOptions>,
   ): Promise<any> {
     if (!this.isConnected) {
@@ -200,22 +213,17 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     const { qos, retain } = options;
 
     try {
-      await this.client.publishAsync(topic, message, { qos, retain });
-      this.emitEvent('mqtt.publish.success', [topic, message]);
+      await this.client.publishAsync(topic, payload, { qos, retain });
+      this.emitEvent('mqtt.publish.success', topic, payload);
       return {
         success: true,
         topic,
-        message,
+        message: payload,
         description: 'Message published successfully',
         timestamp: new Date(),
       };
     } catch (error) {
       this.logger.error('failed to publish message', error.message);
-      this.emitEvent('mqtt.publish.error', {
-        topic,
-        message,
-        error: error.message,
-      });
     }
   }
 
@@ -279,25 +287,25 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
 
   private async handleMessage(
     topic: string,
-    message: Buffer,
-  ): Promise<{ event: string; payload: any }> {
-    const payload = await JSON.parse(message.toString());
-    if (payload.publishTopic?.endsWith('/capabilities')) {
-      return { event: 'mqtt.message.capabilities', payload };
+    payload: Buffer,
+  ): Promise<{ event: string; parsedPayload: any }> {
+    const parsedPayload = await JSON.parse(payload.toString());
+    if (topic?.endsWith('/capabilities')) {
+      return { event: 'mqtt.message.capabilities', parsedPayload };
     }
-    if (payload.publishTopic?.endsWith('/data')) {
-      return { event: 'mqtt.message.data', payload };
+    if (topic?.endsWith('/data')) {
+      return { event: 'mqtt.message.data', parsedPayload };
     }
-    if (payload.publishTopic?.endsWith('/status')) {
-      return { event: 'mqtt.message.status', payload };
+    if (topic?.endsWith('/status')) {
+      return { event: 'mqtt.message.status', parsedPayload };
     }
-    if (payload.publishTopic?.endsWith('/alert')) {
-      return { event: 'mqtt.message.alert', payload };
+    if (topic?.endsWith('/alert')) {
+      return { event: 'mqtt.message.alert', parsedPayload };
     }
-    if (payload.publishTopic?.endsWith('/discovery ')) {
-      return { event: 'mqtt.message.discovery', payload };
+    if (topic?.endsWith('/discovery ')) {
+      return { event: 'mqtt.message.discovery', parsedPayload };
     }
-    return { event: 'mqtt.message.unknown', payload };
+    return { event: 'mqtt.message.unknown', parsedPayload };
   }
 
   private async matchTopic(

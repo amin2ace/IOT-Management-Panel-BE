@@ -9,21 +9,21 @@ export class DeviceListener {
 
   // Listen for MQTT discovery topic like: "sensors/+/discovery"
   @OnEvent('mqtt.message.discovery')
-  async handleDiscoveryEvent(payload: DiscoveryResponseDto) {
-    const { topicPrefix: publishTopic, deviceId: sensorId } = payload;
-    console.log({ publishTopic, sensorId });
+  async handleDiscoveryEvent(topic: string, payload: DiscoveryResponseDto) {
+    const { topicPrefix, deviceId: sensorId } = payload;
+    console.log({ topicPrefix, sensorId });
 
-    if (!publishTopic.endsWith('/discovery')) return;
+    if (!topic.endsWith('/discovery')) return;
 
     await this.deviceService.storeSensorInDatabase(payload);
   }
 
   @OnEvent('mqtt.message.data')
   async handleSensorDataEvent(payload: DiscoveryResponseDto) {
-    const { topicPrefix: publishTopic, deviceId: sensorId } = payload;
-    console.log({ publishTopic, sensorId });
+    const { topicPrefix, deviceId: sensorId } = payload;
+    console.log({ topicPrefix, sensorId });
 
-    if (!publishTopic.endsWith('/data')) return;
+    if (!topicPrefix.endsWith('/data')) return;
 
     // const sensorMessage = await this.deviceService.mapRawPayload(payload);
     await this.deviceService.handleSensorData(payload);

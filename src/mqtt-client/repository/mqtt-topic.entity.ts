@@ -15,6 +15,9 @@ export class MqttTopic {
   @Column()
   brokerUrl: string;
 
+  @Column()
+  name: string;
+
   @Column({ unique: true })
   topic: string;
 

@@ -36,7 +36,7 @@ export class Sensor {
   assignedFunctionality: SensorType[]; // selected from capabilities
 
   @Column({ nullable: true })
-  publishTopic: string; // like "sensors/<client>/temperature/<device>"
+  topicPrefix: string; // like "<mqttPrefix>/<sensorId>/temperature"
 
   @Column()
   location: object; // like { room: 'Greenhouse', floor: 1, unit: 'tomato-section' }

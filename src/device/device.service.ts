@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { QueryDeviceDto } from './dto/query-device.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -46,10 +51,11 @@ export class DeviceService {
 
   async discoverDevices(discoverRequest: DiscoveryRequestDto) {
     const { isBroadcast, deviceId } = discoverRequest;
+    const broadcastPrefix = await this.mqttClientService.getBroadcastPrefix();
 
     if (isBroadcast && !deviceId) {
       this.mqttClientService.publish(
-        buildTopic.discoverBroadcast(),
+        buildTopic.discoverBroadcast(broadcastPrefix),
         JSON.stringify(discoverRequest),
         { qos: 0, retain: false },
       );
@@ -57,8 +63,20 @@ export class DeviceService {
     }
 
     if (deviceId && !isBroadcast) {
+      const sensor = await this.sensorRepo.findOne({
+        where: {
+          sensorId: deviceId,
+        },
+      });
+      if (!sensor) {
+        this.logger.error(`Prefix topic for ${deviceId} is required`);
+        throw new ForbiddenException(
+          `Prefix topic for ${deviceId} is required`,
+        );
+      }
+
       this.mqttClientService.publish(
-        buildTopic.discoverUnicast(deviceId),
+        buildTopic.discoverUnicast(sensor?.topicPrefix, deviceId),
         JSON.stringify(discoverRequest),
         { qos: 0, retain: false },
       );
