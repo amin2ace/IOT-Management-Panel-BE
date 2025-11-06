@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { QoS } from 'src/config/types/mqtt-qos.types';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class MqttSubscribeDto {
   @ApiProperty({ default: 'test/topic' })
@@ -8,8 +7,8 @@ export class MqttSubscribeDto {
   @IsNotEmpty()
   topic: string;
 
-  @ApiProperty({ enum: QoS, default: QoS.AtMostOnce })
-  @IsNumber()
+  @ApiProperty({ default: 'asfewoe9wefwef9' })
+  @IsString()
   @IsNotEmpty()
-  qos: QoS;
+  deviceId: string;
 }

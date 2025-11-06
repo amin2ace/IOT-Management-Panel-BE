@@ -12,17 +12,15 @@ import {
 } from 'mqtt';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { QoS } from 'src/config/types/mqtt-qos.types';
-import { InjectRepository } from '@nestjs/typeorm';
-import MqttTopic from './repository/mqtt-topic.entity';
-import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { TopicService } from 'src/topic/topic.service';
+import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
+import { UpdateTopicDto } from 'src/topic/dto/update-topic.dto';
 
 @Injectable()
 export class MqttClientService implements OnModuleInit, OnModuleDestroy {
   constructor(
-    @InjectRepository(MqttTopic)
-    private readonly topicRepo: Repository<MqttTopic>,
+    private readonly topicService: TopicService,
     private eventEmitter: EventEmitter2,
     private readonly config: ConfigService,
   ) {}
@@ -43,18 +41,17 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     this.eventEmitter.emit(eventName, topic, payload);
   }
 
-  async getBroadcastPrefix(): Promise<string> {
-    const broadcastTopic = await this.topicRepo.find({
-      where: {
-        topic: 'broadcast',
-        name: 'broadcast',
-      },
-    });
+  async getBroadcastTopic(): Promise<string> {
+    const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
+    const broadcastTopic = await this.topicService.getTopicByDeviceId(
+      'broadcast',
+      TopicUseCase.BROADCAST,
+    );
 
-    if (!broadcastTopic || broadcastTopic.length != 1) {
+    if (!broadcastTopic) {
       this.logger.error('Broadcast topic retrieve failed');
     }
-    return broadcastTopic[0].topic;
+    return `${Base_Topic}/${broadcastTopic}`;
   }
 
   async initConnection(broker?: string): Promise<void> {
@@ -79,14 +76,10 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
         this.logger.log(`✅ Connected to MQTT broker: ${brokerUrl}`);
 
         // Add broadcast topic in repo
-        const broadcastTopic = this.topicRepo.create({
-          brokerUrl,
-          isActive: true,
-          topic: 'broadcast',
-          name: 'broadcast',
-        });
-
-        await this.topicRepo.save(broadcastTopic);
+        await this.topicService.createTopic(
+          'broadcast',
+          TopicUseCase.BROADCAST,
+        );
 
         this.eventEmitter.emit('mqtt/events/connected', {
           brokerUrl,
@@ -127,7 +120,6 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
         brokerUrl,
         clientId: this.client.options.clientId,
       });
-      this.clearTopicsInRepository();
     });
 
     this.client.on('reconnect', () => {
@@ -156,13 +148,13 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  async subscribe(topic: string, qos: QoS): Promise<void> {
+  async subscribe(topic: string, deviceId: string): Promise<void> {
     if (!this.isConnected) {
       throw new Error('MQTT client not connected');
     }
 
     return new Promise((resolve, reject) => {
-      this.client.subscribe(topic, { qos }, async (err) => {
+      this.client.subscribe(topic, async (err) => {
         if (err) {
           this.logger.error(
             `❌ Failed to subscribe to ${topic}: ${err.message}`,
@@ -171,12 +163,12 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
           return;
         }
 
-        const existing = await this.topicRepo.find({
-          where: { topic },
-        });
-        if (!existing.length) {
-          this.addTopicToRepository(topic);
+        const existing = await this.topicService.getTopicByName(topic);
+
+        if (!existing) {
+          this.topicService.storeTopic(deviceId, topic);
         }
+
         this.logger.log(`✅ Subscribed to ${topic}`);
         resolve();
       });
@@ -190,12 +182,10 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
 
     try {
       await this.unsubscribe(topic);
-      this.topicRepo.update(
-        { topic },
-        {
-          isActive: false,
-        },
-      );
+      this.topicService.updateTopic(topic, {
+        isActive: false,
+      } as UpdateTopicDto);
+
       this.logger.log(`Unsubscribed from topic: ${topic}`);
       return {
         success: true,
@@ -242,7 +232,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     return {
       connected: this.isConnected,
       brokerUrl: this.getBrokerUrl(),
-      subscribedTopics: this.getSubscribedTopics(),
+      subscribedTopics: await this.topicService.getAllTopics(),
       lastActivity: this.getLastConnectionActivity(),
       timestamp: new Date(),
     };
@@ -252,8 +242,10 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     return this.client?.options?.hostname || 'unknown';
   }
 
-  async getSubscribedTopics(): Promise<MqttTopic[]> {
-    return await this.topicRepo.find();
+  async getSubscribedTopics(deviceId: string): Promise<string[]> {
+    const records = await this.topicService.getDeviceTopics(deviceId);
+    const topics = records.map((record) => record.topic);
+    return topics;
   }
 
   getLastConnectionActivity(): Date {
@@ -262,35 +254,16 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
 
   async disconnect() {
     try {
-      const topics = await this.topicRepo.find();
-      topics.forEach((topic) =>
-        this.topicRepo.update(topic, { isActive: false }),
-      );
+      // const topics = await this.topicService.getAllTopics();
+      // topics.forEach((topic) =>
+      //   this.topicService.updateTopic(topic, {
+      //     isActive: false,
+      //   } as UpdateTopicDto),
+      // );
       await this.onModuleDestroy();
     } catch (error) {
       throw new UnauthorizedException('Failed to disconnect MQTT');
     }
-  }
-
-  async addTopicToRepository(topic: string): Promise<MqttTopic> {
-    const segments = topic.split('/');
-    const name = segments.pop(); // last segment
-
-    const newTopic = this.topicRepo.create({
-      name,
-      topic,
-      brokerUrl: await this.getBrokerUrl(),
-      isActive: true,
-    });
-    await this.topicRepo.save(newTopic);
-    return newTopic;
-  }
-
-  async clearTopicsInRepository(): Promise<void> {
-    const topics = await this.topicRepo.find();
-    topics.forEach((topic) =>
-      this.topicRepo.update(topic, { isActive: false }),
-    );
   }
 
   async onModuleDestroy() {
@@ -332,17 +305,4 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
 
     return { event: 'mqtt/message/unknown', parsedPayload };
   }
-
-  private async matchTopic(
-    subscribedTopic: string,
-    incomingTopic: string,
-  ): Promise<boolean> {
-    // Quick conversion: MQTT wildcards to regex
-    const regex = new RegExp(
-      '^' + subscribedTopic.replace('+', '[^/]+').replace('#', '.+') + '$',
-    );
-    return regex.test(incomingTopic);
-  }
-  // Event forwarding methods
-  onMessage(callback: (topic: string, message: Buffer) => void) {}
 }

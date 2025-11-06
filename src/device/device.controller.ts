@@ -12,7 +12,11 @@ import { DeviceService } from './device.service';
 import { QueryDeviceDto } from './dto/query-device.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
 import { Sensor } from './repository/sensor.entity';
-import { DiscoveryRequestDto, SensorFunctionalityRequestDto } from './messages';
+import {
+  DiscoveryRequestDto,
+  SensorConfigRequestDto,
+  SensorFunctionalityRequestDto,
+} from './messages';
 
 @Controller('devices')
 export class DeviceController {
@@ -51,9 +55,9 @@ export class DeviceController {
     return this.deviceService.deleteSensor(id);
   }
 
-  @Post(':id/reconfigure')
-  reconfigureDevice(@Param('id') id: string) {
-    return this.deviceService.reconfigureDevice(id);
+  @Post('/config')
+  reconfigureDevice(@Body() configData: SensorConfigRequestDto) {
+    return this.deviceService.reconfigureDevice(configData);
   }
 
   @Get(':id/live')

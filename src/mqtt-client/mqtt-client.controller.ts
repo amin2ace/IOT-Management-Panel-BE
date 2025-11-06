@@ -33,7 +33,7 @@ export class MqttManagementController {
   async subscribe(@Body() subscribeDto: MqttSubscribeDto) {
     return this.mqttClientService.subscribe(
       subscribeDto.topic,
-      subscribeDto.qos,
+      subscribeDto.deviceId,
     );
   }
 

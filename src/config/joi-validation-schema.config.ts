@@ -49,6 +49,7 @@ const configValidationSchema: joi.ObjectSchema = joi.object({
   MQTT_USERNAME: joi.string().required(),
   MQTT_PASSWORD: joi.string().required(),
   MQTT_BROKER_URL: joi.string().required(),
+  BASE_TOPIC: joi.string().required(),
 });
 
 export default configValidationSchema;

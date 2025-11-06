@@ -15,6 +15,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './users/guard/roles.guard';
 import { DeviceModule } from './device/device.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { TopicModule } from './topic/topic.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     MqttClientModule,
     MqttGatewayModule,
     DeviceModule,
+    TopicModule,
   ],
   controllers: [AppController],
   providers: [

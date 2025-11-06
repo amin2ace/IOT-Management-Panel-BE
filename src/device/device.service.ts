@@ -20,7 +20,9 @@ import {
   DiscoveryResponseDto,
   FwUpgradeResponseDto,
   HeartbeatDto,
+  RequestMessageCode,
   ResponseMessageCode,
+  SensorConfigRequestDto,
   SensorFunctionalityRequestDto,
   SensorMetricDto,
 } from './messages';
@@ -62,7 +64,7 @@ export class DeviceService {
 
   async discoverDevices(discoverRequest: DiscoveryRequestDto) {
     const { isBroadcast, deviceId } = discoverRequest;
-    const broadcastPrefix = await this.mqttClientService.getBroadcastPrefix();
+    const broadcastPrefix = await this.mqttClientService.getBroadcastTopic();
 
     if (isBroadcast && !deviceId) {
       this.mqttClientService.publish(
@@ -215,8 +217,34 @@ export class DeviceService {
     return `Device with ID ${sensorId} marked as deleted`;
   }
 
-  reconfigureDevice(id: string) {
-    return { message: 'Reconfigure sent', id };
+  async reconfigureDevice(configData: SensorConfigRequestDto) {
+    const { sensorId, requestCode } = configData;
+    if (requestCode != RequestMessageCode.SENSOR_CONFIGURATION) return;
+
+    const storedDevice = await this.sensorRepo.findOne({
+      where: {
+        sensorId,
+        isDeleted: false,
+      },
+    });
+
+    if (!storedDevice) {
+      throw new NotFoundException(`Device with id ${sensorId} not found`);
+    }
+
+    const publishTopic = buildTopic.config(storedDevice.topicPrefix, sensorId);
+    const ackTopic = `${publishTopic}/ack`;
+
+    await this.mqttClientService.publish(
+      publishTopic,
+      JSON.stringify(configData),
+      {
+        qos: 1,
+        retain: false,
+      },
+    );
+
+    await this.mqttClientService.subscribe(ackTopic, 1);
   }
 
   async getLiveStatus(sensorId: string) {

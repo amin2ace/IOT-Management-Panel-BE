@@ -6,6 +6,7 @@ import {
   ObjectIdColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { TopicUseCase } from '../enum/topic-usecase.enum';
 
 @Entity()
 export class MqttTopic {
@@ -16,10 +17,13 @@ export class MqttTopic {
   brokerUrl: string;
 
   @Column()
-  name: string;
+  deviceId: string;
 
   @Column({ unique: true })
   topic: string;
+
+  @Column({ type: 'enum', enum: TopicUseCase })
+  useCase: TopicUseCase;
 
   @Column({ type: 'boolean', default: false })
   isActive: boolean;
@@ -28,7 +32,7 @@ export class MqttTopic {
   createdAt: Date;
 
   @UpdateDateColumn()
-  lastActivity: Date;
+  updatedAt: Date;
 }
 
 export default MqttTopic;

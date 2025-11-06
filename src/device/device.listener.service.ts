@@ -29,6 +29,7 @@ export class DeviceListener {
   @OnEvent('mqtt/message/ack')
   async handleAckEvent(topic: string, payload: AckResponseDto) {
     if (!topic.endsWith('/ack')) return;
+
     await this.deviceService.handleAckMessage(payload);
   }
 
