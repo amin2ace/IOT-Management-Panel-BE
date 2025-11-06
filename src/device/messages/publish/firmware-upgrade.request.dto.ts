@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 
-export class FirmwareUpgradeDto {
+export class FwUpgradeRequestDto {
   @ApiProperty({
     description: 'Unique identifier for the request',
     example: 'req-12345',

@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNumber, IsEnum } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 
-export class DeviceResponseDto {
+export class FwUpgradeResponseDto {
   @ApiProperty({
     description: 'Unique identifier for the response',
     example: 'fw-20251104-status',

@@ -10,7 +10,7 @@ import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validatio
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
 
-export class HeartBeatDto {
+export class HeartbeatDto {
   @ApiProperty({
     description: 'Unique identifier for the response',
     example: 'res-12346',
