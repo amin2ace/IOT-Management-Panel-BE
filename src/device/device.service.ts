@@ -6,11 +6,13 @@ import { Sensor } from './repository/sensor.entity';
 import { Repository } from 'typeorm';
 import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 import { plainToInstance } from 'class-transformer';
-import { DiscoveryResponseDto } from './messages/discovery.response.dto';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
-import { DiscoveryRequestDto } from './messages/discovery.request.dto';
-import { buildTopic } from 'src/config/topic-bulder';
-import { SensorFunctionalityRequestDto } from './messages/sensor-functionality.request.dto';
+import { buildTopic } from 'src/config/topic-builder';
+import {
+  DiscoveryRequestDto,
+  DiscoveryResponseDto,
+  SensorFunctionalityRequestDto,
+} from './messages';
 
 @Injectable()
 export class DeviceService {

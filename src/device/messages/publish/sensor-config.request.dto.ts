@@ -12,12 +12,12 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { DeviceLocationDto } from '../dto/device-location.dto';
+import { DeviceLocationDto } from '../../dto/device-location.dto';
 import { Protocol } from 'src/config/enum/protocol.enum';
 import { Type } from 'class-transformer';
-import { NetworkConfigDto } from '../dto/network-config.dto';
-import { LoggingConfigDto } from '../dto/logging-config.dto';
-import { OtaConfigDto } from '../dto/ota-config.dto';
+import { NetworkConfigDto } from '../../dto/network-config.dto';
+import { LoggingConfigDto } from '../../dto/logging-config.dto';
+import { OtaConfigDto } from '../../dto/ota-config.dto';
 
 export class SensorConfigRequestDto {
   @ApiProperty({

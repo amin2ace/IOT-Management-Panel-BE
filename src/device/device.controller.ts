@@ -12,8 +12,7 @@ import { DeviceService } from './device.service';
 import { QueryDeviceDto } from './dto/query-device.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
 import { Sensor } from './repository/sensor.entity';
-import { DiscoveryRequestDto } from './messages/discovery.request.dto';
-import { SensorFunctionalityRequestDto } from './messages/sensor-functionality.request.dto';
+import { DiscoveryRequestDto, SensorFunctionalityRequestDto } from './messages';
 
 @Controller('devices')
 export class DeviceController {
