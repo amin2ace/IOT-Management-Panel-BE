@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,6 +19,8 @@ export class TopicService {
     private readonly config: ConfigService,
   ) {}
 
+  private readonly logger = new Logger(TopicService.name, { timestamp: true });
+
   async createTopic(
     deviceId: string,
     useCase: TopicUseCase,
@@ -25,6 +28,14 @@ export class TopicService {
     const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
 
     const deviceTopic = `${Base_Topic}/${deviceId}/${useCase}`;
+
+    return await this.storeTopic(deviceId, deviceTopic);
+  }
+
+  async createDeviceBaseTopic(deviceId: string): Promise<MqttTopic> {
+    const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
+
+    const deviceTopic = `${Base_Topic}/${deviceId}`;
 
     return await this.storeTopic(deviceId, deviceTopic);
   }
@@ -38,6 +49,19 @@ export class TopicService {
 
     await this.topicRepo.save(record);
     return record;
+  }
+
+  async getBroadcastTopic(): Promise<string> {
+    const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
+    const broadcastTopic = await this.getTopicByDeviceId(
+      'broadcast',
+      TopicUseCase.BROADCAST,
+    );
+
+    if (!broadcastTopic) {
+      this.logger.error('Broadcast topic retrieve failed');
+    }
+    return `${Base_Topic}/${broadcastTopic}`;
   }
 
   async getTopicByDeviceId(

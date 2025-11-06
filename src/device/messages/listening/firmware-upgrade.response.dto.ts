@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNumber, IsEnum } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
+import { UpgradeStatus } from 'src/config/enum/upgrade-status.enum';
 
 export class FwUpgradeResponseDto {
   @ApiProperty({
@@ -14,8 +15,8 @@ export class FwUpgradeResponseDto {
     description: 'Response code from the device or system',
     example: '204',
   })
-  @IsString()
-  responseCode: string;
+  @IsNumber()
+  responseCode: number;
 
   @ApiProperty({
     description: 'Unique identifier for the request',
@@ -40,9 +41,11 @@ export class FwUpgradeResponseDto {
 
   @ApiProperty({
     description: 'Current status of the device operation',
+    enum: UpgradeStatus,
+    enumName: 'UpgradeStatus',
   })
-  @IsString()
-  status: string;
+  @IsEnum(UpgradeStatus)
+  status: UpgradeStatus;
 
   @ApiProperty({
     description: 'Progress percentage of the operation',

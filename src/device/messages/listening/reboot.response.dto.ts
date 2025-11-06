@@ -22,8 +22,8 @@ export class DeviceRebootResponseDto {
     description: 'Response code from the device or system',
     example: '205',
   })
-  @IsString()
-  responseCode: string;
+  @IsNumber()
+  responseCode: number;
 
   @ApiProperty({
     description: 'Unique identifier for the request',

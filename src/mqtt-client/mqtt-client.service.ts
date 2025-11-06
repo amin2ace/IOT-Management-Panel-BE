@@ -41,19 +41,6 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     this.eventEmitter.emit(eventName, topic, payload);
   }
 
-  async getBroadcastTopic(): Promise<string> {
-    const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
-    const broadcastTopic = await this.topicService.getTopicByDeviceId(
-      'broadcast',
-      TopicUseCase.BROADCAST,
-    );
-
-    if (!broadcastTopic) {
-      this.logger.error('Broadcast topic retrieve failed');
-    }
-    return `${Base_Topic}/${broadcastTopic}`;
-  }
-
   async initConnection(broker?: string): Promise<void> {
     const brokerUrl = this.config.getOrThrow<string>('MQTT_BROKER_URL'); // 'mqtt://localhost:1883';
 
@@ -240,12 +227,6 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
 
   async getBrokerUrl(): Promise<string> {
     return this.client?.options?.hostname || 'unknown';
-  }
-
-  async getSubscribedTopics(deviceId: string): Promise<string[]> {
-    const records = await this.topicService.getDeviceTopics(deviceId);
-    const topics = records.map((record) => record.topic);
-    return topics;
   }
 
   getLastConnectionActivity(): Date {

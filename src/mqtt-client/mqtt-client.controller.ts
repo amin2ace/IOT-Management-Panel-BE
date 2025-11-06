@@ -47,16 +47,6 @@ export class MqttManagementController {
     return this.mqttClientService.unsubscribe(topic);
   }
 
-  @Get('topics')
-  @ApiOperation({ summary: 'Get all subscribed topics' })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns list of subscribed topics',
-  })
-  async getSubscribedTopics() {
-    return this.mqttClientService.getSubscribedTopics();
-  }
-
   @Post('reconnect')
   @ApiOperation({ summary: 'Reconnect to MQTT broker' })
   @ApiResponse({ status: 200, description: 'Reconnection initiated' })

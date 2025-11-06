@@ -28,6 +28,11 @@ import {
 } from './messages';
 import { TelemetryDto } from './messages/listening/telemetry.response.dto';
 import { Telemetry } from './repository/sensor-telemetry.entity';
+import { TopicService } from 'src/topic/topic.service';
+import { ConfigService } from '@nestjs/config';
+import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
+import { RebootStatus } from 'src/config/enum/reboot-status.enum';
+import { UpgradeStatus } from 'src/config/enum/upgrade-status.enum';
 
 @Injectable()
 export class DeviceService {
@@ -35,8 +40,9 @@ export class DeviceService {
     @InjectRepository(Sensor) private readonly sensorRepo: Repository<Sensor>,
     @InjectRepository(Telemetry)
     private readonly telmetryRepo: Repository<Telemetry>,
-
-    private readonly mqttClientService: MqttClientService,
+    private readonly mqttService: MqttClientService,
+    private readonly topicService: TopicService,
+    private readonly config: ConfigService,
   ) {}
 
   private readonly logger = new Logger(DeviceService.name, {
@@ -44,31 +50,33 @@ export class DeviceService {
   });
 
   async getSensors(query: QueryDeviceDto): Promise<Sensor[]> {
-    const { clientId, state, assignedType } = query;
+    const { deviceId, provisionState, functionality } = query;
 
     // Build dynamic query
     const qb = this.sensorRepo.createQueryBuilder('device');
 
-    if (state) {
-      qb.andWhere('device.state = :state', { state });
+    if (provisionState) {
+      qb.andWhere('device.provisionState = :provisionState', {
+        provisionState,
+      });
     }
-    if (assignedType) {
-      qb.andWhere('device.type = :type', { assignedType });
+    if (functionality) {
+      qb.andWhere('device.functionality = :functionality', { functionality });
     }
-    if (clientId) {
-      qb.andWhere('device.clientId = :clientId', { clientId });
+    if (deviceId) {
+      qb.andWhere('device.deviceId = :deviceId', { deviceId });
     }
 
     return await qb.getMany();
   }
 
   async discoverDevices(discoverRequest: DiscoveryRequestDto) {
-    const { isBroadcast, deviceId } = discoverRequest;
-    const broadcastPrefix = await this.mqttClientService.getBroadcastTopic();
+    const broadcastTopic = await this.topicService.getBroadcastTopic();
 
+    const { isBroadcast, deviceId } = discoverRequest;
     if (isBroadcast && !deviceId) {
-      this.mqttClientService.publish(
-        buildTopic.discoverBroadcast(broadcastPrefix),
+      this.mqttService.publish(
+        broadcastTopic,
         JSON.stringify(discoverRequest),
         { qos: 0, retain: false },
       );
@@ -76,20 +84,19 @@ export class DeviceService {
     }
 
     if (deviceId && !isBroadcast) {
-      const sensor = await this.sensorRepo.findOne({
-        where: {
-          sensorId: deviceId,
-        },
-      });
-      if (!sensor) {
-        this.logger.error(`Prefix topic for ${deviceId} is required`);
+      const sensorTopic = await this.topicService.getTopicByDeviceId(
+        deviceId,
+        TopicUseCase.DISCOVERY,
+      );
+      if (!sensorTopic.topic) {
+        this.logger.error(`Discovery topic for ${deviceId} is required`);
         throw new ForbiddenException(
-          `Prefix topic for ${deviceId} is required`,
+          `Discovery topic for ${deviceId} is required`,
         );
       }
 
-      this.mqttClientService.publish(
-        buildTopic.discoverUnicast(sensor?.topicPrefix, deviceId),
+      this.mqttService.publish(
+        sensorTopic.topic,
         JSON.stringify(discoverRequest),
         { qos: 0, retain: false },
       );
@@ -134,21 +141,29 @@ export class DeviceService {
   public async storeSensorInDatabase(
     sensorMessage: DiscoveryResponseDto,
   ): Promise<string> {
-    const { deviceId: sensorId } = sensorMessage;
+    const { deviceId } = sensorMessage;
+    const BASE_TOPIC = this.config.getOrThrow<string>('BASE_TOPIC');
 
     const existingDevice = await this.sensorRepo.findOne({
-      where: { sensorId },
+      where: { sensorId: deviceId },
     });
 
     try {
       if (existingDevice?.isDeleted) {
-        await this.sensorRepo.update({ sensorId }, { isDeleted: false });
+        await this.sensorRepo.update(
+          { sensorId: deviceId },
+          { isDeleted: false },
+        );
       }
 
       if (!existingDevice) {
+        const { topic } =
+          await this.topicService.createDeviceBaseTopic(deviceId);
+
         const deviceRecord = this.sensorRepo.create({
           ...sensorMessage,
           provisionState: ProvisionState.DISCOVERED,
+          deviceBaseTopic: topic,
           isActuator: false,
           isDeleted: false,
         });
@@ -193,10 +208,14 @@ export class DeviceService {
       throw new NotFoundException(`Device with ID ${sensorId} not found`);
     }
 
-    device.assignedFunctionality = functionality;
-    device.provisionState = ProvisionState.ASSIGNED;
+    await this.sensorRepo.update(
+      { sensorId },
+      {
+        provisionState: ProvisionState.ASSIGNED,
+        assignedFunctionality: functionality,
+      },
+    );
 
-    await this.sensorRepo.save(device);
     return `Device with id of ${sensorId} provisioned as ${functionality}`;
   }
 
@@ -212,8 +231,7 @@ export class DeviceService {
       throw new NotFoundException(`Device with ID ${sensorId} not found`);
     }
 
-    device.isDeleted = true;
-    await this.sensorRepo.save(device);
+    await this.sensorRepo.update({ sensorId }, { isDeleted: true });
     return `Device with ID ${sensorId} marked as deleted`;
   }
 
@@ -232,33 +250,33 @@ export class DeviceService {
       throw new NotFoundException(`Device with id ${sensorId} not found`);
     }
 
-    const publishTopic = buildTopic.config(storedDevice.topicPrefix, sensorId);
-    const ackTopic = `${publishTopic}/ack`;
-
-    await this.mqttClientService.publish(
-      publishTopic,
-      JSON.stringify(configData),
-      {
-        qos: 1,
-        retain: false,
-      },
+    const { topic: publishTopic } = await this.topicService.createTopic(
+      sensorId,
+      TopicUseCase.SENSOR_CONFIGURATION,
     );
 
-    await this.mqttClientService.subscribe(ackTopic, 1);
-  }
+    const ackTopic = `${publishTopic}/ack`;
 
-  async getLiveStatus(sensorId: string) {
-    const sensor = await this.sensorRepo.findOne({
-      where: {
-        sensorId,
-      },
+    await this.mqttService.publish(publishTopic, JSON.stringify(configData), {
+      qos: 1,
+      retain: false,
     });
-    if (!sensor) {
-      throw new NotFoundException(`Device with ID ${sensorId} not found`);
-    }
 
-    return { status: sensor.connectionState };
+    await this.mqttService.subscribe(ackTopic, sensorId);
   }
+
+  // async getLiveStatus(sensorId: string) {
+  //   const sensor = await this.sensorRepo.findOne({
+  //     where: {
+  //       sensorId,
+  //     },
+  //   });
+  //   if (!sensor) {
+  //     throw new NotFoundException(`Device with ID ${sensorId} not found`);
+  //   }
+
+  //   return { status: sensor.connectionState };
+  // }
 
   getDeviceHistory(id: string) {
     return { message: 'History data', id };
@@ -305,10 +323,26 @@ export class DeviceService {
   }
 
   async handleDeviceHeartbeat(payload: HeartbeatDto) {
-    const { connectionState, uptime, wifiRssi, deviceId, responseCode } =
-      payload;
+    const { connectionState, deviceId, responseCode } = payload;
 
     if (responseCode != ResponseMessageCode.HEARTBEAT) return;
+
+    const sensor = await this.sensorRepo.findOne({
+      where: {
+        sensorId: deviceId,
+      },
+    });
+
+    if (!sensor) {
+      throw new ForbiddenException('Device not found');
+    }
+
+    await this.sensorRepo.update(
+      { sensorId: deviceId },
+      {
+        connectionState,
+      },
+    );
 
     return 'success';
   }
@@ -317,11 +351,57 @@ export class DeviceService {
     throw new Error('Method not implemented.');
   }
   async handleRebootResponse(payload: DeviceRebootResponseDto) {
-    throw new Error('Method not implemented.');
+    const { deviceId, responseCode, status, message, timestamp } = payload;
+
+    if (responseCode !== ResponseMessageCode.REBOOT_CONFIRMATION) return;
+
+    if (status !== RebootStatus.SUCCESS) {
+      this.logger.error(`Device ${deviceId} reboot failed`, {
+        description: message,
+      });
+    }
+
+    await this.sensorRepo.update(
+      { sensorId: deviceId },
+      {
+        lastReboot: new Date(timestamp),
+      },
+    );
+
+    this.logger.log(`Device ${deviceId} rebooted successfully`);
   }
+
   async handleUpgradeResponse(payload: FwUpgradeResponseDto) {
-    throw new Error('Method not implemented.');
+    const {
+      deviceId,
+      progress,
+      requestId,
+      responseCode,
+      responseId,
+      status,
+      timestamp,
+    } = payload;
+
+    if (responseCode !== ResponseMessageCode.FIRMWARE_UPDATE_STATUS) return;
+
+    if (status === UpgradeStatus.PROCESSING) {
+      return `Processing... ${progress} %`;
+    }
+
+    if (status === UpgradeStatus.SUCCESS) {
+      await this.sensorRepo.update(
+        {
+          sensorId: deviceId,
+        },
+        {
+          lastUpgrade: new Date(timestamp),
+        },
+      );
+      this.logger.log(`Device ${deviceId} upgraded successfully`);
+    }
+    this.logger.error(`Device ${deviceId} upgrade failed`);
   }
+
   async handleAckMessage(payload: AckResponseDto) {
     throw new Error('Method not implemented.');
   }

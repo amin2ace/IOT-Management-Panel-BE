@@ -36,7 +36,7 @@ export class Sensor {
   assignedFunctionality: SensorType[]; // selected from capabilities
 
   @Column({ nullable: true })
-  topicPrefix: string; // like "<mqttPrefix>/<sensorId>/temperature"
+  deviceBaseTopic: string; // like "<mqttPrefix>/<sensorId>/temperature"
 
   @Column()
   location: object; // like { room: 'Greenhouse', floor: 1, unit: 'tomato-section' }
@@ -83,6 +83,12 @@ export class Sensor {
 
   @Column({ default: false })
   isDeleted: boolean;
+
+  @Column({ nullable: true, default: null })
+  lastReboot: Date;
+
+  @Column({ nullable: true, default: null })
+  lastUpgrade: Date;
 
   @CreateDateColumn()
   createdAt: Date;
