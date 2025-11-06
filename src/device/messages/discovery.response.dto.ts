@@ -42,7 +42,7 @@ export class DiscoveryResponseDto {
 
   @ApiProperty()
   @IsString()
-  publishTopic: string; // like "sensors/<client>/temperature/<device>"
+  topicPrefix: string; // like "sensors/<client>/temperature/<device>"
 
   @ApiProperty()
   @IsEnum(ConnectionState)
