@@ -46,6 +46,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
   async getBroadcastPrefix(): Promise<string> {
     const broadcastTopic = await this.topicRepo.find({
       where: {
+        topic: 'broadcast',
         name: 'broadcast',
       },
     });
@@ -71,13 +72,23 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     try {
       this.client = connect(brokerUrl, options);
 
-      this.client.on('connect', () => {
+      this.client.on('connect', async () => {
         this.isConnected = true;
         this.connectionAttempts++;
         this.lastActivity = new Date();
         this.logger.log(`✅ Connected to MQTT broker: ${brokerUrl}`);
 
-        this.eventEmitter.emit('connected', {
+        // Add broadcast topic in repo
+        const broadcastTopic = this.topicRepo.create({
+          brokerUrl,
+          isActive: true,
+          topic: 'broadcast',
+          name: 'broadcast',
+        });
+
+        await this.topicRepo.save(broadcastTopic);
+
+        this.eventEmitter.emit('mqtt/events/connected', {
           brokerUrl,
           clientId: this.client.options.clientId,
         });
@@ -112,7 +123,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     this.client.on('close', () => {
       this.isConnected = false;
       this.logger.warn('🔌 Disconnected from MQTT broker');
-      this.eventEmitter.emit('disconnected', {
+      this.eventEmitter.emit('mqtt/events/disconnected', {
         brokerUrl,
         clientId: this.client.options.clientId,
       });
@@ -214,11 +225,11 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
 
     try {
       await this.client.publishAsync(topic, payload, { qos, retain });
-      this.emitEvent('mqtt.publish.success', topic, payload);
+      this.emitEvent('mqtt/events/publish/success', topic, payload);
       return {
         success: true,
         topic,
-        message: payload,
+        payload,
         description: 'Message published successfully',
         timestamp: new Date(),
       };
@@ -237,7 +248,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  getBrokerUrl(): string {
+  async getBrokerUrl(): Promise<string> {
     return this.client?.options?.hostname || 'unknown';
   }
 
@@ -262,9 +273,13 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
   }
 
   async addTopicToRepository(topic: string): Promise<MqttTopic> {
+    const segments = topic.split('/');
+    const name = segments.pop(); // last segment
+
     const newTopic = this.topicRepo.create({
+      name,
       topic,
-      brokerUrl: this.getBrokerUrl(),
+      brokerUrl: await this.getBrokerUrl(),
       isActive: true,
     });
     await this.topicRepo.save(newTopic);
@@ -290,22 +305,32 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     payload: Buffer,
   ): Promise<{ event: string; parsedPayload: any }> {
     const parsedPayload = await JSON.parse(payload.toString());
-    if (topic?.endsWith('/capabilities')) {
-      return { event: 'mqtt.message.capabilities', parsedPayload };
+    if (topic?.endsWith('/discovery ')) {
+      return { event: 'mqtt/message/discovery', parsedPayload };
     }
-    if (topic?.endsWith('/data')) {
-      return { event: 'mqtt.message.data', parsedPayload };
+    if (topic?.endsWith('/ack')) {
+      return { event: 'mqtt/message/ack', parsedPayload };
     }
-    if (topic?.endsWith('/status')) {
-      return { event: 'mqtt.message.status', parsedPayload };
+    if (topic?.endsWith('/upgrade')) {
+      return { event: 'mqtt/message/upgrade', parsedPayload };
+    }
+    if (topic?.endsWith('/heatbeat')) {
+      return { event: 'mqtt/message/heatbeat', parsedPayload };
+    }
+    if (topic?.endsWith('/reboot')) {
+      return { event: 'mqtt/message/reboot', parsedPayload };
+    }
+    if (topic?.endsWith('/telemetry')) {
+      return { event: 'mqtt/message/telemetry', parsedPayload };
+    }
+    if (topic?.endsWith('/metrics')) {
+      return { event: 'mqtt/message/metrics', parsedPayload };
     }
     if (topic?.endsWith('/alert')) {
-      return { event: 'mqtt.message.alert', parsedPayload };
+      return { event: 'mqtt/message/alert', parsedPayload };
     }
-    if (topic?.endsWith('/discovery ')) {
-      return { event: 'mqtt.message.discovery', parsedPayload };
-    }
-    return { event: 'mqtt.message.unknown', parsedPayload };
+
+    return { event: 'mqtt/message/unknown', parsedPayload };
   }
 
   private async matchTopic(

@@ -14,15 +14,26 @@ import { plainToInstance } from 'class-transformer';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import { buildTopic } from 'src/config/topic-builder';
 import {
+  AckResponseDto,
+  DeviceRebootResponseDto,
   DiscoveryRequestDto,
   DiscoveryResponseDto,
+  FwUpgradeResponseDto,
+  HeartbeatDto,
+  ResponseMessageCode,
   SensorFunctionalityRequestDto,
+  SensorMetricDto,
 } from './messages';
+import { TelemetryDto } from './messages/listening/telemetry.response.dto';
+import { Telemetry } from './repository/sensor-telemetry.entity';
 
 @Injectable()
 export class DeviceService {
   constructor(
     @InjectRepository(Sensor) private readonly sensorRepo: Repository<Sensor>,
+    @InjectRepository(Telemetry)
+    private readonly telmetryRepo: Repository<Telemetry>,
+
     private readonly mqttClientService: MqttClientService,
   ) {}
 
@@ -248,7 +259,42 @@ export class DeviceService {
     };
   }
 
-  handleSensorData(payload: DiscoveryResponseDto) {
+  async handleSensorTelemetry(payload: TelemetryDto) {
+    const { deviceId, metric, value, meta, status } = payload;
+    const record = this.telmetryRepo.create({
+      deviceId,
+      metric,
+      value,
+      meta,
+      status,
+    });
+
+    this.telmetryRepo
+      .save(record)
+      .then(() => this.logger.log(`Device ${deviceId} telemetry saved`))
+      .catch((err) => this.logger.error(err));
+    throw new Error('Method not implemented.');
+  }
+
+  async handleDeviceHeartbeat(payload: HeartbeatDto) {
+    const { connectionState, uptime, wifiRssi, deviceId, responseCode } =
+      payload;
+
+    if (responseCode != ResponseMessageCode.HEARTBEAT) return;
+
+    return 'success';
+  }
+
+  async handleDeviceMetrics(payload: SensorMetricDto) {
+    throw new Error('Method not implemented.');
+  }
+  async handleRebootResponse(payload: DeviceRebootResponseDto) {
+    throw new Error('Method not implemented.');
+  }
+  async handleUpgradeResponse(payload: FwUpgradeResponseDto) {
+    throw new Error('Method not implemented.');
+  }
+  async handleAckMessage(payload: AckResponseDto) {
     throw new Error('Method not implemented.');
   }
 }

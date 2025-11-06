@@ -85,7 +85,7 @@ export class Sensor {
   isDeleted: boolean;
 
   @CreateDateColumn()
-  connectedTime: Date;
+  createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
