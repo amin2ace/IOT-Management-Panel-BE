@@ -63,6 +63,12 @@ export class Sensor {
   @Column({ default: false })
   isActuator: boolean; // distinguish sensor vs controller
 
+  @Column()
+  highSetPoint: number;
+
+  @Column()
+  lowSetPoint: number;
+
   @Column({ default: false })
   hasError: boolean;
 
