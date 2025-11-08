@@ -32,6 +32,17 @@ export class TopicService {
     return await this.storeTopic(deviceId, deviceTopic);
   }
 
+  async createAllTopics(deviceId: string) {
+    const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
+
+    for (const useCase of Object.values(TopicUseCase)) {
+      let topic = `${Base_Topic}/${deviceId}/${useCase}`;
+      await this.storeTopic(deviceId, topic);
+    }
+
+    return `All topics for device ${deviceId} was created`;
+  }
+
   async createDeviceBaseTopic(deviceId: string): Promise<MqttTopic> {
     const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
 

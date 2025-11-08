@@ -142,7 +142,7 @@ export class DeviceListener {
     await this.deviceService.handleTelemetryResponse(validatedPayload);
   }
 
-  @OnEvent('mqtt/message/hardware_status')
+  @OnEvent('mqtt/message/hardware-status')
   async handleMetricsEvent(topic: string, payload: any) {
     if (!topic.endsWith('/hardware_status')) return;
 

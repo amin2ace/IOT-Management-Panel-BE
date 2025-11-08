@@ -29,9 +29,14 @@ export class DeviceController {
     return await this.deviceService.getSensors(query);
   }
 
-  @Get('discover')
-  async discoverDevices(@Body() discoverRequest: DiscoveryRequestDto) {
-    return await this.deviceService.discoverDevices(discoverRequest);
+  @Get('discover-broadcast')
+  async discoverDevicesBroadcast(@Body() discoverRequest: DiscoveryRequestDto) {
+    return await this.deviceService.discoverDevicesBroadcast(discoverRequest);
+  }
+
+  @Get('discover-unicast')
+  async discoverDeviceUnicast(@Body() discoverRequest: DiscoveryRequestDto) {
+    return await this.deviceService.discoverDeviceUnicast(discoverRequest);
   }
 
   @Get('unassigned')
@@ -39,17 +44,16 @@ export class DeviceController {
     return await this.deviceService.getUnassignedSensor();
   }
 
-  @Get('hardware/status')
+  @Get('hardware-status')
   async getHardwareStatus(@Body() statusRequest: HardwareStatusRequestDto) {
     return await this.deviceService.getHardwareStatus(statusRequest);
   }
 
-  @Put(':id/provision')
+  @Put('provision')
   async provisionDevice(
-    @Param('id') id: string,
     @Body() body: SensorFunctionalityRequestDto,
   ): Promise<string> {
-    return await this.deviceService.provisionDevice(id, body);
+    return await this.deviceService.provisionDevice(body);
   }
 
   @Delete(':id')

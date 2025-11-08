@@ -90,7 +90,7 @@ export class DeviceService {
       deviceId,
     });
   }
-  async discoverDevices(discoverRequest: DiscoveryRequestDto) {
+  async discoverDevicesBroadcast(discoverRequest: DiscoveryRequestDto) {
     const broadcastTopic = await this.topicService.getBroadcastTopic();
 
     const { isBroadcast, deviceId, requestCode } = discoverRequest;
@@ -109,8 +109,16 @@ export class DeviceService {
       );
       return { message: 'Discovery request broadcasted' };
     }
+  }
+
+  async discoverDeviceUnicast(discoverRequest: DiscoveryRequestDto) {
+    const { isBroadcast, deviceId, requestCode } = discoverRequest;
+
+    if (requestCode !== RequestMessageCode.DISCOVERY) return;
 
     if (deviceId && !isBroadcast) {
+      await this.setCache(discoverRequest);
+
       const sensorTopic = await this.topicService.getTopicByDeviceId(
         deviceId,
         TopicUseCase.DISCOVERY,
@@ -225,7 +233,7 @@ export class DeviceService {
     try {
       const { topic } = await this.topicService.createTopic(
         deviceId,
-        TopicUseCase.DEVICE_METRICS,
+        TopicUseCase.HARDWARE_STATUS,
       );
 
       await this.setCache(statusRequest);
@@ -242,7 +250,6 @@ export class DeviceService {
   }
 
   async provisionDevice(
-    sensorId: string,
     provisionData: SensorFunctionalityRequestDto,
   ): Promise<string> {
     const { deviceId, functionality, requestCode } = provisionData;
@@ -267,7 +274,7 @@ export class DeviceService {
       await this.setCache(provisionData);
       this.logger.log(`Sensor ${deviceId} assignement requested`);
 
-      return `Device with id of ${sensorId} provisioned as ${functionality}`;
+      return `Device with id of ${deviceId} provisioned as ${functionality}`;
     } catch (error) {
       this.logger.error(`Sensor ${deviceId} assignement request error`);
 

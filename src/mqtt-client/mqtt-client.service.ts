@@ -63,7 +63,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
         this.lastActivity = new Date();
         this.logger.log(`✅ Connected to MQTT broker: ${brokerUrl}`);
 
-        // Add broadcast topic in repo
+        // Create broadcast topic in repo
         await this.topicService.createTopic(
           'broadcast',
           TopicUseCase.BROADCAST,
@@ -279,7 +279,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
       return { event: 'mqtt/message/telemetry', parsedPayload };
     }
     if (topic?.endsWith('/hardware_status')) {
-      return { event: 'mqtt/message/hardware_status', parsedPayload };
+      return { event: 'mqtt/message/hardware-status', parsedPayload };
     }
     if (topic?.endsWith('/alert')) {
       return { event: 'mqtt/message/alert', parsedPayload };
