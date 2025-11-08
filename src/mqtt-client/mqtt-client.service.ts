@@ -16,6 +16,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { TopicService } from 'src/topic/topic.service';
 import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
 import { UpdateTopicDto } from 'src/topic/dto/update-topic.dto';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class MqttClientService implements OnModuleInit, OnModuleDestroy {

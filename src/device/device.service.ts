@@ -12,7 +12,6 @@ import { Repository } from 'typeorm';
 import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 import { plainToInstance } from 'class-transformer';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
-import { buildTopic } from 'src/config/topic-builder';
 import {
   AckResponseDto,
   DeviceRebootResponseDto,
@@ -33,6 +32,7 @@ import { ConfigService } from '@nestjs/config';
 import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
 import { RebootStatus } from 'src/config/enum/reboot-status.enum';
 import { UpgradeStatus } from 'src/config/enum/upgrade-status.enum';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class DeviceService {
@@ -42,6 +42,7 @@ export class DeviceService {
     private readonly telmetryRepo: Repository<Telemetry>,
     private readonly mqttService: MqttClientService,
     private readonly topicService: TopicService,
+    private readonly redisCache: RedisService,
     private readonly config: ConfigService,
   ) {}
 
@@ -73,8 +74,18 @@ export class DeviceService {
   async discoverDevices(discoverRequest: DiscoveryRequestDto) {
     const broadcastTopic = await this.topicService.getBroadcastTopic();
 
-    const { isBroadcast, deviceId } = discoverRequest;
+    const { isBroadcast, deviceId, requestId, requestCode, userId } =
+      discoverRequest;
     if (isBroadcast && !deviceId) {
+      // cache the request id for validation with response id
+      this.redisCache.set(`pending:${requestId}`, {
+        userId,
+        requestCode,
+        deviceId,
+        topic: broadcastTopic,
+      });
+
+      // Then publish message
       this.mqttService.publish(
         broadcastTopic,
         JSON.stringify(discoverRequest),
