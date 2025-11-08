@@ -84,7 +84,7 @@ export class DeviceListener {
       payload,
     );
 
-    await this.deviceService.handleAssignMessage(validatedPayload);
+    await this.deviceService.handleAssignResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/ack')

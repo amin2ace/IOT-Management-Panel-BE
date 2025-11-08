@@ -35,6 +35,8 @@ import { RebootStatus } from 'src/config/enum/reboot-status.enum';
 import { UpgradeStatus } from 'src/config/enum/upgrade-status.enum';
 import { RedisService } from 'src/redis/redis.service';
 import { SensorFunctionalityResponseDto } from './messages/listening/sensor-functionality.response.dto';
+import { SensorType } from 'src/config/enum/sensor-type.enum';
+import { AckStatus } from 'src/config/enum/ack-status.enum';
 
 @Injectable()
 export class DeviceService {
@@ -226,9 +228,62 @@ export class DeviceService {
       TopicUseCase.ASSIGN_DEVICE_FUNCTION,
     );
 
+    try {
+      await this.validateSensorTypes(deviceId, functionality);
+
+      this.mqttService.publish(topic, JSON.stringify(provisionData), {
+        qos: 1,
+        retain: false,
+      });
+
+      this.setCache(provisionData);
+      this.logger.log(`Sensor ${deviceId} assignement requested`);
+
+      return `Device with id of ${sensorId} provisioned as ${functionality}`;
+    } catch (error) {
+      this.logger.error(`Sensor ${deviceId} assignement request error`);
+
+      throw new BadRequestException('Invalid assignement request');
+    }
+  }
+
+  async handleAssignResponse(provisionData: SensorFunctionalityResponseDto) {
+    const { responseCode, deviceId, functionality, status } = provisionData;
+
+    if (responseCode !== ResponseMessageCode.DEVICE_FUNCTION_ASSIGNED) {
+      throw new ForbiddenException('Invalid Response');
+    }
+
+    try {
+      await this.validateSensorTypes(deviceId, functionality);
+
+      if (status !== AckStatus.ACCEPTED) {
+        throw new BadRequestException('Sensor functionality assign failed');
+      }
+
+      await this.sensorRepo.update(
+        {
+          sensorId: deviceId,
+        },
+        {
+          assignedFunctionality: functionality,
+          provisionState: ProvisionState.ASSIGNED,
+        },
+      );
+
+      this.logger.log(`Sensor ${deviceId} assigned to ${functionality}`);
+
+      return `Device ${deviceId} was assigned to ${functionality} successfully`;
+    } catch (error) {
+      this.logger.error(`Sensor ${deviceId} assignement acknowledge error`);
+      return `Device ${deviceId} assignement failed`;
+    }
+  }
+  async validateSensorTypes(deviceId: string, functionality: SensorType[]) {
     const storedDevice = await this.sensorRepo.findOne({
       where: {
         sensorId: deviceId,
+        isDeleted: false,
       },
     });
 
@@ -242,37 +297,12 @@ export class DeviceService {
     );
 
     if (invalidSensorTypes.length > 0) {
+      this.logger.error(`Sensor ${deviceId} functionality validation failed`);
+
       throw new BadRequestException(
         `Device does not support the following functionalities: ${invalidSensorTypes.join(', ')}`,
       );
     }
-
-    this.mqttService.publish(topic, JSON.stringify(provisionData), {
-      qos: 1,
-      retain: false,
-    });
-
-    this.setCache(provisionData);
-
-    return `Device with id of ${sensorId} provisioned as ${functionality}`;
-  }
-
-  async handleAssignMessage(provisionData: SensorFunctionalityResponseDto) {
-    const { responseCode, deviceId, functionality } = provisionData;
-
-    if (responseCode !== ResponseMessageCode.DEVICE_FUNCTION_ASSIGNED) {
-      throw new ForbiddenException('Invalid Response');
-    }
-
-    await this.sensorRepo.update(
-      {
-        sensorId: deviceId,
-      },
-      {
-        assignedFunctionality: functionality,
-        provisionState: ProvisionState.ASSIGNED,
-      },
-    );
   }
 
   async deleteSensor(sensorId: string): Promise<string> {
