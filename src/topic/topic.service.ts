@@ -10,6 +10,7 @@ import { Repository } from 'typeorm';
 import { TopicUseCase } from './enum/topic-usecase.enum';
 import { ConfigService } from '@nestjs/config';
 import { UpdateTopicDto } from './dto/update-topic.dto';
+import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 
 @Injectable()
 export class TopicService {
@@ -27,9 +28,23 @@ export class TopicService {
   ): Promise<MqttTopic> {
     const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
 
+    const brokerUrl = await this.config.getOrThrow<string>('MQTT_BROKER_URL');
+
     const deviceTopic = `${Base_Topic}/${deviceId}/${useCase}`;
 
-    return await this.storeTopic(deviceId, deviceTopic, useCase);
+    const isTopicExist = await this.topicRepo.findOne({
+      where: {
+        brokerUrl,
+        topic: deviceTopic,
+        isActive: true,
+        deviceId,
+      },
+    });
+
+    if (!isTopicExist) {
+      return await this.storeTopic(deviceId, deviceTopic, useCase);
+    }
+    return isTopicExist;
   }
 
   async createAllTopics(deviceId: string) {
@@ -60,7 +75,10 @@ export class TopicService {
     topic: string,
     useCase: TopicUseCase,
   ): Promise<MqttTopic> {
+    const brokerUrl = await this.config.getOrThrow<string>('MQTT_BROKER_URL');
+
     const record = this.topicRepo.create({
+      brokerUrl,
       deviceId,
       topic,
       useCase,
