@@ -11,12 +11,13 @@ import { MqttGatewayModule } from './gateway/gateway.module';
 import jwtModuleOptions from './config/jwt-module.config';
 import typeOrmModuleConfig from './config/typeorm-module-config';
 import configModuleOptions from './config/config-module.config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { RolesGuard } from './users/guard/roles.guard';
 import { DeviceModule } from './device/device.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TopicModule } from './topic/topic.module';
 import { RedisModule } from './redis/redis.module';
+import { ExceptionHandlerInterceptor } from './common';
 
 @Module({
   imports: [
@@ -51,6 +52,12 @@ import { RedisModule } from './redis/redis.module';
   providers: [
     AppService,
     MqttGatewayModule,
+
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ExceptionHandlerInterceptor, // Nest will instantiate it via DI
+    },
+
     {
       provide: APP_GUARD,
       useClass: RolesGuard, // Apply RolesGuard globally
