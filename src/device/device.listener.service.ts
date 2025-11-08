@@ -7,7 +7,7 @@ import {
   DiscoveryResponseDto,
   FwUpgradeResponseDto,
   HeartbeatDto,
-  SensorMetricDto,
+  HardwareStatusResponseDto,
 } from './messages';
 import { TelemetryResponseDto } from './messages/listening/telemetry.response.dto';
 import { RedisService } from 'src/redis/redis.service';
@@ -142,15 +142,15 @@ export class DeviceListener {
     await this.deviceService.handleTelemetryResponse(validatedPayload);
   }
 
-  @OnEvent('mqtt/message/metrics')
+  @OnEvent('mqtt/message/hardware_status')
   async handleMetricsEvent(topic: string, payload: any) {
-    if (!topic.endsWith('/metrics')) return;
+    if (!topic.endsWith('/hardware_status')) return;
 
     const validatedPayload = await this.transformAndValidate(
-      SensorMetricDto,
+      HardwareStatusResponseDto,
       payload,
     );
-    await this.deviceService.handleDeviceMetrics(validatedPayload);
+    await this.deviceService.handleHardwareStatus(validatedPayload);
   }
 
   // @OnEvent('mqtt/message/alert')

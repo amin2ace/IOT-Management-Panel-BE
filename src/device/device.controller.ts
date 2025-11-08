@@ -18,6 +18,7 @@ import {
   SensorFunctionalityRequestDto,
 } from './messages';
 import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
+import { HardwareStatusRequestDto } from './messages/publish/hardware-status.request';
 
 @Controller('devices')
 export class DeviceController {
@@ -38,9 +39,9 @@ export class DeviceController {
     return await this.deviceService.getUnassignedSensor();
   }
 
-  @Get(':id')
-  async getDeviceDetails(@Param('id') id: string): Promise<Sensor> {
-    return await this.deviceService.getDeviceById(id);
+  @Get('hardware/status')
+  async getHardwareStatus(@Body() statusRequest: HardwareStatusRequestDto) {
+    return await this.deviceService.getHardwareStatus(statusRequest);
   }
 
   @Put(':id/provision')

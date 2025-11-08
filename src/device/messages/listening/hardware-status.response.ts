@@ -3,7 +3,7 @@ import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
 
-export class SensorMetricDto {
+export class HardwareStatusResponseDto {
   @ApiProperty({
     description: 'Unique identifier of the user who initiated the request',
     example: 'user-001',

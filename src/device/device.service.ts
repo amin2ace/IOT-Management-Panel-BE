@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { QueryDeviceDto } from './dto/query-device.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
@@ -24,7 +25,7 @@ import {
   ResponseMessageCode,
   SensorConfigRequestDto,
   SensorFunctionalityRequestDto,
-  SensorMetricDto,
+  HardwareStatusResponseDto,
 } from './messages';
 import { TelemetryResponseDto } from './messages/listening/telemetry.response.dto';
 import { Telemetry } from './repository/sensor-telemetry.entity';
@@ -38,11 +39,15 @@ import { SensorFunctionalityResponseDto } from './messages/listening/sensor-func
 import { SensorType } from 'src/config/enum/sensor-type.enum';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
 import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
+import { HardwareStatusRequestDto } from './messages/publish/hardware-status.request';
+import { HardwareStatus } from './repository/hardware-status.entity';
 
 @Injectable()
 export class DeviceService {
   constructor(
     @InjectRepository(Sensor) private readonly sensorRepo: Repository<Sensor>,
+    @InjectRepository(HardwareStatus)
+    private readonly hardwareStatusRepo: Repository<HardwareStatus>,
     @InjectRepository(Telemetry)
     private readonly telmetryRepo: Repository<Telemetry>,
     private readonly mqttService: MqttClientService,
@@ -199,19 +204,41 @@ export class DeviceService {
     }
   }
 
-  async getDeviceById(sensorId: string): Promise<Sensor> {
+  async getHardwareStatus(statusRequest: HardwareStatusRequestDto) {
+    const { deviceId, requestCode } = statusRequest;
+
+    if (requestCode !== RequestMessageCode.HARDWARE_METRICS) {
+      throw new BadRequestException('Invalid Request');
+    }
+
     const device = await this.sensorRepo.findOne({
       where: {
+        sensorId: deviceId,
         isDeleted: false,
-        sensorId,
       },
     });
 
     if (!device) {
-      throw new NotFoundException(`Device with ID ${sensorId} not found`);
+      throw new NotFoundException(`Device with ID ${deviceId} not found`);
     }
 
-    return device;
+    try {
+      const { topic } = await this.topicService.createTopic(
+        deviceId,
+        TopicUseCase.DEVICE_METRICS,
+      );
+
+      await this.setCache(statusRequest);
+
+      await this.mqttService.publish(topic, JSON.stringify(statusRequest), {
+        qos: 1,
+        retain: false,
+      });
+      this.logger.log(`Hardware_Status:::${deviceId}:::request:::success`);
+    } catch (error) {
+      this.logger.error(`Hardware_Status:::${deviceId}:::request:::failed`);
+      throw new BadRequestException('Hardware status request failed');
+    }
   }
 
   async provisionDevice(
@@ -417,9 +444,42 @@ export class DeviceService {
     return 'success';
   }
 
-  async handleDeviceMetrics(payload: SensorMetricDto) {
-    throw new Error('Method not implemented.');
+  async handleHardwareStatus(payload: HardwareStatusResponseDto) {
+    const { responseCode, requestId, ...statusData } = payload;
+
+    if (responseCode !== ResponseMessageCode.HARDWARE_METRICS) {
+      throw new UnauthorizedException('Invalid response');
+    }
+
+    const record = await this.sensorRepo.findOne({
+      where: {
+        sensorId: statusData.deviceId,
+        isDeleted: false,
+      },
+    });
+
+    if (!record) {
+      throw new NotFoundException('Device not found');
+    }
+    try {
+      const statusRecord = this.hardwareStatusRepo.create({
+        ...statusData,
+        timestamp: new Date(statusData.timestamp),
+      });
+
+      await this.hardwareStatusRepo.save(statusRecord);
+      this.logger.log(
+        `Hardware_Status:::${statusData.deviceId}:::response:::success`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Hardware_Status:::${statusData.deviceId}:::response:::failed`,
+        error,
+      );
+      throw new UnauthorizedException('Invalid Response');
+    }
   }
+
   async handleRebootResponse(payload: DeviceRebootResponseDto) {
     const { deviceId, responseCode, status, message, timestamp } = payload;
 

@@ -278,8 +278,8 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     if (topic?.endsWith('/telemetry')) {
       return { event: 'mqtt/message/telemetry', parsedPayload };
     }
-    if (topic?.endsWith('/metrics')) {
-      return { event: 'mqtt/message/metrics', parsedPayload };
+    if (topic?.endsWith('/hardware_status')) {
+      return { event: 'mqtt/message/hardware_status', parsedPayload };
     }
     if (topic?.endsWith('/alert')) {
       return { event: 'mqtt/message/alert', parsedPayload };
