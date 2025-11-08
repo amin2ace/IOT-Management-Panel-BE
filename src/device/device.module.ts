@@ -7,13 +7,18 @@ import { Sensor } from './repository/sensor.entity';
 import { Telemetry } from './repository/sensor-telemetry.entity';
 import { ResponseListenerService } from './response.listener.service';
 import { HardwareStatus } from './repository/hardware-status.entity';
+import { TopicModule } from 'src/topic/topic.module';
+import { ResponseHandlerService } from './response.handler.service';
+import { LogHandlerModule } from 'src/log-handler/log-handler.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Sensor, Telemetry, HardwareStatus]),
     MqttClientModule,
+    TopicModule,
+    LogHandlerModule,
   ],
   controllers: [DeviceController],
-  providers: [DeviceService, ResponseListenerService],
+  providers: [DeviceService, ResponseListenerService, ResponseHandlerService],
 })
 export class DeviceModule {}

@@ -17,9 +17,19 @@ import { TopicService } from 'src/topic/topic.service';
 import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
 import { UpdateTopicDto } from 'src/topic/dto/update-topic.dto';
 import { RedisService } from 'src/redis/redis.service';
+import { IncomeMessageDto } from 'src/gateway/dto/message-income.dto';
 
 @Injectable()
 export class MqttClientService implements OnModuleInit, OnModuleDestroy {
+  async onMessage(
+    arg0: (
+      topic: string,
+      message: Buffer,
+    ) => Promise<IncomeMessageDto | undefined>,
+  ) {
+    return true;
+    throw new Error('Method not implemented.');
+  }
   constructor(
     private readonly topicService: TopicService,
     private eventEmitter: EventEmitter2,
@@ -65,7 +75,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
 
         // Create broadcast topic in repo
         await this.topicService.createTopic(
-          'broadcast',
+          'MqttBroker',
           TopicUseCase.BROADCAST,
         );
 
@@ -149,12 +159,6 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
           );
           reject(err);
           return;
-        }
-
-        const existing = await this.topicService.getTopicByName(topic);
-
-        if (!existing) {
-          this.topicService.storeTopic(deviceId, topic);
         }
 
         this.logger.log(`✅ Subscribed to ${topic}`);

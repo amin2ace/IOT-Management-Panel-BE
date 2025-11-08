@@ -7,6 +7,7 @@ export enum TopicUseCase {
   FIRMWARE_UPDATE = 'firmware/upgrade',
   TELEMETRY_QUEUE = 'telemetry-queue',
   REBOOT_COMMAND = 'reboot',
+  DEVICE_BASE = 'base',
   DIAGNOSTICS = 'diagnose',
   DISCOVERY = 'discover',
   TELEMETRY = 'telemetry',

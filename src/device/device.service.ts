@@ -19,24 +19,24 @@ import {
   SensorConfigRequestDto,
   SensorFunctionalityRequestDto,
 } from './messages';
-import { Telemetry } from './repository/sensor-telemetry.entity';
 import { TopicService } from 'src/topic/topic.service';
 import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
 import { RedisService } from 'src/redis/redis.service';
 import { SensorType } from 'src/config/enum/sensor-type.enum';
 import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
 import { HardwareStatusRequestDto } from './messages/publish/hardware-status.request';
-import { LogAction, LogContext, LoggerHandlerService } from 'src/common';
+import { LogHandlerService } from 'src/log-handler/log-handler.service';
+import { LogContext } from 'src/log-handler/enum/log-context.enum';
+import { LogAction } from 'src/log-handler/enum/log-action.enum';
 
 @Injectable()
 export class DeviceService {
   constructor(
     @InjectRepository(Sensor) private readonly sensorRepo: Repository<Sensor>,
-    @InjectRepository(Telemetry)
     private readonly mqttService: MqttClientService,
     private readonly topicService: TopicService,
     private readonly redisCache: RedisService,
-    private readonly logger: LoggerHandlerService,
+    private readonly logger: LogHandlerService,
   ) {}
 
   async getSensors(query: QueryDeviceDto): Promise<Sensor[]> {

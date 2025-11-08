@@ -19,7 +19,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Sensor } from './repository/sensor.entity';
 import { RedisService } from 'src/redis/redis.service';
-import { LogAction, LogContext, LoggerHandlerService } from 'src/common';
+import { LogAction } from 'src/log-handler/enum/log-action.enum';
+import { LogContext } from 'src/log-handler/enum/log-context.enum';
 import { DeviceService } from './device.service';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
@@ -27,6 +28,7 @@ import { UpgradeStatus } from 'src/config/enum/upgrade-status.enum';
 import { RebootStatus } from 'src/config/enum/reboot-status.enum';
 import { Telemetry } from './repository/sensor-telemetry.entity';
 import { HardwareStatus } from './repository/hardware-status.entity';
+import { LogHandlerService } from 'src/log-handler/log-handler.service';
 
 @Injectable()
 export class ResponseHandlerService {
@@ -39,7 +41,7 @@ export class ResponseHandlerService {
     private readonly telemetryRepo: Repository<Telemetry>,
 
     private readonly redisCache: RedisService,
-    private readonly logger: LoggerHandlerService,
+    private readonly logger: LogHandlerService,
     private readonly deviceService: DeviceService,
   ) {}
 

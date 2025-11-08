@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { LogContext } from './log-context.enum';
-import { LogAction } from './log-action.enum';
-import { LogStatus } from './log-status.type';
+import { LogContext } from './enum/log-context.enum';
+import { LogAction } from './enum/log-action.enum';
+import { LogStatus } from './enum/log-status.type';
 
 @Injectable()
-export class LoggerHandlerService extends Logger {
+export class LogHandlerService extends Logger {
   // toggle structured JSON output
   private structured = true;
 

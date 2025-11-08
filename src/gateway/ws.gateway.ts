@@ -74,7 +74,7 @@ export class MqttGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       // Forward subscription to MQTT broker
-      await this.mqttGatewayService.subscribeToTopics(topics);
+      await this.mqttGatewayService.subscribeToTopics(topics, sensorId);
 
       // Acknowledge subscription
       client.emit('subscription-confirmed', {

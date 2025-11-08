@@ -283,10 +283,10 @@ export class MqttGatewayService implements OnModuleInit {
   }
 
   // Subscribe to MQTT topics
-  async subscribeToTopics(topics: string[]) {
+  async subscribeToTopics(topics: string[], deviceId: string) {
     const qos: QoS = QoS.AtLeastOnce;
     for (const topic of topics) {
-      await this.mqttClientService.subscribe(topic, qos);
+      await this.mqttClientService.subscribe(topic, deviceId);
     }
   }
 

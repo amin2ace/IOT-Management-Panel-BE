@@ -8,13 +8,13 @@ import {
 } from '@nestjs/common';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
-import { LoggerHandlerService } from '../logger/logger.service';
-import { LogContext } from '../logger/log-context.enum';
-import { LogAction } from '../logger/log-action.enum';
+import { LogContext } from '../../log-handler/enum/log-context.enum';
+import { LogAction } from '../../log-handler/enum/log-action.enum';
+import { LogHandlerService } from 'src/log-handler/log-handler.service';
 
 @Injectable()
-export class CatchErrorInterceptor implements NestInterceptor {
-  constructor(private readonly logger: LoggerHandlerService) {}
+export class ExceptionHandlerInterceptor implements NestInterceptor {
+  constructor(private readonly logger: LogHandlerService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const start = Date.now();

@@ -29,7 +29,7 @@ export class TopicService {
 
     const deviceTopic = `${Base_Topic}/${deviceId}/${useCase}`;
 
-    return await this.storeTopic(deviceId, deviceTopic);
+    return await this.storeTopic(deviceId, deviceTopic, useCase);
   }
 
   async createAllTopics(deviceId: string) {
@@ -37,7 +37,7 @@ export class TopicService {
 
     for (const useCase of Object.values(TopicUseCase)) {
       let topic = `${Base_Topic}/${deviceId}/${useCase}`;
-      await this.storeTopic(deviceId, topic);
+      await this.storeTopic(deviceId, topic, useCase);
     }
 
     return `All topics for device ${deviceId} was created`;
@@ -48,13 +48,22 @@ export class TopicService {
 
     const deviceTopic = `${Base_Topic}/${deviceId}`;
 
-    return await this.storeTopic(deviceId, deviceTopic);
+    return await this.storeTopic(
+      deviceId,
+      deviceTopic,
+      TopicUseCase.DEVICE_BASE,
+    );
   }
 
-  async storeTopic(deviceId: string, topic: string): Promise<MqttTopic> {
+  async storeTopic(
+    deviceId: string,
+    topic: string,
+    useCase: TopicUseCase,
+  ): Promise<MqttTopic> {
     const record = this.topicRepo.create({
       deviceId,
       topic,
+      useCase,
       isActive: true,
     });
 
@@ -64,10 +73,14 @@ export class TopicService {
 
   async getBroadcastTopic(): Promise<string> {
     const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
-    const broadcastTopic = await this.getTopicByDeviceId(
-      'broadcast',
-      TopicUseCase.BROADCAST,
-    );
+    const broadcastTopic = await this.topicRepo.findOne({
+      where: {
+        useCase: TopicUseCase.BROADCAST,
+        isActive: true,
+        topic: 'broadcast',
+        deviceId: 'MqttBroker',
+      },
+    });
 
     if (!broadcastTopic) {
       this.logger.error(
