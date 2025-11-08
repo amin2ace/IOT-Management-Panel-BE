@@ -95,48 +95,60 @@ export class DeviceService {
 
     const { isBroadcast, deviceId, requestCode } = discoverRequest;
 
-    if (requestCode !== RequestMessageCode.DISCOVERY) return;
+    if (requestCode !== RequestMessageCode.DISCOVERY) {
+      throw new BadRequestException('Invalid request');
+    }
 
-    if (isBroadcast && !deviceId) {
-      // cache the request id for validation with response id
-      await this.setCache(discoverRequest);
+    try {
+      if (isBroadcast && !deviceId) {
+        // cache the request id for validation with response id
+        await this.setCache(discoverRequest);
 
-      // Then publish message
-      this.mqttService.publish(
-        broadcastTopic,
-        JSON.stringify(discoverRequest),
-        { qos: 0, retain: false },
-      );
-      return { message: 'Discovery request broadcasted' };
+        // Then publish message
+        this.mqttService.publish(
+          broadcastTopic,
+          JSON.stringify(discoverRequest),
+          { qos: 0, retain: false },
+        );
+      }
+      this.logger.log(`Broadcast:::discovery:::request:::success`);
+      return `Broadcast discovery request sent successfully`;
+    } catch (error) {
+      this.logger.log(`Broadcast:::discovery:::request:::failed`);
+      throw new BadRequestException('Broadcast discovery request failed');
     }
   }
 
   async discoverDeviceUnicast(discoverRequest: DiscoveryRequestDto) {
     const { isBroadcast, deviceId, requestCode } = discoverRequest;
 
-    if (requestCode !== RequestMessageCode.DISCOVERY) return;
-
-    if (deviceId && !isBroadcast) {
-      await this.setCache(discoverRequest);
-
-      const sensorTopic = await this.topicService.getTopicByDeviceId(
-        deviceId,
-        TopicUseCase.DISCOVERY,
-      );
-      if (!sensorTopic.topic) {
-        this.logger.error(`Discovery topic for ${deviceId} is required`);
-        throw new ForbiddenException(
-          `Discovery topic for ${deviceId} is required`,
-        );
-      }
-
-      this.mqttService.publish(
-        sensorTopic.topic,
-        JSON.stringify(discoverRequest),
-        { qos: 0, retain: false },
-      );
-      return { message: `Discovery request sent to device ${deviceId}` };
+    if (requestCode !== RequestMessageCode.DISCOVERY) {
+      throw new BadRequestException('Invalid request');
     }
+
+    try {
+      if (deviceId && !isBroadcast) {
+        await this.setCache(discoverRequest);
+
+        const sensorTopic = await this.topicService.getTopicByDeviceId(
+          deviceId,
+          TopicUseCase.DISCOVERY,
+        );
+        if (!sensorTopic.topic) {
+          this.logger.error(`Discovery topic for ${deviceId} is required`);
+          throw new ForbiddenException(
+            `Discovery topic for ${deviceId} is required`,
+          );
+        }
+
+        this.mqttService.publish(
+          sensorTopic.topic,
+          JSON.stringify(discoverRequest),
+          { qos: 0, retain: false },
+        );
+        return { message: `Discovery request sent to device ${deviceId}` };
+      }
+    } catch (error) {}
   }
 
   async getUnassignedSensor(): Promise<Sensor[]> {
