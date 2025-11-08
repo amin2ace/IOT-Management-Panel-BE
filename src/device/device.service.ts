@@ -2,9 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
-  Logger,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { QueryDeviceDto } from './dto/query-device.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
@@ -15,50 +13,31 @@ import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 import { plainToInstance } from 'class-transformer';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import {
-  AckResponseDto,
-  DeviceRebootResponseDto,
   DiscoveryRequestDto,
   DiscoveryResponseDto,
-  FwUpgradeResponseDto,
-  HeartbeatDto,
   RequestMessageCode,
-  ResponseMessageCode,
   SensorConfigRequestDto,
   SensorFunctionalityRequestDto,
-  HardwareStatusResponseDto,
 } from './messages';
-import { TelemetryResponseDto } from './messages/listening/telemetry.response.dto';
 import { Telemetry } from './repository/sensor-telemetry.entity';
 import { TopicService } from 'src/topic/topic.service';
-import { ConfigService } from '@nestjs/config';
 import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
-import { RebootStatus } from 'src/config/enum/reboot-status.enum';
-import { UpgradeStatus } from 'src/config/enum/upgrade-status.enum';
 import { RedisService } from 'src/redis/redis.service';
-import { SensorFunctionalityResponseDto } from './messages/listening/sensor-functionality.response.dto';
 import { SensorType } from 'src/config/enum/sensor-type.enum';
-import { AckStatus } from 'src/config/enum/ack-status.enum';
 import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
 import { HardwareStatusRequestDto } from './messages/publish/hardware-status.request';
-import { HardwareStatus } from './repository/hardware-status.entity';
+import { LogAction, LogContext, LoggerHandlerService } from 'src/common';
 
 @Injectable()
 export class DeviceService {
   constructor(
     @InjectRepository(Sensor) private readonly sensorRepo: Repository<Sensor>,
-    @InjectRepository(HardwareStatus)
-    private readonly hardwareStatusRepo: Repository<HardwareStatus>,
     @InjectRepository(Telemetry)
-    private readonly telmetryRepo: Repository<Telemetry>,
     private readonly mqttService: MqttClientService,
     private readonly topicService: TopicService,
     private readonly redisCache: RedisService,
-    private readonly config: ConfigService,
+    private readonly logger: LoggerHandlerService,
   ) {}
-
-  private readonly logger = new Logger(DeviceService.name, {
-    timestamp: true,
-  });
 
   async getSensors(query: QueryDeviceDto): Promise<Sensor[]> {
     const { deviceId, provisionState, functionality } = query;
@@ -99,24 +78,24 @@ export class DeviceService {
       throw new BadRequestException('Invalid request');
     }
 
-    try {
-      if (isBroadcast && !deviceId) {
-        // cache the request id for validation with response id
-        await this.setCache(discoverRequest);
+    if (isBroadcast && !deviceId) {
+      // cache the request id for validation with response id
+      await this.setCache(discoverRequest);
 
-        // Then publish message
-        this.mqttService.publish(
-          broadcastTopic,
-          JSON.stringify(discoverRequest),
-          { qos: 0, retain: false },
-        );
-      }
-      this.logger.log(`Broadcast:::discovery:::request:::success`);
-      return `Broadcast discovery request sent successfully`;
-    } catch (error) {
-      this.logger.log(`Broadcast:::discovery:::request:::failed`);
-      throw new BadRequestException('Broadcast discovery request failed');
+      // Then publish message
+      this.mqttService.publish(
+        broadcastTopic,
+        JSON.stringify(discoverRequest),
+        { qos: 0, retain: false },
+      );
     }
+
+    this.logger.success(
+      LogContext.MESSAGE,
+      'DiscoverBroadcast',
+      LogAction.REQUEST,
+      'Broadcast discovery request sent successfully',
+    );
   }
 
   async discoverDeviceUnicast(discoverRequest: DiscoveryRequestDto) {
@@ -126,29 +105,38 @@ export class DeviceService {
       throw new BadRequestException('Invalid request');
     }
 
-    try {
-      if (deviceId && !isBroadcast) {
-        await this.setCache(discoverRequest);
+    if (deviceId && !isBroadcast) {
+      await this.setCache(discoverRequest);
 
-        const sensorTopic = await this.topicService.getTopicByDeviceId(
-          deviceId,
-          TopicUseCase.DISCOVERY,
+      const sensorTopic = await this.topicService.getTopicByDeviceId(
+        deviceId,
+        TopicUseCase.DISCOVERY,
+      );
+      if (!sensorTopic.topic) {
+        this.logger.fail(
+          LogContext.TOPIC,
+          'Discovery',
+          LogAction.RETRIEVE,
+          `Discovery topic for ${deviceId} is required`,
         );
-        if (!sensorTopic.topic) {
-          this.logger.error(`Discovery topic for ${deviceId} is required`);
-          throw new ForbiddenException(
-            `Discovery topic for ${deviceId} is required`,
-          );
-        }
 
-        this.mqttService.publish(
-          sensorTopic.topic,
-          JSON.stringify(discoverRequest),
-          { qos: 0, retain: false },
+        throw new ForbiddenException(
+          `Discovery topic for ${deviceId} is required`,
         );
-        return { message: `Discovery request sent to device ${deviceId}` };
       }
-    } catch (error) {}
+
+      this.mqttService.publish(
+        sensorTopic.topic,
+        JSON.stringify(discoverRequest),
+        { qos: 0, retain: false },
+      );
+    }
+    this.logger.success(
+      LogContext.MESSAGE,
+      'DiscoverUnicast',
+      LogAction.REQUEST,
+      'Broadcast discovery request sent successfully',
+    );
   }
 
   async getUnassignedSensor(): Promise<Sensor[]> {
@@ -159,7 +147,12 @@ export class DeviceService {
       },
     });
     if (!sensors.length) {
-      this.logger.log('No unassigned devices found');
+      this.logger.success(
+        LogContext.DEVICE,
+        'Unassigned',
+        LogAction.REQUEST,
+        'No unassigend device was found',
+      );
       throw new NotFoundException('No unassigned devices found');
     }
     return sensors;
@@ -185,11 +178,8 @@ export class DeviceService {
     return payload;
   }
 
-  public async storeSensorInDatabase(
-    sensorMessage: DiscoveryResponseDto,
-  ): Promise<string> {
+  public async storeSensorInDatabase(sensorMessage: DiscoveryResponseDto) {
     const { deviceId } = sensorMessage;
-    const BASE_TOPIC = this.config.getOrThrow<string>('BASE_TOPIC');
 
     const existingDevice = await this.sensorRepo.findOne({
       where: { sensorId: deviceId },
@@ -215,12 +205,22 @@ export class DeviceService {
           isDeleted: false,
         });
         await this.sensorRepo.save(deviceRecord);
+        await this.topicService.createAllTopics(deviceId);
       }
 
-      return 'Device saved to database';
+      this.logger.success(
+        LogContext.DATABASE,
+        'StoreSensor',
+        LogAction.CREATE,
+        `Device added to database`,
+      );
     } catch (error) {
-      console.error('Error saving device to database:', error.message);
-      return 'Error saving device to database';
+      this.logger.fail(
+        LogContext.DATABASE,
+        'StoreSensor',
+        LogAction.CREATE,
+        `Saving device in database failed`,
+      );
     }
   }
 
@@ -254,9 +254,19 @@ export class DeviceService {
         qos: 1,
         retain: false,
       });
-      this.logger.log(`Hardware_Status:::${deviceId}:::request:::success`);
+      this.logger.success(
+        LogContext.MESSAGE,
+        'HardwareStatus',
+        LogAction.RESPONSE,
+        `Hardware_Status ${deviceId} request success`,
+      );
     } catch (error) {
-      this.logger.error(`Hardware_Status:::${deviceId}:::request:::failed`);
+      this.logger.fail(
+        LogContext.MESSAGE,
+        'HardwareStatus',
+        LogAction.RESPONSE,
+        `Hardware_Status ${deviceId} request failed`,
+      );
       throw new BadRequestException('Hardware status request failed');
     }
   }
@@ -284,48 +294,26 @@ export class DeviceService {
       });
 
       await this.setCache(provisionData);
-      this.logger.log(`Sensor ${deviceId} assignement requested`);
+
+      this.logger.success(
+        LogContext.MESSAGE,
+        'AssignDeviceFunction',
+        LogAction.REQUEST,
+        `Sensor ${deviceId} assignement requestede`,
+      );
 
       return `Device with id of ${deviceId} provisioned as ${functionality}`;
     } catch (error) {
-      this.logger.error(`Sensor ${deviceId} assignement request error`);
-
+      this.logger.fail(
+        LogContext.MESSAGE,
+        'AssignDeviceFunction',
+        LogAction.REQUEST,
+        `Sensor ${deviceId} assignement request failed`,
+      );
       throw new BadRequestException('Invalid assignement request');
     }
   }
 
-  async handleAssignResponse(provisionData: SensorFunctionalityResponseDto) {
-    const { responseCode, deviceId, functionality, status } = provisionData;
-
-    if (responseCode !== ResponseMessageCode.DEVICE_FUNCTION_ASSIGNED) {
-      throw new ForbiddenException('Invalid Response');
-    }
-
-    try {
-      await this.validateSensorTypes(deviceId, functionality);
-
-      if (status !== AckStatus.ACCEPTED) {
-        throw new BadRequestException('Sensor functionality assign failed');
-      }
-
-      await this.sensorRepo.update(
-        {
-          sensorId: deviceId,
-        },
-        {
-          assignedFunctionality: functionality,
-          provisionState: ProvisionState.ASSIGNED,
-        },
-      );
-
-      this.logger.log(`Sensor ${deviceId} assigned to ${functionality}`);
-
-      return `Device ${deviceId} was assigned to ${functionality} successfully`;
-    } catch (error) {
-      this.logger.error(`Sensor ${deviceId} assignement acknowledge error`);
-      return `Device ${deviceId} assignement failed`;
-    }
-  }
   async validateSensorTypes(deviceId: string, functionality: SensorType[]) {
     const storedDevice = await this.sensorRepo.findOne({
       where: {
@@ -352,7 +340,7 @@ export class DeviceService {
     }
   }
 
-  async deleteSensor(sensorId: string): Promise<string> {
+  async deleteSensor(sensorId: string) {
     const device = await this.sensorRepo.findOne({
       where: {
         sensorId,
@@ -365,7 +353,12 @@ export class DeviceService {
     }
 
     await this.sensorRepo.update({ sensorId }, { isDeleted: true });
-    return `Device with ID ${sensorId} marked as deleted`;
+    this.logger.success(
+      LogContext.MESSAGE,
+      'SensorDelete',
+      LogAction.REQUEST,
+      `Sensor ${device.sensorId} deleted successfully`,
+    );
   }
 
   async reconfigureDevice(configData: SensorConfigRequestDto) {
@@ -388,28 +381,15 @@ export class DeviceService {
       TopicUseCase.SENSOR_CONFIGURATION,
     );
 
-    const ackTopic = `${publishTopic}/ack`;
+    // const ackTopic = `${publishTopic}/ack`;
 
     await this.mqttService.publish(publishTopic, JSON.stringify(configData), {
       qos: 1,
       retain: false,
     });
 
-    await this.mqttService.subscribe(ackTopic, sensorId);
+    // await this.mqttService.subscribe(ackTopic, sensorId);
   }
-
-  // async getLiveStatus(sensorId: string) {
-  //   const sensor = await this.sensorRepo.findOne({
-  //     where: {
-  //       sensorId,
-  //     },
-  //   });
-  //   if (!sensor) {
-  //     throw new NotFoundException(`Device with ID ${sensorId} not found`);
-  //   }
-
-  //   return { status: sensor.connectionState };
-  // }
 
   getDeviceHistory(id: string) {
     return { message: 'History data', id };
@@ -438,123 +418,6 @@ export class DeviceService {
     };
   }
 
-  async handleDeviceHeartbeat(payload: HeartbeatDto) {
-    const { connectionState, deviceId, responseCode } = payload;
-
-    if (responseCode != ResponseMessageCode.HEARTBEAT) return;
-
-    const sensor = await this.sensorRepo.findOne({
-      where: {
-        sensorId: deviceId,
-      },
-    });
-
-    if (!sensor) {
-      throw new ForbiddenException('Device not found');
-    }
-
-    await this.sensorRepo.update(
-      { sensorId: deviceId },
-      {
-        connectionState,
-      },
-    );
-
-    return 'success';
-  }
-
-  async handleHardwareStatus(payload: HardwareStatusResponseDto) {
-    const { responseCode, requestId, ...statusData } = payload;
-
-    if (responseCode !== ResponseMessageCode.HARDWARE_METRICS) {
-      throw new UnauthorizedException('Invalid response');
-    }
-
-    const record = await this.sensorRepo.findOne({
-      where: {
-        sensorId: statusData.deviceId,
-        isDeleted: false,
-      },
-    });
-
-    if (!record) {
-      throw new NotFoundException('Device not found');
-    }
-    try {
-      const statusRecord = this.hardwareStatusRepo.create({
-        ...statusData,
-        timestamp: new Date(statusData.timestamp),
-      });
-
-      await this.hardwareStatusRepo.save(statusRecord);
-      this.logger.log(
-        `Hardware_Status:::${statusData.deviceId}:::response:::success`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Hardware_Status:::${statusData.deviceId}:::response:::failed`,
-        error,
-      );
-      throw new UnauthorizedException('Invalid Response');
-    }
-  }
-
-  async handleRebootResponse(payload: DeviceRebootResponseDto) {
-    const { deviceId, responseCode, status, message, timestamp } = payload;
-
-    if (responseCode !== ResponseMessageCode.REBOOT_CONFIRMATION) return;
-
-    if (status !== RebootStatus.SUCCESS) {
-      this.logger.error(`Device ${deviceId} reboot failed`, {
-        description: message,
-      });
-    }
-
-    await this.sensorRepo.update(
-      { sensorId: deviceId },
-      {
-        lastReboot: new Date(timestamp),
-      },
-    );
-
-    this.logger.log(`Device ${deviceId} rebooted successfully`);
-  }
-
-  async handleUpgradeResponse(payload: FwUpgradeResponseDto) {
-    const {
-      deviceId,
-      progress,
-      requestId,
-      responseCode,
-      responseId,
-      status,
-      timestamp,
-    } = payload;
-
-    if (responseCode !== ResponseMessageCode.FIRMWARE_UPDATE_STATUS) return;
-
-    if (status === UpgradeStatus.PROCESSING) {
-      return `Processing... ${progress} %`;
-    }
-
-    if (status === UpgradeStatus.SUCCESS) {
-      await this.sensorRepo.update(
-        {
-          sensorId: deviceId,
-        },
-        {
-          lastUpgrade: new Date(timestamp),
-        },
-      );
-      this.logger.log(`Device ${deviceId} upgraded successfully`);
-    }
-    this.logger.error(`Device ${deviceId} upgrade failed`);
-  }
-
-  async handleAckMessage(payload: AckResponseDto) {
-    throw new Error('Method not implemented.');
-  }
-
   async getDeviceTelemetry(telemetry: TelemetryRequestDto) {
     const { deviceId, requestCode } = telemetry;
 
@@ -579,47 +442,18 @@ export class DeviceService {
       TopicUseCase.TELEMETRY,
     );
 
-    try {
-      await this.setCache(TelemetryRequestDto);
+    await this.setCache(TelemetryRequestDto);
 
-      await this.mqttService.publish(topic, JSON.stringify(telemetry), {
-        qos: 0,
-        retain: false,
-      });
+    await this.mqttService.publish(topic, JSON.stringify(telemetry), {
+      qos: 0,
+      retain: false,
+    });
 
-      this.logger.debug(`Telemetry requested from ${deviceId}`);
-      return `Telemetry requested from ${deviceId} `;
-    } catch (error) {
-      this.logger.error(`Telemetry request of ${deviceId} failed`);
-      throw new BadRequestException('Telemetry request failed');
-    }
-  }
-
-  async handleTelemetryResponse(payload: TelemetryResponseDto) {
-    const { responseCode, deviceId, metric, value, meta } = payload;
-
-    if (responseCode !== ResponseMessageCode.TELEMETRY_DATA) {
-      throw new BadRequestException(`Invalid response`);
-    }
-
-    try {
-      const record = this.telmetryRepo.create({
-        deviceId,
-        metric,
-        value,
-        meta,
-      });
-
-      this.telmetryRepo
-        .save(record)
-        .then(() => this.logger.log(`Device ${deviceId} telemetry saved`))
-        .catch((err) => this.logger.error(err));
-
-      this.logger.log(
-        `Telemetry:::${deviceId}:::${record.metric}:::${record.value}:::${record.meta}`,
-      );
-    } catch (error) {
-      throw new ForbiddenException(`Telemetry data for ${deviceId} mallformed`);
-    }
+    this.logger.debug(
+      LogContext.TELEMETRY,
+      'TelemetryRequest',
+      LogAction.REQUEST,
+      `Telemetry requested from ${deviceId}`,
+    );
   }
 }

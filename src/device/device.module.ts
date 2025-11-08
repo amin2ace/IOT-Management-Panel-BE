@@ -5,7 +5,7 @@ import { MqttClientModule } from 'src/mqtt-client/mqtt-client.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Sensor } from './repository/sensor.entity';
 import { Telemetry } from './repository/sensor-telemetry.entity';
-import { DeviceListener } from './device.listener.service';
+import { ResponseListenerService } from './response.listener.service';
 import { HardwareStatus } from './repository/hardware-status.entity';
 
 @Module({
@@ -14,6 +14,6 @@ import { HardwareStatus } from './repository/hardware-status.entity';
     MqttClientModule,
   ],
   controllers: [DeviceController],
-  providers: [DeviceService, DeviceListener],
+  providers: [DeviceService, ResponseListenerService],
 })
 export class DeviceModule {}

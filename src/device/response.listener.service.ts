@@ -14,15 +14,17 @@ import { RedisService } from 'src/redis/redis.service';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { SensorFunctionalityResponseDto } from './messages/listening/sensor-functionality.response.dto';
+import { ResponseHandlerService } from './response.handler.service';
 
 @Injectable()
-export class DeviceListener {
+export class ResponseListenerService {
   constructor(
+    private readonly responseService: ResponseHandlerService,
     private readonly deviceService: DeviceService,
     private readonly redisCache: RedisService,
   ) {}
 
-  private readonly logger = new Logger(DeviceListener.name, {
+  private readonly logger = new Logger(ResponseListenerService.name, {
     timestamp: true,
   });
 
@@ -84,7 +86,7 @@ export class DeviceListener {
       payload,
     );
 
-    await this.deviceService.handleAssignResponse(validatedPayload);
+    await this.responseService.handleAssignResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/ack')
@@ -96,7 +98,7 @@ export class DeviceListener {
       payload,
     );
 
-    await this.deviceService.handleAckMessage(validatedPayload);
+    await this.responseService.handleAckMessage(validatedPayload);
   }
 
   @OnEvent('mqtt/message/upgrade')
@@ -106,7 +108,7 @@ export class DeviceListener {
       FwUpgradeResponseDto,
       payload,
     );
-    await this.deviceService.handleUpgradeResponse(validatedPayload);
+    await this.responseService.handleUpgradeResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/heartbeat')
@@ -117,7 +119,7 @@ export class DeviceListener {
       HeartbeatDto,
       payload,
     );
-    await this.deviceService.handleDeviceHeartbeat(validatedPayload);
+    await this.responseService.handleDeviceHeartbeat(validatedPayload);
   }
 
   @OnEvent('mqtt/message/reboot')
@@ -128,7 +130,7 @@ export class DeviceListener {
       DeviceRebootResponseDto,
       payload,
     );
-    await this.deviceService.handleRebootResponse(validatedPayload);
+    await this.responseService.handleRebootResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/telemetry')
@@ -139,7 +141,7 @@ export class DeviceListener {
       TelemetryResponseDto,
       payload,
     );
-    await this.deviceService.handleTelemetryResponse(validatedPayload);
+    await this.responseService.handleTelemetryResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/hardware-status')
@@ -150,7 +152,7 @@ export class DeviceListener {
       HardwareStatusResponseDto,
       payload,
     );
-    await this.deviceService.handleHardwareStatus(validatedPayload);
+    await this.responseService.handleHardwareStatus(validatedPayload);
   }
 
   // @OnEvent('mqtt/message/alert')
@@ -164,6 +166,6 @@ export class DeviceListener {
 
   @OnEvent('mqtt/message/unknown')
   async handleUnknownEvent(topic: string, payload: any) {
-    await this.deviceService.handleAckMessage(payload);
+    await this.responseService.handleUnknownMessage(payload);
   }
 }

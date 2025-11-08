@@ -70,7 +70,9 @@ export class TopicService {
     );
 
     if (!broadcastTopic) {
-      this.logger.error('Broadcast topic retrieve failed');
+      this.logger.error(
+        `Topics:::${broadcastTopic}:::MqttBroker:::retrieve:::failed`,
+      );
     }
     return `${Base_Topic}/${broadcastTopic}`;
   }
@@ -87,6 +89,9 @@ export class TopicService {
     });
 
     if (!topic) {
+      this.logger.error(
+        `Topics:::${useCase}:::${deviceId}:::retrieve:::failed`,
+      );
       throw new NotFoundException('Topic not found');
     }
 
