@@ -21,8 +21,8 @@ export class Sensor {
   @Index({ unique: true })
   sensorId: string; // ESP unique ID (MAC or custom ID)
 
-  @Column({ type: 'array', default: [] })
-  capabilities: string[]; // e.g. ["temperature", "humidity"]
+  @Column({ type: 'enum', enum: SensorType, array: true })
+  capabilities: SensorType[]; // e.g. ["temperature", "humidity"]
 
   @Column()
   deviceHardware: string; // device model or hardware ID
