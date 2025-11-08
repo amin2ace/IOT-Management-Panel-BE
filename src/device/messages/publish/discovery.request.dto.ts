@@ -26,6 +26,14 @@ class FilterDto {
 }
 
 export class DiscoveryRequestDto {
+  @ApiProperty({
+    description: 'Unique identifier of the user who initiated the request',
+    example: 'user-001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -60,15 +68,18 @@ export class DiscoveryRequestDto {
   filters?: FilterDto;
 }
 
-// mock data for discovery request:
-/**
- * {
- *   "requestId": "123e4567-e89b-12d3-a456-426614174000",
- *   "deviceId": "device-001",
- *   "requestCode": 0,
- *   "timestamp": "2024-10-01T12:00:00Z",
- *   "filters": {
- *     "subnet": "192.168.1.0/24",
- *     "hardware": ["sensor", "camera"]
- *   }
+/*
+  Example:
+    {
+      "userId": "user-001",
+      "requestId": "req-98765",
+      "requestCode": 101,
+      "deviceId": "sensor-12345",
+      "isBroadcast": true,
+      "timestamp": 1762379573804,
+      "filters": {
+        "subnet": "192.168.1.0/24",
+        "hardware": ["ESP32", "ESP8266"]
+      }
+    }
  */

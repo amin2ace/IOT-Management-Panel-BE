@@ -11,6 +11,14 @@ import { AckStatus } from 'src/config/enum/ack-status.enum';
 
 export class AckResponseDto {
   @ApiProperty({
+    description: 'Unique identifier of the user who initiated the request',
+    example: 'user-001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty({
     description: 'Unique identifier for the response',
     example: 'res-12346',
   })
@@ -67,3 +75,18 @@ export class AckResponseDto {
   @IsNotEmpty()
   details: string; //"assigned TEMPERATURE, publishing to sensors/client-123/temperature/sensor-001"
 }
+
+/**
+    Example:
+      {
+        "userId": "user-001",
+        "responseId": "res-12346",
+        "responseCode": 201,
+        "requestId": "req-12345",
+        "deviceId": "sensor-67890",
+        "ackStatus": "ACCEPTED",
+        "timestamp": 1762379573804,
+        "details": "Assigned TEMPERATURE metric successfully, publishing to sensors/client-123/temperature/sensor-001"
+      }
+
+ */

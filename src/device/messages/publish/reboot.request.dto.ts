@@ -1,15 +1,17 @@
 // src/device/dto/device-reboot-request.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsBoolean,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 
 export class DeviceRebootRequestDto {
+  @ApiProperty({
+    description: 'Unique identifier of the user who initiated the request',
+    example: 'user-001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
   @ApiProperty({
     description: 'Unique identifier for the request',
     example: 'req-12345',
@@ -55,11 +57,13 @@ export class DeviceRebootRequestDto {
 /**
   Example:
     {
+      "userId": "user-001",
       "requestId": "req-12345",
       "requestCode": 105,
       "deviceId": "sensor-67890",
       "timestamp": 1762379573804,
       "reason": "Firmware update required"
     }
+
 
  */

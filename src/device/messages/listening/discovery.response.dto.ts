@@ -4,7 +4,8 @@ import {
   IsArray,
   IsEnum,
   IsObject,
-  IsDate,
+  IsNotEmpty,
+  IsNumber,
 } from 'class-validator';
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
 import { Protocol } from 'src/config/enum/protocol.enum';
@@ -27,9 +28,53 @@ export class AdditionalInfoDto {
 }
 
 export class DiscoveryResponseDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Unique identifier of the user who initiated the request',
+    example: 'user-001',
+  })
   @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty({
+    description: 'Unique identifier for the response',
+    example: 'fw-20251104-status',
+  })
+  @IsNotEmpty()
+  @IsString()
+  responseId: string;
+
+  @ApiProperty({
+    description: 'Response code from the device or system',
+    example: '206',
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  responseCode: number;
+
+  @ApiProperty({
+    description: 'Unique identifier for the request',
+    example: 'fw-20251104-0004',
+  })
+  @IsNotEmpty()
+  @IsString()
+  requestId: string;
+
+  @ApiProperty({
+    description: 'Device ID that performed the diagnostic',
+    example: 'sensor-67890',
+  })
+  @IsString()
+  @IsNotEmpty()
   deviceId: string;
+
+  @ApiProperty({
+    description: 'Time of diagnostic completion in epoch milliseconds',
+    example: 1762379573804,
+  })
+  @IsValidTimestampMillis()
+  @IsNotEmpty()
+  timestamp: number;
 
   @ApiProperty()
   @IsArray()
@@ -63,13 +108,6 @@ export class DiscoveryResponseDto {
   @IsValidEpochMillis({ message: 'Uptime must be valid epoch milliseconds' })
   uptime: number;
 
-  @ApiProperty({
-    description: 'Time of the request in epoch milli second',
-    example: '1762379573804',
-  })
-  @IsValidTimestampMillis() // 5min behind, 30sec ahead
-  timestamp: number;
-
   @ApiProperty()
   @IsObject()
   location: DeviceLocationDto;
@@ -89,27 +127,33 @@ export class DiscoveryResponseDto {
 }
 
 /**
- * Example SensorMessageDto:
-{
-  "publishTopic": "sensors/client-123/temperature/sensor-001",
-  "sensorId": "sensor-001",
-  "mac": "A4:C1:38:2F:7B:9D",
-  "ip": "192.168.1.45",
-  "firmware": "v1.2.3",
-  "deviceHardware": "ESP32-DevKitC",
-  "capabilities": ["humidity", "temperature"],
-  "uptime": "2024-10-01T12:34:56.789Z",
-  "connectionState": "ONLINE",
-  "location": {
-    "site": "greenhouse-1",
-    "floor": 1,
-    "unit": "tomato-section"
-  },
-  "protocol": "MQTT",
-  "broker": "mqtt://192.168.1.10:1883",
-  "additionalInfo": {
-    "manufacturer": "Acme Sensors",
-    "model": "T1000"
-  }
-}
+    Example:
+      {
+        "userId": "user-001",
+        "responseId": "fw-20251104-status",
+        "responseCode": 206,
+        "requestId": "fw-20251104-0004",
+        "deviceId": "sensor-67890",
+        "timestamp": 1762379573804,
+        "capabilities": ["temperature", "humidity", "pressure"],
+        "deviceHardware": "ESP32-DevKitC",
+        "topicPrefix": "sensors/lab01/temperature/sensor-67890",
+        "connectionState": "connected",
+        "firmware": "v2.3.7",
+        "mac": "00:1B:44:11:3A:B7",
+        "ip": "192.168.1.45",
+        "uptime": 1762379500000,
+        "location": {
+          "latitude": 35.6895,
+          "longitude": 51.389,
+          "altitude": 1200,
+          "description": "Main laboratory - floor 2"
+        },
+        "protocol": "MQTT",
+        "broker": "mqtt://broker.lab.local",
+        "additionalInfo": {
+          "manufacturer": "IoTTech Inc.",
+          "model": "TX-9000"
+        }
+      }
  */

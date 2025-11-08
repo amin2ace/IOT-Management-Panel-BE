@@ -2,9 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsArray,
   IsBoolean,
-  IsDate,
   IsEnum,
-  IsISO8601,
   IsNotEmpty,
   IsNumber,
   IsString,
@@ -13,6 +11,14 @@ import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validatio
 import { SensorType } from 'src/config/enum/sensor-type.enum';
 
 export class SensorFunctionalityRequestDto {
+  @ApiProperty({
+    description: 'Unique identifier of the user who initiated the request',
+    example: 'user-001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
   @ApiProperty({
     description: 'Unique identifier for the request',
     example: 'req-12345',
@@ -100,3 +106,21 @@ export class SensorFunctionalityRequestDto {
   @IsString()
   signature: string; // digital signature for security
 }
+
+/**
+  Example:
+    {
+      "userId": "user-001",
+      "requestId": "req-12345",
+      "requestCode": 101,
+      "deviceId": "sensor-67890",
+      "timestamp": 1762379573804,
+      "functionality": ["TEMPERATURE"],
+      "publishTopic": "sensors/sensor-67890/assign",
+      "interval": 5000,
+      "highSetPoint": "{ \"high\": 25.0 }",
+      "lowSetPoint": "{ \"low\": 0.2 }",
+      "ackRequired": true,
+      "signature": "abc123signature"
+    }
+ */

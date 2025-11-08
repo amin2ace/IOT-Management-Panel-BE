@@ -4,8 +4,6 @@ import {
   IsNumber,
   IsOptional,
   IsArray,
-  IsBoolean,
-  IsIn,
   IsNotEmpty,
   IsEnum,
 } from 'class-validator';
@@ -14,6 +12,14 @@ import { DiagnosticComponent } from 'src/config/enum/diagnostic-component.enum';
 import { DiagnosticLevel } from 'src/config/enum/diagnostic-Level.enum';
 
 export class AutoDiagnosticRequestDto {
+  @ApiProperty({
+    description: 'Unique identifier of the user who initiated the request',
+    example: 'user-001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
   @ApiProperty({
     description: 'Unique identifier for the request',
     example: 'req-12345',
@@ -72,11 +78,12 @@ export class AutoDiagnosticRequestDto {
 /**
   Example:
     {
-      requestId: 'req-12345',
-      requestCode: 106,
-      deviceId: 'sensor-67890',
-      timestamp: 1762379573804
-      diagnosticLevel: 'full',
-      components: ['sensors', 'wifi'],
-    };
+      "userId": "user-001",
+      "requestId": "req-12345",
+      "requestCode": 106,
+      "deviceId": "sensor-67890",
+      "timestamp": 1762379573804,
+      "diagnosticLevel": "FULL",
+      "components": ["WIFI", "SENSORS"]
+    }
  */

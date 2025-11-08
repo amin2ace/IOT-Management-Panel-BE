@@ -43,9 +43,18 @@ export class ComponentDiagnosticResultDto {
 
 export class AutoDiagnosticResponseDto {
   @ApiProperty({
+    description: 'Unique identifier of the user who initiated the request',
+    example: 'user-001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty({
     description: 'Unique identifier for the response',
     example: 'fw-20251104-status',
   })
+  @IsNotEmpty()
   @IsString()
   responseId: string;
 
@@ -53,13 +62,15 @@ export class AutoDiagnosticResponseDto {
     description: 'Response code from the device or system',
     example: '206',
   })
-  @IsString()
-  responseCode: string;
+  @IsNotEmpty()
+  @IsNumber()
+  responseCode: number;
 
   @ApiProperty({
     description: 'Unique identifier for the request',
     example: 'fw-20251104-0004',
   })
+  @IsNotEmpty()
   @IsString()
   requestId: string;
 
@@ -110,32 +121,35 @@ export class AutoDiagnosticResponseDto {
 /**
   Example:
     {
-  "requestId": "req-12345",
-  "deviceId": "sensor-67890",
-  "timestamp": 1762379573804,
-  "diagnosticLevel": "full",
-  "status": "success",
-  "results": [
-    {
-      "component": "wifi",
-      "status": "success",
-      "details": "WiFi connection stable, signal strength 78%"
-    },
-    {
-      "component": "sensors",
-      "status": "partial",
-      "details": "Temperature sensor OK, humidity sensor error"
-    },
-    {
-      "component": "memory",
-      "status": "success",
-      "details": "Memory usage normal, no leaks detected"
-    },
-    {
-      "component": "mqtt",
-      "status": "success",
-      "details": "MQTT broker reachable, last publish successful"
+      "userId": "user-001",
+      "responseId": "res-56789",
+      "responseCode": 206,
+      "requestId": "req-12345",
+      "deviceId": "sensor-67890",
+      "timestamp": 1762379573804,
+      "diagnosticLevel": "full",
+      "diagStatus": "success",
+      "results": [
+        {
+          "component": "wifi",
+          "status": "success",
+          "details": "WiFi connection stable, signal strength 78%"
+        },
+        {
+          "component": "sensors",
+          "status": "partial",
+          "details": "Temperature sensor OK, humidity sensor error"
+        },
+        {
+          "component": "memory",
+          "status": "success",
+          "details": "Memory usage normal, no leaks detected"
+        },
+        {
+          "component": "mqtt",
+          "status": "success",
+          "details": "MQTT broker reachable, last publish successful"
+        }
+      ]
     }
-  ]
-}
  */

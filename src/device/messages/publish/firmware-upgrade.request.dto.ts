@@ -12,6 +12,14 @@ import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validatio
 
 export class FwUpgradeRequestDto {
   @ApiProperty({
+    description: 'Unique identifier of the user who initiated the request',
+    example: 'user-001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty({
     description: 'Unique identifier for the request',
     example: 'req-12345',
   })
@@ -102,17 +110,18 @@ export class FwUpgradeRequestDto {
 
 /**
   Example:
-  {
-  "requestId": "fw-20251104-0004",
-  "requestCode": 104,
-  "deviceId": 'sensor-67890,
-  "timestamp": "1762379573804",
-  "version": "v1.3.0",
-  "url": "https://files.example.com/firmware/client-123/T1000/v1.3.0.bin?sig=...",
-  "size": 345678,
-  "checksum": "3F4A9B2C",
-  "signature": "U29tZVJhbmRvbUJhc2U2NFZhbHVl"
-  "releaseNotes": "Fixed sensor drift and improved connectivity."
-  "forceUpdate": false,
-}
+    {
+      "userId": "user-001",
+      "requestId": "req-12345",
+      "requestCode": 101,
+      "deviceId": "sensor-67890",
+      "timestamp": 1762379573804,
+      "version": "v1.2.3",
+      "url": "http://server.com/firmware/v1.2.3.bin",
+      "size": 5120,
+      "checksum": "3F4A9B2C",
+      "signature": "U29tZVJhbmRvbUJhc2U2NFZhbHVl",
+      "releaseNotes": "Fixed sensor drift and improved connectivity.",
+      "forceUpdate": false
+    }
  */

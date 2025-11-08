@@ -1,10 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsArray,
   IsEnum,
   IsNotEmpty,
   IsNumber,
-  IsObject,
   IsOptional,
   IsString,
   IsStrongPassword,
@@ -20,6 +18,14 @@ import { LoggingConfigDto } from '../../dto/logging-config.dto';
 import { OtaConfigDto } from '../../dto/ota-config.dto';
 
 export class SensorConfigRequestDto {
+  @ApiProperty({
+    description: 'Unique identifier of the user who initiated the request',
+    example: 'user-001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
   @ApiProperty({
     description: 'Unique identifier for the request',
     example: 'req-12345',
@@ -154,17 +160,39 @@ export class SensorConfigRequestDto {
 /**
   Example:
     {
-      "requestId": "config-20251104-0003",
-      "timestamp": "2025-11-04T10:10:00Z",
-      "config": {
-        "intervalMs": 10000,
-        "thresholds": {
-          "temperature": { "min": -5, "max": 45 },
-          "humidity": { "min": 20, "max": 90 }
-        },
-        "reporting": { "format": "compact", "includeMeta": true }
+      "userId": "user-001",
+      "requestId": "req-12345",
+      "requestCode": 101,
+      "sensorId": "sensor-67890",
+      "timestamp": 1762379573804,
+      "baseTopic": "greenHouse_jolfa/tomato-section/sensor/temperature",
+      "network": {
+        "ssid": "GreenHouseWiFi",
+        "password": "securePass123",
+        "ip": "192.168.1.50",
+        "gateway": "192.168.1.1",
+        "subnet": "255.255.255.0"
       },
-      "version": "v1.2",
-      "signature": "base64"
+      "timezone": "Asia/Tehran",
+      "logging": {
+        "level": "INFO",
+        "remoteLogging": true,
+        "logServer": "http://logs.example.com"
+      },
+      "ota": {
+        "enabled": true,
+        "serverUrl": "http://ota.example.com",
+        "checkInterval": 3600000
+      },
+      "interval": 5000,
+      "location": {
+        "latitude": 38.276,
+        "longitude": 46.289,
+        "altitude": 1300
+      },
+      "protocol": "MQTT",
+      "apSsid": "SensorAP-001",
+      "apPassword": "strongpassword",
+      "configVersion": 1
     }
  */

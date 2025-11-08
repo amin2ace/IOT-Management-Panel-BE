@@ -14,27 +14,44 @@ import { TelemetryMetaDto } from 'src/device/dto/telemetry-meta.dto';
 
 export class TelemetryDto {
   @ApiProperty({
-    description: 'Unique identifier for the response',
-    example: 'res-12346',
+    description: 'Unique identifier of the user who initiated the request',
+    example: 'user-001',
   })
   @IsString()
   @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty({
+    description: 'Unique identifier for the response',
+    example: 'fw-20251104-status',
+  })
+  @IsNotEmpty()
+  @IsString()
   responseId: string;
 
   @ApiProperty({
-    description: 'Numeric code representing the response type',
-    example: 201,
+    description: 'Response code from the device or system',
+    example: '206',
   })
-  @IsNumber()
   @IsNotEmpty()
-  responseCode: number; // Request Message Code
+  @IsNumber()
+  responseCode: number;
 
   @ApiProperty({
-    description: 'Unique identifier of the sensor',
+    description: 'Unique identifier for the request',
+    example: 'fw-20251104-0004',
+  })
+  @IsNotEmpty()
+  @IsString()
+  requestId: string;
+
+  @ApiProperty({
+    description: 'Device ID that performed the diagnostic',
     example: 'sensor-67890',
   })
   @IsString()
-  deviceId: string; // Request from specific device
+  @IsNotEmpty()
+  deviceId: string;
 
   @ApiProperty({
     description: 'Telemetry metric type',
@@ -79,21 +96,23 @@ export class TelemetryDto {
 /**
   Example:
     {
-      "responseId": "res-12346",
-      "responseCode": 201,
+      "userId": "user-001",
+      "responseId": "fw-20251104-status",
+      "responseCode": 206,
+      "requestId": "fw-20251104-0004",
       "deviceId": "sensor-67890",
-      "metric": "temperature",
+      "metric": "Temperature",
       "value": 24.5,
       "status": "OK",
       "createdAt": 1762379573804,
       "meta": {
-        "firmwareVersion": "v1.2.3",
+        "firmwareVersion": "1.0.3",
         "location": {
-          "site": "greenhouse-1",
-          "floor": 1,
-          "unit": "tomato-section"
+          "latitude": 37.7749,
+          "longitude": -122.4194,
+          "altitude": 15
         },
-        "comment": "Near greenhouse sensor"
+        "comment": "Initial reading from device"
       }
     }
       
