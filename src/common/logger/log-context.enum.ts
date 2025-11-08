@@ -8,4 +8,5 @@ export enum LogContext {
   DISCOVERY = 'Discovery',
   DEVICE = 'Device',
   TELEMETRY = 'Telemetry',
+  CACHE = 'Cache',
 }

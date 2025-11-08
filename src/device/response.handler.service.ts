@@ -9,10 +9,8 @@ import {
   AckResponseDto,
   DeviceRebootResponseDto,
   FwUpgradeResponseDto,
-  HardwareStatusRequestDto,
   HardwareStatusResponseDto,
   HeartbeatDto,
-  RequestMessageCode,
   ResponseMessageCode,
   SensorFunctionalityResponseDto,
   TelemetryResponseDto,
@@ -20,10 +18,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Sensor } from './repository/sensor.entity';
-import { TopicService } from 'src/topic/topic.service';
-import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
 import { RedisService } from 'src/redis/redis.service';
-import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 import { LogAction, LogContext, LoggerHandlerService } from 'src/common';
 import { DeviceService } from './device.service';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
@@ -43,21 +38,31 @@ export class ResponseHandlerService {
     @InjectRepository(Telemetry)
     private readonly telemetryRepo: Repository<Telemetry>,
 
-    private readonly topicService: TopicService,
-    private readonly mqttService: MqttClientService,
     private readonly redisCache: RedisService,
     private readonly logger: LoggerHandlerService,
     private readonly deviceService: DeviceService,
   ) {}
 
-  private async setCache(dto: any) {
-    const { deviceId, requestId, requestCode, userId } = dto;
+  private async deleteCache(dto: any) {
+    const { requestId } = dto;
 
-    this.redisCache.set(`pending:${requestId}`, {
-      userId,
-      requestCode,
-      deviceId,
-    });
+    if (!requestId) {
+      this.logger.fail(
+        LogContext.CACHE,
+        'CacheDelete',
+        LogAction.DELETE,
+        'Request id required for deleting cache',
+      );
+      return;
+    }
+
+    await this.redisCache.del(`pending:${requestId}`);
+    this.logger.success(
+      LogContext.CACHE,
+      'CacheDelete',
+      LogAction.DELETE,
+      `Cache deleted for requestId=${requestId}`,
+    );
   }
 
   async handleAssignResponse(provisionData: SensorFunctionalityResponseDto) {
@@ -89,16 +94,14 @@ export class ResponseHandlerService {
       },
     );
 
+    await this.deleteCache(SensorFunctionalityResponseDto);
+
     this.logger.success(
       LogContext.MESSAGE,
       'AssignDeviceFunction',
       LogAction.RESPONSE,
       `Sensor ${deviceId} assigned to ${functionality}`,
     );
-  }
-
-  async handleAckMessage(payload: AckResponseDto) {
-    throw new Error('Method not implemented.');
   }
 
   async handleUpgradeResponse(payload: FwUpgradeResponseDto) {
@@ -119,6 +122,9 @@ export class ResponseHandlerService {
           lastUpgrade: new Date(timestamp),
         },
       );
+
+      await this.deleteCache(FwUpgradeResponseDto);
+
       this.logger.success(
         LogContext.MESSAGE,
         'FirmwareUpgrade',
@@ -162,6 +168,8 @@ export class ResponseHandlerService {
       },
     );
 
+    await this.deleteCache(HeartbeatDto);
+
     this.logger.success(
       LogContext.MESSAGE,
       'DeviceHeartbeat',
@@ -190,6 +198,7 @@ export class ResponseHandlerService {
         lastReboot: new Date(timestamp),
       },
     );
+    await this.deleteCache(DeviceRebootResponseDto);
 
     this.logger.success(
       LogContext.MESSAGE,
@@ -223,6 +232,8 @@ export class ResponseHandlerService {
       .save(record)
       .then(() => this.logger.log(`Device ${deviceId} telemetry saved`))
       .catch((err) => this.logger.error(err));
+
+    await this.deleteCache(TelemetryResponseDto);
 
     this.logger.success(
       LogContext.TELEMETRY,
@@ -261,12 +272,19 @@ export class ResponseHandlerService {
     });
 
     await this.hardwareStatusRepo.save(statusRecord);
+
+    await this.deleteCache(HardwareStatusResponseDto);
+
     this.logger.success(
       LogContext.HARDWARE,
       'HardwareStatus',
       LogAction.RESPONSE,
       `Hardware status from ${statusData.deviceId} retrieved`,
     );
+  }
+
+  async handleAckMessage(payload: AckResponseDto) {
+    throw new Error('Method not implemented.');
   }
 
   async handleUnknownMessage(payload: any) {
