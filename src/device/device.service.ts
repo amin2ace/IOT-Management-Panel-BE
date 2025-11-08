@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -33,6 +34,7 @@ import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
 import { RebootStatus } from 'src/config/enum/reboot-status.enum';
 import { UpgradeStatus } from 'src/config/enum/upgrade-status.enum';
 import { RedisService } from 'src/redis/redis.service';
+import { SensorFunctionalityResponseDto } from './messages/listening/sensor-functionality.response.dto';
 
 @Injectable()
 export class DeviceService {
@@ -71,19 +73,25 @@ export class DeviceService {
     return await qb.getMany();
   }
 
+  private async setCache(dto: any) {
+    const { deviceId, requestId, requestCode, userId } = dto;
+
+    this.redisCache.set(`pending:${requestId}`, {
+      userId,
+      requestCode,
+      deviceId,
+    });
+  }
   async discoverDevices(discoverRequest: DiscoveryRequestDto) {
     const broadcastTopic = await this.topicService.getBroadcastTopic();
 
-    const { isBroadcast, deviceId, requestId, requestCode, userId } =
-      discoverRequest;
+    const { isBroadcast, deviceId, requestCode } = discoverRequest;
+
+    if (requestCode !== RequestMessageCode.DISCOVERY) return;
+
     if (isBroadcast && !deviceId) {
       // cache the request id for validation with response id
-      this.redisCache.set(`pending:${requestId}`, {
-        userId,
-        requestCode,
-        deviceId,
-        topic: broadcastTopic,
-      });
+      this.setCache(discoverRequest);
 
       // Then publish message
       this.mqttService.publish(
@@ -207,27 +215,64 @@ export class DeviceService {
     sensorId: string,
     provisionData: SensorFunctionalityRequestDto,
   ): Promise<string> {
-    const { functionality } = provisionData;
-    const device = await this.sensorRepo.findOne({
+    const { deviceId, functionality, requestCode } = provisionData;
+
+    if (requestCode !== RequestMessageCode.ASSIGN_DEVICE_FUNCTION) {
+      throw new BadRequestException('Invalid Request');
+    }
+
+    const { topic } = await this.topicService.createTopic(
+      deviceId,
+      TopicUseCase.ASSIGN_DEVICE_FUNCTION,
+    );
+
+    const storedDevice = await this.sensorRepo.findOne({
       where: {
-        isDeleted: false,
-        sensorId,
+        sensorId: deviceId,
       },
     });
 
-    if (!device) {
-      throw new NotFoundException(`Device with ID ${sensorId} not found`);
+    if (!storedDevice) {
+      throw new NotFoundException('Device not found');
+    }
+
+    // Validate that all requested functionality exists in device capabilities
+    const invalidSensorTypes = functionality.filter(
+      (sensorType) => !storedDevice.capabilities.includes(sensorType),
+    );
+
+    if (invalidSensorTypes.length > 0) {
+      throw new BadRequestException(
+        `Device does not support the following functionalities: ${invalidSensorTypes.join(', ')}`,
+      );
+    }
+
+    this.mqttService.publish(topic, JSON.stringify(provisionData), {
+      qos: 1,
+      retain: false,
+    });
+
+    this.setCache(provisionData);
+
+    return `Device with id of ${sensorId} provisioned as ${functionality}`;
+  }
+
+  async handleAssignMessage(provisionData: SensorFunctionalityResponseDto) {
+    const { responseCode, deviceId, functionality } = provisionData;
+
+    if (responseCode !== ResponseMessageCode.DEVICE_FUNCTION_ASSIGNED) {
+      throw new ForbiddenException('Invalid Response');
     }
 
     await this.sensorRepo.update(
-      { sensorId },
       {
-        provisionState: ProvisionState.ASSIGNED,
+        sensorId: deviceId,
+      },
+      {
         assignedFunctionality: functionality,
+        provisionState: ProvisionState.ASSIGNED,
       },
     );
-
-    return `Device with id of ${sensorId} provisioned as ${functionality}`;
   }
 
   async deleteSensor(sensorId: string): Promise<string> {

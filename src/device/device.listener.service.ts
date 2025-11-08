@@ -13,6 +13,7 @@ import { TelemetryDto } from './messages/listening/telemetry.response.dto';
 import { RedisService } from 'src/redis/redis.service';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
+import { SensorFunctionalityResponseDto } from './messages/listening/sensor-functionality.response.dto';
 
 @Injectable()
 export class DeviceListener {
@@ -63,7 +64,7 @@ export class DeviceListener {
 
   // Listen for MQTT discovery topic like: "sensors/+/discovery"
   @OnEvent('mqtt/message/discovery')
-  async handleDiscoveryEvent(topic: string, payload: DiscoveryResponseDto) {
+  async handleDiscoveryEvent(topic: string, payload: any) {
     if (!topic.endsWith('/discovery')) return;
 
     const validatedPayload = await this.transformAndValidate(
@@ -72,6 +73,18 @@ export class DeviceListener {
     );
 
     await this.deviceService.storeSensorInDatabase(validatedPayload);
+  }
+
+  @OnEvent('mqtt/message/assign')
+  async handleSensorAssignEvent(topic: string, payload: any) {
+    if (!topic.endsWith('/ack')) return;
+
+    const validatedPayload = await this.transformAndValidate(
+      SensorFunctionalityResponseDto,
+      payload,
+    );
+
+    await this.deviceService.handleAssignMessage(validatedPayload);
   }
 
   @OnEvent('mqtt/message/ack')
@@ -87,7 +100,7 @@ export class DeviceListener {
   }
 
   @OnEvent('mqtt/message/upgrade')
-  async handleUpgradeEvent(topic: string, payload: FwUpgradeResponseDto) {
+  async handleUpgradeEvent(topic: string, payload: any) {
     if (!topic.endsWith('/upgrade')) return;
     const validatedPayload = await this.transformAndValidate(
       FwUpgradeResponseDto,
@@ -97,7 +110,7 @@ export class DeviceListener {
   }
 
   @OnEvent('mqtt/message/heartbeat')
-  async handleHeartbeatEvent(topic: string, payload: HeartbeatDto) {
+  async handleHeartbeatEvent(topic: string, payload: any) {
     if (!topic.endsWith('/heartbeat')) return;
 
     const validatedPayload = await this.transformAndValidate(
@@ -108,7 +121,7 @@ export class DeviceListener {
   }
 
   @OnEvent('mqtt/message/reboot')
-  async handleRebootEvent(topic: string, payload: DeviceRebootResponseDto) {
+  async handleRebootEvent(topic: string, payload: any) {
     if (!topic.endsWith('/reboot')) return;
 
     const validatedPayload = await this.transformAndValidate(
@@ -119,7 +132,7 @@ export class DeviceListener {
   }
 
   @OnEvent('mqtt/message/telemetry')
-  async handleTelemetryEvent(topic: string, payload: TelemetryDto) {
+  async handleTelemetryEvent(topic: string, payload: any) {
     if (!topic.endsWith('/telemetry')) return;
 
     const validatedPayload = await this.transformAndValidate(
@@ -130,7 +143,7 @@ export class DeviceListener {
   }
 
   @OnEvent('mqtt/message/metrics')
-  async handleMetricsEvent(topic: string, payload: SensorMetricDto) {
+  async handleMetricsEvent(topic: string, payload: any) {
     if (!topic.endsWith('/metrics')) return;
 
     const validatedPayload = await this.transformAndValidate(
@@ -141,7 +154,7 @@ export class DeviceListener {
   }
 
   // @OnEvent('mqtt/message/alert')
-  // async handleAlertEvent(topic: string, payload: AlertDto) {
+  // async handleAlertEvent(topic: string, payload: any) {
   //   if (!topic.endsWith('/alert')) return;
 
   //   const validatedPayload = await this.transformAndValidate(AlertDto, payload);

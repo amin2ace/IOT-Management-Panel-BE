@@ -62,7 +62,7 @@ export class DeviceController {
 
   @Get(':id/live')
   getLiveStatus(@Param('id') id: string) {
-    return this.deviceService.getLiveStatus(id);
+    // return this.deviceService.getLiveStatus(id);
   }
 
   @Get(':id/history')
