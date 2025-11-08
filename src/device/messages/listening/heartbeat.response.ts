@@ -3,6 +3,7 @@ import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
+import { ResponseMessageCode } from '../enum/response-message-code.enum';
 
 export class HeartbeatDto {
   @ApiProperty({
@@ -23,7 +24,7 @@ export class HeartbeatDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: '206',
+    example: ResponseMessageCode.HEARTBEAT,
   })
   @IsNotEmpty()
   @IsNumber()
@@ -73,7 +74,7 @@ export class HeartbeatDto {
       {
         "userId": "user-001",
         "responseId": "fw-20251104-status",
-        "responseCode": 206,
+        "responseCode": 209,
         "requestId": "fw-20251104-0004",
         "deviceId": "sensor-67890",
         "connectionState": "CONNECTED",

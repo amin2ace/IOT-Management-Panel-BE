@@ -8,6 +8,7 @@ import {
 } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
+import { ResponseMessageCode } from '../enum/response-message-code.enum';
 
 export class AckResponseDto {
   @ApiProperty({
@@ -28,7 +29,7 @@ export class AckResponseDto {
 
   @ApiProperty({
     description: 'Numeric code representing the response type',
-    example: 201,
+    example: ResponseMessageCode.SENSOR_CONFIGURATION_ACKNOWLEDGEMENT,
   })
   @IsNumber()
   @IsNotEmpty()
@@ -81,7 +82,7 @@ export class AckResponseDto {
       {
         "userId": "user-001",
         "responseId": "res-12346",
-        "responseCode": 201,
+        "responseCode": 202,
         "requestId": "req-12345",
         "deviceId": "sensor-67890",
         "ackStatus": "ACCEPTED",

@@ -16,6 +16,7 @@ import { Type } from 'class-transformer';
 import { NetworkConfigDto } from '../../dto/network-config.dto';
 import { LoggingConfigDto } from '../../dto/logging-config.dto';
 import { OtaConfigDto } from '../../dto/ota-config.dto';
+import { RequestMessageCode } from '../enum/request-message-code.enum';
 
 export class SensorConfigRequestDto {
   @ApiProperty({
@@ -36,7 +37,7 @@ export class SensorConfigRequestDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: 101,
+    example: RequestMessageCode.SENSOR_CONFIGURATION,
   })
   @IsNumber()
   @IsNotEmpty()
@@ -162,7 +163,7 @@ export class SensorConfigRequestDto {
     {
       "userId": "user-001",
       "requestId": "req-12345",
-      "requestCode": 101,
+      "requestCode": 102,
       "sensorId": "sensor-67890",
       "timestamp": 1762379573804,
       "baseTopic": "greenHouse_jolfa/tomato-section/sensor/temperature",

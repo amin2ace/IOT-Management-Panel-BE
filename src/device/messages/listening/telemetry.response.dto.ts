@@ -12,6 +12,7 @@ import { Type } from 'class-transformer';
 import { TelemetryMetric } from 'src/config/enum/telemetry-metrics.enum';
 import { TelemetryMetaDto } from 'src/device/dto/telemetry-meta.dto';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
+import { ResponseMessageCode } from '../enum/response-message-code.enum';
 
 export class TelemetryResponseDto {
   @ApiProperty({
@@ -32,7 +33,7 @@ export class TelemetryResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: '206',
+    example: ResponseMessageCode.TELEMETRY_DATA,
   })
   @IsNotEmpty()
   @IsNumber()
@@ -90,7 +91,7 @@ export class TelemetryResponseDto {
     {
       "userId": "user-001",
       "responseId": "fw-20251104-status",
-      "responseCode": 206,
+      "responseCode": 211,
       "requestId": "fw-20251104-0004",
       "deviceId": "sensor-67890",
       "metric": "Temperature",

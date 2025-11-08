@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNumber, IsNotEmpty } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
+import { RequestMessageCode } from '../enum/request-message-code.enum';
 
 export class TelemetryRequestDto {
   @ApiProperty({
@@ -13,7 +14,7 @@ export class TelemetryRequestDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: 101,
+    example: RequestMessageCode.TELEMETRY_DATA,
   })
   @IsNotEmpty()
   @IsNumber()

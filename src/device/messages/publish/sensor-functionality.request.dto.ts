@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { SensorType } from 'src/config/enum/sensor-type.enum';
+import { RequestMessageCode } from '../enum/request-message-code.enum';
 
 export class SensorFunctionalityRequestDto {
   @ApiProperty({
@@ -29,7 +30,7 @@ export class SensorFunctionalityRequestDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: 101,
+    example: RequestMessageCode.ASSIGN_DEVICE_FUNCTION,
   })
   @IsNumber()
   @IsNotEmpty()

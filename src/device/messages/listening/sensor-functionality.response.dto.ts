@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
 import { SensorType } from 'src/config/enum/sensor-type.enum';
+import { ResponseMessageCode } from '../enum/response-message-code.enum';
 
 export class SensorFunctionalityResponseDto {
   @ApiProperty({
@@ -29,7 +30,7 @@ export class SensorFunctionalityResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: '206',
+    example: ResponseMessageCode.DEVICE_FUNCTION_ASSIGNED,
   })
   @IsNotEmpty()
   @IsNumber()
@@ -75,7 +76,7 @@ export class SensorFunctionalityResponseDto {
       {
         "userId": "user-001",
         "responseId": "fw-20251104-status",
-        "responseCode": 206,
+        "responseCode": 201,
         "requestId": "fw-20251104-0004",
         "deviceId": "sensor-67890",
         "functionality": ["TEMPERATURE"],

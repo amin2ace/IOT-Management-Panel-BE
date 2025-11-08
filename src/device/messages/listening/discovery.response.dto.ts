@@ -14,6 +14,7 @@ import { DeviceLocationDto } from '../../dto/device-location.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
+import { ResponseMessageCode } from '../enum/response-message-code.enum';
 
 export class AdditionalInfoDto {
   @ApiProperty()
@@ -46,7 +47,7 @@ export class DiscoveryResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: '206',
+    example: ResponseMessageCode.DISCOVERY_ANNOUNCEMENT,
   })
   @IsNotEmpty()
   @IsNumber()
@@ -131,7 +132,7 @@ export class DiscoveryResponseDto {
       {
         "userId": "user-001",
         "responseId": "fw-20251104-status",
-        "responseCode": 206,
+        "responseCode": 200,
         "requestId": "fw-20251104-0004",
         "deviceId": "sensor-67890",
         "timestamp": 1762379573804,
