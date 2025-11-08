@@ -25,10 +25,6 @@ export class Telemetry {
   @Column()
   readonly value: number;
 
-  // Telemetry status: OK, ERROR, etc.
-  @Column({ default: 'OK' })
-  readonly status: string;
-
   // The time of creating record
   @CreateDateColumn()
   readonly createdAt: Date;

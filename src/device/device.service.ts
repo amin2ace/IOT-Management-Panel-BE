@@ -26,7 +26,7 @@ import {
   SensorFunctionalityRequestDto,
   SensorMetricDto,
 } from './messages';
-import { TelemetryDto } from './messages/listening/telemetry.response.dto';
+import { TelemetryResponseDto } from './messages/listening/telemetry.response.dto';
 import { Telemetry } from './repository/sensor-telemetry.entity';
 import { TopicService } from 'src/topic/topic.service';
 import { ConfigService } from '@nestjs/config';
@@ -37,6 +37,7 @@ import { RedisService } from 'src/redis/redis.service';
 import { SensorFunctionalityResponseDto } from './messages/listening/sensor-functionality.response.dto';
 import { SensorType } from 'src/config/enum/sensor-type.enum';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
+import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
 
 @Injectable()
 export class DeviceService {
@@ -93,7 +94,7 @@ export class DeviceService {
 
     if (isBroadcast && !deviceId) {
       // cache the request id for validation with response id
-      this.setCache(discoverRequest);
+      await this.setCache(discoverRequest);
 
       // Then publish message
       this.mqttService.publish(
@@ -236,7 +237,7 @@ export class DeviceService {
         retain: false,
       });
 
-      this.setCache(provisionData);
+      await this.setCache(provisionData);
       this.logger.log(`Sensor ${deviceId} assignement requested`);
 
       return `Device with id of ${sensorId} provisioned as ${functionality}`;
@@ -391,23 +392,6 @@ export class DeviceService {
     };
   }
 
-  async handleSensorTelemetry(payload: TelemetryDto) {
-    const { deviceId, metric, value, meta, status } = payload;
-    const record = this.telmetryRepo.create({
-      deviceId,
-      metric,
-      value,
-      meta,
-      status,
-    });
-
-    this.telmetryRepo
-      .save(record)
-      .then(() => this.logger.log(`Device ${deviceId} telemetry saved`))
-      .catch((err) => this.logger.error(err));
-    throw new Error('Method not implemented.');
-  }
-
   async handleDeviceHeartbeat(payload: HeartbeatDto) {
     const { connectionState, deviceId, responseCode } = payload;
 
@@ -490,5 +474,73 @@ export class DeviceService {
 
   async handleAckMessage(payload: AckResponseDto) {
     throw new Error('Method not implemented.');
+  }
+
+  async getDeviceTelemetry(telemetry: TelemetryRequestDto) {
+    const { deviceId, requestCode } = telemetry;
+
+    if (requestCode !== RequestMessageCode.TELEMETRY_DATA) {
+      throw new BadRequestException('Invalid request');
+    }
+
+    const storedDevice = await this.sensorRepo.findOne({
+      where: {
+        sensorId: deviceId,
+        provisionState: ProvisionState.ASSIGNED,
+        isDeleted: false,
+      },
+    });
+
+    if (!storedDevice) {
+      throw new NotFoundException(`Device not found`);
+    }
+
+    const { topic } = await this.topicService.createTopic(
+      deviceId,
+      TopicUseCase.TELEMETRY,
+    );
+
+    try {
+      await this.setCache(TelemetryRequestDto);
+
+      await this.mqttService.publish(topic, JSON.stringify(telemetry), {
+        qos: 0,
+        retain: false,
+      });
+
+      this.logger.debug(`Telemetry requested from ${deviceId}`);
+      return `Telemetry requested from ${deviceId} `;
+    } catch (error) {
+      this.logger.error(`Telemetry request of ${deviceId} failed`);
+      throw new BadRequestException('Telemetry request failed');
+    }
+  }
+
+  async handleTelemetryResponse(payload: TelemetryResponseDto) {
+    const { responseCode, deviceId, metric, value, meta } = payload;
+
+    if (responseCode !== ResponseMessageCode.TELEMETRY_DATA) {
+      throw new BadRequestException(`Invalid response`);
+    }
+
+    try {
+      const record = this.telmetryRepo.create({
+        deviceId,
+        metric,
+        value,
+        meta,
+      });
+
+      this.telmetryRepo
+        .save(record)
+        .then(() => this.logger.log(`Device ${deviceId} telemetry saved`))
+        .catch((err) => this.logger.error(err));
+
+      this.logger.log(
+        `Telemetry:::${deviceId}:::${record.metric}:::${record.value}:::${record.meta}`,
+      );
+    } catch (error) {
+      throw new ForbiddenException(`Telemetry data for ${deviceId} mallformed`);
+    }
   }
 }

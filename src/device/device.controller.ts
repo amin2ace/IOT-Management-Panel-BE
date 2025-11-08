@@ -17,6 +17,7 @@ import {
   SensorConfigRequestDto,
   SensorFunctionalityRequestDto,
 } from './messages';
+import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
 
 @Controller('devices')
 export class DeviceController {
@@ -78,5 +79,10 @@ export class DeviceController {
   @Get(':id/status')
   getDeviceStatus(@Param('id') id: string) {
     return this.deviceService.getDeviceStatus(id);
+  }
+
+  @Get('/telemetry')
+  async getDeviceTelemetry(@Body() telemetry: TelemetryRequestDto) {
+    return await this.deviceService.getDeviceTelemetry(telemetry);
   }
 }

@@ -11,8 +11,9 @@ import {
 import { Type } from 'class-transformer';
 import { TelemetryMetric } from 'src/config/enum/telemetry-metrics.enum';
 import { TelemetryMetaDto } from 'src/device/dto/telemetry-meta.dto';
+import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 
-export class TelemetryDto {
+export class TelemetryResponseDto {
   @ApiProperty({
     description: 'Unique identifier of the user who initiated the request',
     example: 'user-001',
@@ -66,20 +67,11 @@ export class TelemetryDto {
   value: number;
 
   @ApiProperty({
-    description: 'Telemetry status',
-    example: 'OK',
-    required: false,
+    description: 'Time of the response in epoch milli second',
+    example: '1762379573804',
   })
-  @IsOptional()
-  @IsString()
-  status?: string;
-
-  @ApiProperty({
-    description: 'Record creation timestamp',
-    example: 1762379573804,
-  })
-  @IsNumber()
-  createdAt: number;
+  @IsValidTimestampMillis() // 5min behind, 30sec ahead
+  timestamp: number;
 
   @ApiProperty({
     description: 'Optional metadata',

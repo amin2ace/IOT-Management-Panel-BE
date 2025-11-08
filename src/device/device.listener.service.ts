@@ -9,7 +9,7 @@ import {
   HeartbeatDto,
   SensorMetricDto,
 } from './messages';
-import { TelemetryDto } from './messages/listening/telemetry.response.dto';
+import { TelemetryResponseDto } from './messages/listening/telemetry.response.dto';
 import { RedisService } from 'src/redis/redis.service';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
@@ -136,10 +136,10 @@ export class DeviceListener {
     if (!topic.endsWith('/telemetry')) return;
 
     const validatedPayload = await this.transformAndValidate(
-      TelemetryDto,
+      TelemetryResponseDto,
       payload,
     );
-    await this.deviceService.handleSensorTelemetry(validatedPayload);
+    await this.deviceService.handleTelemetryResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/metrics')
