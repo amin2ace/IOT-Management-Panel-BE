@@ -16,6 +16,7 @@ import { RolesGuard } from './users/guard/roles.guard';
 import { DeviceModule } from './device/device.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TopicModule } from './topic/topic.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { TopicModule } from './topic/topic.module';
     MqttGatewayModule,
     DeviceModule,
     TopicModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [

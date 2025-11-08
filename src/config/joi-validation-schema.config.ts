@@ -50,6 +50,12 @@ const configValidationSchema: joi.ObjectSchema = joi.object({
   MQTT_PASSWORD: joi.string().required(),
   MQTT_BROKER_URL: joi.string().required(),
   BASE_TOPIC: joi.string().required(),
+
+  // caching
+  REDIS_HOST: joi.string().required(),
+  REDIS_PORT: joi.number().required(),
+  REDIS_PASSWORD: joi.string().required(),
+  REDIS_DB: joi.number().required(),
 });
 
 export default configValidationSchema;
