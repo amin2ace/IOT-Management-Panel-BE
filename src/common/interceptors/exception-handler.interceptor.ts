@@ -54,8 +54,9 @@ export class ExceptionHandlerInterceptor implements NestInterceptor {
           LogContext.MQTT, // or LogContext.DEVICE / depending on your app module
           route,
           LogAction.RESPONSE,
-          new Error(`[${status}] ${message}`),
-          { ctxType, status },
+          `[${status}] ${message}`,
+          // new Error(`[${status}] ${message}`),
+          // { ctxType, status },
         );
 
         return throwError(() => error);

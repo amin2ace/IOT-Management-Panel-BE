@@ -22,7 +22,7 @@ export class FwUpgradeRequestDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'req-12345',
+    example: 'req-fu-41',
   })
   @IsString()
   @IsNotEmpty()
@@ -113,7 +113,7 @@ export class FwUpgradeRequestDto {
   Example:
     {
       "userId": "user-001",
-      "requestId": "req-12345",
+      "requestId": "req-fu-41",
       "requestCode": 104,
       "deviceId": "sensor-67890",
       "timestamp": 1762379573804,

@@ -69,7 +69,7 @@ export class AutoDiagnosticResponseDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'req-ad-852',
   })
   @IsNotEmpty()
   @IsString()
@@ -125,7 +125,7 @@ export class AutoDiagnosticResponseDto {
       "userId": "user-001",
       "responseId": "res-56789",
       "responseCode": 206,
-      "requestId": "req-12345",
+      "requestId": "req-ad-852",
       "deviceId": "sensor-67890",
       "timestamp": 1762379573804,
       "diagnosticLevel": "full",

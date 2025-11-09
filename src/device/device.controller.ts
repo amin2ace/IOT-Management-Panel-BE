@@ -29,12 +29,12 @@ export class DeviceController {
     return await this.deviceService.getSensors(query);
   }
 
-  @Get('discover-broadcast')
+  @Post('discover-broadcast')
   async discoverDevicesBroadcast(@Body() discoverRequest: DiscoveryRequestDto) {
     return await this.deviceService.discoverDevicesBroadcast(discoverRequest);
   }
 
-  @Get('discover-unicast')
+  @Post('discover-unicast')
   async discoverDeviceUnicast(@Body() discoverRequest: DiscoveryRequestDto) {
     return await this.deviceService.discoverDeviceUnicast(discoverRequest);
   }
@@ -44,7 +44,7 @@ export class DeviceController {
     return await this.deviceService.getUnassignedSensor();
   }
 
-  @Get('hardware-status')
+  @Post('hardware-status')
   async getHardwareStatus(@Body() statusRequest: HardwareStatusRequestDto) {
     return await this.deviceService.getHardwareStatus(statusRequest);
   }

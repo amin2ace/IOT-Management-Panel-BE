@@ -55,7 +55,7 @@ export class DiscoveryResponseDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'req-d-79',
   })
   @IsNotEmpty()
   @IsString()
@@ -133,13 +133,13 @@ export class DiscoveryResponseDto {
         "userId": "user-001",
         "responseId": "fw-20251104-status",
         "responseCode": 200,
-        "requestId": "fw-20251104-0004",
+        "requestId": "req-d-79",
         "deviceId": "sensor-67890",
         "timestamp": 1762379573804,
         "capabilities": ["temperature", "humidity", "pressure"],
         "deviceHardware": "ESP32-DevKitC",
         "topicPrefix": "sensors/lab01/temperature/sensor-67890",
-        "connectionState": "connected",
+        "connectionState": "online",
         "firmware": "v2.3.7",
         "mac": "00:1B:44:11:3A:B7",
         "ip": "192.168.1.45",

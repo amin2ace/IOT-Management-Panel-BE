@@ -75,7 +75,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
 
         // Create broadcast topic in repo
         await this.topicService.createTopic(
-          'MqttBroker',
+          'Mqtt_Broker',
           TopicUseCase.BROADCAST,
         );
 
@@ -146,7 +146,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  async subscribe(topic: string, deviceId: string): Promise<void> {
+  async subscribe(topic: string): Promise<void> {
     if (!this.isConnected) {
       throw new Error('MQTT client not connected');
     }
@@ -206,8 +206,9 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     const { qos, retain } = options;
 
     try {
-      await this.client.publishAsync(topic, payload, { qos, retain });
-      this.emitEvent('mqtt/events/publish/success', topic, payload);
+      await this.client.publish(topic, payload, { qos, retain });
+      await this.subscribe(topic);
+
       return {
         success: true,
         topic,
@@ -264,8 +265,11 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     payload: Buffer,
   ): Promise<{ event: string; parsedPayload: any }> {
     const parsedPayload = await JSON.parse(payload.toString());
-    if (topic?.endsWith('/discovery ')) {
-      return { event: 'mqtt/message/discovery', parsedPayload };
+    if (topic?.endsWith('/discovery')) {
+      return { event: '/discovery', parsedPayload };
+    }
+    if (topic?.endsWith('/assign')) {
+      return { event: '/assign', parsedPayload };
     }
     if (topic?.endsWith('/ack')) {
       return { event: 'mqtt/message/ack', parsedPayload };

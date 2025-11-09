@@ -41,7 +41,7 @@ export class TelemetryResponseDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'fw-t-43',
   })
   @IsNotEmpty()
   @IsString()
@@ -92,7 +92,7 @@ export class TelemetryResponseDto {
       "userId": "user-001",
       "responseId": "fw-20251104-status",
       "responseCode": 211,
-      "requestId": "fw-20251104-0004",
+      "requestId": "fw-t-43",
       "deviceId": "sensor-67890",
       "metric": "Temperature",
       "value": 24.5,

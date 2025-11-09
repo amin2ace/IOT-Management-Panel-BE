@@ -31,7 +31,7 @@ export class FwUpgradeResponseDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'req-fu-41',
   })
   @IsNotEmpty()
   @IsString()
@@ -74,7 +74,7 @@ export class FwUpgradeResponseDto {
       "userId": "user-001",
       "responseId": "fw-20251104-status",
       "responseCode": 204,
-      "requestId": "fw-20251104-0004",
+      "requestId": "req-fu-41",
       "deviceId": "sensor-67890",
       "timestamp": "1762379573804",
       "status": "IN_PROGRESS",

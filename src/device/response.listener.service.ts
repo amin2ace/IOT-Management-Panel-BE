@@ -15,12 +15,14 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { SensorFunctionalityResponseDto } from './messages/listening/sensor-functionality.response.dto';
 import { ResponseHandlerService } from './response.handler.service';
+import { TopicService } from 'src/topic/topic.service';
 
 @Injectable()
 export class ResponseListenerService {
   constructor(
     private readonly responseService: ResponseHandlerService,
     private readonly deviceService: DeviceService,
+    private readonly topicService: TopicService,
     private readonly redisCache: RedisService,
   ) {}
 
@@ -36,7 +38,7 @@ export class ResponseListenerService {
     const dtoInstance = plainToInstance(dtoClass, payload);
 
     const errors = await validate(dtoInstance as object);
-    const { requestId } = dtoInstance as any;
+    const { requestId, deviceId } = dtoInstance as any;
 
     if (errors.length > 0) {
       const errorString = errors
@@ -56,16 +58,23 @@ export class ResponseListenerService {
     }
 
     // 3: Check requested id validation
-    const { requestId: cachedRequestId } = cached;
+    const {
+      requestId: cachedRequestId,
+      deviceId: cachedDeviceId,
+      userId,
+    } = cached;
     if (cachedRequestId !== requestId) {
       this.logger.warn('Invalid request id in response payload');
     }
 
+    if (cachedDeviceId !== deviceId) {
+      this.logger.warn('Invalid device id in response payload');
+    }
     return dtoInstance;
   }
 
   // Listen for MQTT discovery topic like: "sensors/+/discovery"
-  @OnEvent('mqtt/message/discovery')
+  @OnEvent('/discovery')
   async handleDiscoveryEvent(topic: string, payload: any) {
     if (!topic.endsWith('/discovery')) return;
 
@@ -74,12 +83,12 @@ export class ResponseListenerService {
       payload,
     );
 
-    await this.deviceService.storeSensorInDatabase(validatedPayload);
+    await this.responseService.handleDiscoveryResponse(validatedPayload);
   }
 
-  @OnEvent('mqtt/message/assign')
+  @OnEvent('/assign')
   async handleSensorAssignEvent(topic: string, payload: any) {
-    if (!topic.endsWith('/ack')) return;
+    if (!topic.endsWith('/assign')) return;
 
     const validatedPayload = await this.transformAndValidate(
       SensorFunctionalityResponseDto,

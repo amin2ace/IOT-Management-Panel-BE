@@ -9,7 +9,7 @@ export enum TopicUseCase {
   REBOOT_COMMAND = 'reboot',
   DEVICE_BASE = 'base',
   DIAGNOSTICS = 'diagnose',
-  DISCOVERY = 'discover',
+  DISCOVERY = 'discovery',
   TELEMETRY = 'telemetry',
   HEARTBEAT = 'heartbeat',
   BROADCAST = 'broadcast',

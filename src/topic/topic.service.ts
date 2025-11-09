@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import MqttTopic from './repository/mqtt-topic.entity';
+import Topic from './repository/mqtt-topic.entity';
 import { Repository } from 'typeorm';
 import { TopicUseCase } from './enum/topic-usecase.enum';
 import { ConfigService } from '@nestjs/config';
@@ -15,17 +15,15 @@ import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 @Injectable()
 export class TopicService {
   constructor(
-    @InjectRepository(MqttTopic)
-    private readonly topicRepo: Repository<MqttTopic>,
+    @InjectRepository(Topic)
+    private readonly topicRepo: Repository<Topic>,
     private readonly config: ConfigService,
   ) {}
 
   private readonly logger = new Logger(TopicService.name, { timestamp: true });
+  public MQTT_BROADCAST_DISCOVERY = '';
 
-  async createTopic(
-    deviceId: string,
-    useCase: TopicUseCase,
-  ): Promise<MqttTopic> {
+  async createTopic(deviceId: string, useCase: TopicUseCase): Promise<Topic> {
     const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
 
     const brokerUrl = await this.config.getOrThrow<string>('MQTT_BROKER_URL');
@@ -58,7 +56,7 @@ export class TopicService {
     return `All topics for device ${deviceId} was created`;
   }
 
-  async createDeviceBaseTopic(deviceId: string): Promise<MqttTopic> {
+  async createDeviceBaseTopic(deviceId: string): Promise<Topic> {
     const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
 
     const deviceTopic = `${Base_Topic}/${deviceId}`;
@@ -74,7 +72,7 @@ export class TopicService {
     deviceId: string,
     topic: string,
     useCase: TopicUseCase,
-  ): Promise<MqttTopic> {
+  ): Promise<Topic> {
     const brokerUrl = await this.config.getOrThrow<string>('MQTT_BROKER_URL');
 
     const record = this.topicRepo.create({
@@ -95,8 +93,7 @@ export class TopicService {
       where: {
         useCase: TopicUseCase.BROADCAST,
         isActive: true,
-        topic: 'broadcast',
-        deviceId: 'MqttBroker',
+        deviceId: 'Mqtt_Broker',
       },
     });
 
@@ -104,14 +101,16 @@ export class TopicService {
       this.logger.error(
         `Topics:::${broadcastTopic}:::MqttBroker:::retrieve:::failed`,
       );
+      throw new NotFoundException('Broadcast topic not found');
     }
-    return `${Base_Topic}/${broadcastTopic}`;
+    this.MQTT_BROADCAST_DISCOVERY = broadcastTopic?.topic;
+    return broadcastTopic?.topic;
   }
 
   async getTopicByDeviceId(
     deviceId: string,
     useCase?: TopicUseCase,
-  ): Promise<MqttTopic> {
+  ): Promise<Topic> {
     const topic = await this.topicRepo.findOne({
       where: {
         deviceId,
@@ -129,7 +128,7 @@ export class TopicService {
     return topic;
   }
 
-  async getDeviceTopics(deviceId: string): Promise<MqttTopic[]> {
+  async getDeviceTopics(deviceId: string): Promise<Topic[]> {
     const topic = await this.topicRepo.find({
       where: {
         deviceId,
@@ -143,7 +142,7 @@ export class TopicService {
     return topic;
   }
 
-  async getTopicByName(topic: string): Promise<MqttTopic> {
+  async getTopicByName(topic: string): Promise<Topic> {
     const storedTopic = await this.topicRepo.findOne({
       where: {
         topic,
@@ -157,7 +156,7 @@ export class TopicService {
     return storedTopic;
   }
 
-  async getAllTopics(): Promise<MqttTopic[]> {
+  async getAllTopics(): Promise<Topic[]> {
     const topics = await this.topicRepo.find({
       where: {
         isActive: true,

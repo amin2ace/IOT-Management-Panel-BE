@@ -37,7 +37,7 @@ export class DiscoveryRequestDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'req-12345',
+    example: 'req-d-79',
   })
   @IsString()
   @IsNotEmpty()
@@ -74,7 +74,10 @@ export class DiscoveryRequestDto {
 
   @ApiProperty({
     description: 'Time of the request in epoch milli second',
-    example: '1762379573804',
+    example: {
+      subnet: '192.168.1.0/24',
+      hardware: ['ESP32', 'ESP8266'],
+    },
   })
   @ApiProperty()
   @IsOptional()
@@ -87,7 +90,7 @@ export class DiscoveryRequestDto {
   Example:
     {
       "userId": "user-001",
-      "requestId": "req-98765",
+      "requestId": "req-d-79",
       "requestCode": 100,
       "deviceId": "sensor-12345",
       "timestamp": 1762379573804,

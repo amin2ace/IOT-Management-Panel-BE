@@ -29,7 +29,7 @@ export class SensorConfigRequestDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'req-12345',
+    example: 'req-sc-86',
   })
   @IsString()
   @IsNotEmpty()
@@ -162,7 +162,7 @@ export class SensorConfigRequestDto {
   Example:
     {
       "userId": "user-001",
-      "requestId": "req-12345",
+      "requestId": "req-sc-86",
       "requestCode": 102,
       "sensorId": "sensor-67890",
       "timestamp": 1762379573804,

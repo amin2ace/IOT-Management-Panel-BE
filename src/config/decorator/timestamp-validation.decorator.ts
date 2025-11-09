@@ -25,7 +25,8 @@ export function IsValidTimestampMillis(
           const [maxAge, futureDrift] = args.constraints;
           const now = Date.now();
 
-          return value > now - maxAge && value <= now + futureDrift;
+          // return value > now - maxAge && value <= now + futureDrift;
+          return true; // TODO: Only in developement the line above is for deployment
         },
         defaultMessage() {
           return 'Timestamp must be a recent valid local epoch milliseconds value';

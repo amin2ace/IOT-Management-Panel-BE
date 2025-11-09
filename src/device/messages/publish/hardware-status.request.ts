@@ -22,7 +22,7 @@ export class HardwareStatusRequestDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'req-hs-35',
   })
   @IsNotEmpty()
   @IsString()
@@ -49,7 +49,7 @@ export class HardwareStatusRequestDto {
     {
       "userId": "user-001",
       "requestCode": 110,
-      "requestId": "fw-20251104-0004",
+      "requestId": "req-hs-35",
       "deviceId": "sensor-67890",
       "timestamp": 1762379573804
     }

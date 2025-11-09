@@ -8,6 +8,7 @@ import {
 import {
   AckResponseDto,
   DeviceRebootResponseDto,
+  DiscoveryResponseDto,
   FwUpgradeResponseDto,
   HardwareStatusResponseDto,
   HeartbeatDto,
@@ -29,6 +30,7 @@ import { RebootStatus } from 'src/config/enum/reboot-status.enum';
 import { Telemetry } from './repository/sensor-telemetry.entity';
 import { HardwareStatus } from './repository/hardware-status.entity';
 import { LogHandlerService } from 'src/log-handler/log-handler.service';
+import { TopicService } from 'src/topic/topic.service';
 
 @Injectable()
 export class ResponseHandlerService {
@@ -43,6 +45,7 @@ export class ResponseHandlerService {
     private readonly redisCache: RedisService,
     private readonly logger: LogHandlerService,
     private readonly deviceService: DeviceService,
+    private readonly topic: TopicService,
   ) {}
 
   private async deleteCache(dto: any) {
@@ -67,8 +70,54 @@ export class ResponseHandlerService {
     );
   }
 
-  async handleAssignResponse(provisionData: SensorFunctionalityResponseDto) {
-    const { responseCode, deviceId, functionality, status } = provisionData;
+  public async handleDiscoveryResponse(payload: DiscoveryResponseDto) {
+    const { deviceId } = payload;
+
+    const existingDevice = await this.sensorRepo.findOne({
+      where: { sensorId: deviceId },
+    });
+
+    // try {
+    if (existingDevice?.isDeleted) {
+      await this.sensorRepo.update(
+        { sensorId: deviceId },
+        { isDeleted: false },
+      );
+    }
+
+    if (!existingDevice) {
+      const { topic } = await this.topic.createDeviceBaseTopic(deviceId);
+
+      const deviceRecord = this.sensorRepo.create({
+        ...payload,
+        sensorId: deviceId,
+        provisionState: ProvisionState.DISCOVERED,
+        deviceBaseTopic: topic,
+        isActuator: false,
+        isDeleted: false,
+      });
+      await this.sensorRepo.save(deviceRecord);
+      await this.topic.createAllTopics(deviceId);
+    }
+
+    this.logger.success(
+      LogContext.DATABASE,
+      'StoreSensor',
+      LogAction.CREATE,
+      `Device added to database`,
+    );
+    // } catch (error) {
+    //   this.logger.fail(
+    //     LogContext.DATABASE,
+    //     'StoreSensor',
+    //     LogAction.CREATE,
+    //     `Saving device in database failed`,
+    //   );
+    // }
+  }
+
+  async handleAssignResponse(payload: SensorFunctionalityResponseDto) {
+    const { responseCode, deviceId, functionality, status } = payload;
 
     if (responseCode !== ResponseMessageCode.DEVICE_FUNCTION_ASSIGNED) {
       throw new ForbiddenException('Invalid Response');
@@ -77,13 +126,13 @@ export class ResponseHandlerService {
     await this.deviceService.validateSensorTypes(deviceId, functionality);
 
     if (status !== AckStatus.ACCEPTED) {
-      this.logger.fail(
-        LogContext.MESSAGE,
-        'AssignDeviceFunction',
-        LogAction.RESPONSE,
-        `Sensor ${deviceId} assignement failed`,
-      );
-      throw new BadRequestException('Sensor functionality assign failed');
+      // this.logger.fail(
+      //   LogContext.MESSAGE,
+      //   'AssignDeviceFunction',
+      //   LogAction.RESPONSE,
+      //   `Sensor ${deviceId} assignement failed`,
+      // );
+      throw new BadRequestException('Sensor functionality assign not accepted');
     }
 
     await this.sensorRepo.update(
@@ -96,7 +145,7 @@ export class ResponseHandlerService {
       },
     );
 
-    await this.deleteCache(SensorFunctionalityResponseDto);
+    await this.deleteCache(payload);
 
     this.logger.success(
       LogContext.MESSAGE,
@@ -125,7 +174,7 @@ export class ResponseHandlerService {
         },
       );
 
-      await this.deleteCache(FwUpgradeResponseDto);
+      await this.deleteCache(payload);
 
       this.logger.success(
         LogContext.MESSAGE,
@@ -170,7 +219,7 @@ export class ResponseHandlerService {
       },
     );
 
-    await this.deleteCache(HeartbeatDto);
+    await this.deleteCache(payload);
 
     this.logger.success(
       LogContext.MESSAGE,
@@ -200,7 +249,7 @@ export class ResponseHandlerService {
         lastReboot: new Date(timestamp),
       },
     );
-    await this.deleteCache(DeviceRebootResponseDto);
+    await this.deleteCache(payload);
 
     this.logger.success(
       LogContext.MESSAGE,
@@ -235,7 +284,7 @@ export class ResponseHandlerService {
       .then(() => this.logger.log(`Device ${deviceId} telemetry saved`))
       .catch((err) => this.logger.error(err));
 
-    await this.deleteCache(TelemetryResponseDto);
+    await this.deleteCache(payload);
 
     this.logger.success(
       LogContext.TELEMETRY,
@@ -275,7 +324,7 @@ export class ResponseHandlerService {
 
     await this.hardwareStatusRepo.save(statusRecord);
 
-    await this.deleteCache(HardwareStatusResponseDto);
+    await this.deleteCache(payload);
 
     this.logger.success(
       LogContext.HARDWARE,

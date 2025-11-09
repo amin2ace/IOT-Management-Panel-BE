@@ -38,7 +38,7 @@ export class SensorFunctionalityResponseDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'req-sf-39',
   })
   @IsNotEmpty()
   @IsString()
@@ -77,7 +77,7 @@ export class SensorFunctionalityResponseDto {
         "userId": "user-001",
         "responseId": "fw-20251104-status",
         "responseCode": 201,
-        "requestId": "fw-20251104-0004",
+        "requestId": "req-sf-39",
         "deviceId": "sensor-67890",
         "functionality": ["TEMPERATURE"],
         "status": "ACCEPTED"

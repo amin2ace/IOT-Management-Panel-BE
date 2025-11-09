@@ -37,7 +37,7 @@ export class DeviceRebootResponseDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'req-r-61',
   })
   @IsNotEmpty()
   @IsString()
@@ -82,7 +82,7 @@ export class DeviceRebootResponseDto {
       "userId": "user-001",
       "responseId": "fw-20251104-status",
       "responseCode": 205,
-      "requestId": "fw-20251104-0004",
+      "requestId": "req-r-61",
       "deviceId": "sensor-67890",
       "timestamp": "1762379573804",
       "status": "SUCCESS",

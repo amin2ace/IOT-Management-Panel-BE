@@ -9,7 +9,7 @@ import {
 import { TopicUseCase } from '../enum/topic-usecase.enum';
 
 @Entity()
-export class MqttTopic {
+export class Topic {
   @ObjectIdColumn()
   _id: ObjectId;
 
@@ -35,4 +35,4 @@ export class MqttTopic {
   updatedAt: Date;
 }
 
-export default MqttTopic;
+export default Topic;

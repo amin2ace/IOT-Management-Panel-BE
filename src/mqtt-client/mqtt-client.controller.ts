@@ -31,10 +31,7 @@ export class MqttManagementController {
   @ApiOperation({ summary: 'Subscribe to MQTT topic' })
   @ApiResponse({ status: 201, description: 'Subscribed to topic successfully' })
   async subscribe(@Body() subscribeDto: MqttSubscribeDto) {
-    return this.mqttClientService.subscribe(
-      subscribeDto.topic,
-      subscribeDto.deviceId,
-    );
+    return this.mqttClientService.subscribe(subscribeDto.topic);
   }
 
   @Delete('unsubscribe/:topic')
