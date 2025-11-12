@@ -145,10 +145,9 @@ export class DiscoveryResponseDto {
         "ip": "192.168.1.45",
         "uptime": 1762379500000,
         "location": {
-          "latitude": 35.6895,
-          "longitude": 51.389,
-          "altitude": 1200,
-          "description": "Main laboratory - floor 2"
+          "site": "main",
+          "floor": 1,
+          "unit": "tomato"
         },
         "protocol": "MQTT",
         "broker": "mqtt://broker.lab.local",
