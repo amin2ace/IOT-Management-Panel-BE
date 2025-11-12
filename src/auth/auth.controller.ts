@@ -50,7 +50,7 @@ export class AuthController {
       refreshToken,
     );
 
-    return res.send({
+    return res.status(200).send({
       accessToken,
       refreshToken: refreshToken.split('.')[0],
     });

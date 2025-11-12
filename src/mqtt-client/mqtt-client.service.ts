@@ -74,10 +74,11 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
         this.logger.log(`✅ Connected to MQTT broker: ${brokerUrl}`);
 
         // Create broadcast topic in repo
-        await this.topicService.createTopic(
+        const broadcastTopic = await this.topicService.createTopic(
           'Mqtt_Broker',
           TopicUseCase.BROADCAST,
         );
+        await this.subscribe(broadcastTopic.topic);
 
         this.eventEmitter.emit('mqtt/events/connected', {
           brokerUrl,
@@ -161,6 +162,9 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
           return;
         }
 
+        this.topicService.updateTopic(topic, {
+          isSubscribed: true,
+        } as UpdateTopicDto);
         this.logger.log(`✅ Subscribed to ${topic}`);
         resolve();
       });
@@ -175,7 +179,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.unsubscribe(topic);
       this.topicService.updateTopic(topic, {
-        isActive: false,
+        isSubscribed: false,
       } as UpdateTopicDto);
 
       this.logger.log(`Unsubscribed from topic: ${topic}`);
@@ -207,7 +211,6 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
 
     try {
       await this.client.publish(topic, payload, { qos, retain });
-      await this.subscribe(topic);
 
       return {
         success: true,
@@ -225,7 +228,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     return {
       connected: this.isConnected,
       brokerUrl: this.getBrokerUrl(),
-      subscribedTopics: await this.topicService.getAllTopics(),
+      subscribedTopics: await this.topicService.getAllSubscribedTopics(),
       lastActivity: this.getLastConnectionActivity(),
       timestamp: new Date(),
     };
@@ -244,7 +247,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
       // const topics = await this.topicService.getAllTopics();
       // topics.forEach((topic) =>
       //   this.topicService.updateTopic(topic, {
-      //     isActive: false,
+      //     isSubscribed: false,
       //   } as UpdateTopicDto),
       // );
       await this.onModuleDestroy();

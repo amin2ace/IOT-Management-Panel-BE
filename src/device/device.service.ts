@@ -43,22 +43,16 @@ export class DeviceService {
   async getSensors(query: QueryDeviceDto): Promise<Sensor[]> {
     const { deviceId, provisionState, functionality } = query;
 
-    // Build dynamic query
-    const qb = this.sensorRepo.createQueryBuilder('device');
+    // Build dynamic filter object Mongo db doesn't support query builder
+    const filter: any = {};
 
-    if (provisionState) {
-      qb.andWhere('device.provisionState = :provisionState', {
-        provisionState,
-      });
-    }
-    if (functionality) {
-      qb.andWhere('device.functionality = :functionality', { functionality });
-    }
-    if (deviceId) {
-      qb.andWhere('device.deviceId = :deviceId', { deviceId });
-    }
+    if (deviceId) filter.deviceId = deviceId;
+    if (provisionState) filter.provisionState = provisionState;
+    if (functionality) filter.functionality = functionality;
 
-    return await qb.getMany();
+    return await this.sensorRepo.find({
+      where: filter,
+    });
   }
 
   private async setCache(dto: any) {
@@ -97,6 +91,8 @@ export class DeviceService {
         qos: 0,
         retain: false,
       });
+
+      await this.mqttService.subscribe(topic);
     }
 
     this.logger.success(
@@ -117,7 +113,7 @@ export class DeviceService {
     if (deviceId && !isBroadcast) {
       await this.setCache(discoverRequest);
 
-      const sensorTopic = await this.topicService.getTopicByDeviceId(
+      const sensorTopic = await this.topicService.getDeviceTopicsByUseCase(
         deviceId,
         TopicUseCase.DISCOVERY,
       );
@@ -139,6 +135,7 @@ export class DeviceService {
         JSON.stringify(discoverRequest),
         { qos: 0, retain: false },
       );
+      await this.mqttService.subscribe(sensorTopic.topic);
     }
     this.logger.success(
       LogContext.MESSAGE,
@@ -217,6 +214,7 @@ export class DeviceService {
         qos: 1,
         retain: false,
       });
+
       this.logger.success(
         LogContext.MESSAGE,
         'HardwareStatus',
@@ -243,7 +241,7 @@ export class DeviceService {
       throw new BadRequestException('Invalid Request');
     }
 
-    const { topic } = await this.topicService.createTopic(
+    const { topic } = await this.topicService.getDeviceTopicsByUseCase(
       deviceId,
       TopicUseCase.ASSIGN_DEVICE_FUNCTION,
     );
@@ -251,19 +249,23 @@ export class DeviceService {
     // try {
     await this.validateSensorTypes(deviceId, functionality);
 
+    await this.setCache(provisionData);
+
     this.mqttService.publish(topic, JSON.stringify(provisionData), {
       qos: 1,
       retain: false,
     });
 
-    await this.setCache(provisionData);
+    this.logger.log(`Sensor ${deviceId} assignement requested`, {
+      context: 'AssignDeviceFunction',
+    });
 
-    this.logger.success(
-      LogContext.MESSAGE,
-      'AssignDeviceFunction',
-      LogAction.REQUEST,
-      `Sensor ${deviceId} assignement requestede`,
-    );
+    // this.logger.success(
+    //   LogContext.MESSAGE,
+    //   'AssignDeviceFunction',
+    //   LogAction.REQUEST,
+    //   `Sensor ${deviceId} assignement requested`,
+    // );
 
     return `Device with id of ${deviceId} provisioned as ${functionality}`;
     // } catch (error) {
@@ -338,19 +340,15 @@ export class DeviceService {
       throw new NotFoundException(`Device with id ${sensorId} not found`);
     }
 
-    const { topic: publishTopic } = await this.topicService.createTopic(
+    const { topic } = await this.topicService.getDeviceTopicsByUseCase(
       sensorId,
       TopicUseCase.SENSOR_CONFIGURATION,
     );
 
-    // const ackTopic = `${publishTopic}/ack`;
-
-    await this.mqttService.publish(publishTopic, JSON.stringify(configData), {
+    await this.mqttService.publish(topic, JSON.stringify(configData), {
       qos: 1,
       retain: false,
     });
-
-    // await this.mqttService.subscribe(ackTopic, sensorId);
   }
 
   getDeviceHistory(id: string) {
@@ -399,7 +397,7 @@ export class DeviceService {
       throw new NotFoundException(`Device not found`);
     }
 
-    const { topic } = await this.topicService.createTopic(
+    const { topic } = await this.topicService.getDeviceTopicsByUseCase(
       deviceId,
       TopicUseCase.TELEMETRY,
     );

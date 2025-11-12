@@ -16,6 +16,7 @@ import { validate } from 'class-validator';
 import { SensorFunctionalityResponseDto } from './messages/listening/sensor-functionality.response.dto';
 import { ResponseHandlerService } from './response.handler.service';
 import { TopicService } from 'src/topic/topic.service';
+import { LogHandlerService } from 'src/log-handler/log-handler.service';
 
 @Injectable()
 export class ResponseListenerService {
@@ -24,11 +25,8 @@ export class ResponseListenerService {
     private readonly deviceService: DeviceService,
     private readonly topicService: TopicService,
     private readonly redisCache: RedisService,
+    private readonly logger: LogHandlerService,
   ) {}
-
-  private readonly logger = new Logger(ResponseListenerService.name, {
-    timestamp: true,
-  });
 
   async transformAndValidate<T>(
     dtoClass: new () => T,
@@ -53,7 +51,7 @@ export class ResponseListenerService {
     // 2: Check Redis cache for pending request
     const cached = await this.redisCache.get(`pending:${requestId}`);
     if (!cached) {
-      this.logger.warn(`No pending request found for requestId=${requestId}`);
+      this.logger.log(`No pending request found for requestId=${requestId}`);
       throw new BadRequestException('Invalid request id in payload');
     }
 
@@ -64,11 +62,11 @@ export class ResponseListenerService {
       userId,
     } = cached;
     if (cachedRequestId !== requestId) {
-      this.logger.warn('Invalid request id in response payload');
+      this.logger.log('Invalid request id in response payload');
     }
 
     if (cachedDeviceId !== deviceId) {
-      this.logger.warn('Invalid device id in response payload');
+      this.logger.log('Invalid device id in response payload');
     }
     return dtoInstance;
   }
@@ -76,7 +74,7 @@ export class ResponseListenerService {
   // Listen for MQTT discovery topic like: "sensors/+/discovery"
   @OnEvent('/discovery')
   async handleDiscoveryEvent(topic: string, payload: any) {
-    if (!topic.endsWith('/discovery')) return;
+    if (!topic.endsWith('/discovery') && !payload?.responseId) return;
 
     const validatedPayload = await this.transformAndValidate(
       DiscoveryResponseDto,
@@ -88,7 +86,7 @@ export class ResponseListenerService {
 
   @OnEvent('/assign')
   async handleSensorAssignEvent(topic: string, payload: any) {
-    if (!topic.endsWith('/assign')) return;
+    if (!topic.endsWith('/assign') || !payload?.responseId) return;
 
     const validatedPayload = await this.transformAndValidate(
       SensorFunctionalityResponseDto,
@@ -100,7 +98,7 @@ export class ResponseListenerService {
 
   @OnEvent('mqtt/message/ack')
   async handleAckEvent(topic: string, payload: AckResponseDto) {
-    if (!topic.endsWith('/ack')) return;
+    if (!topic.endsWith('/ack') && !payload?.responseId) return;
 
     const validatedPayload = await this.transformAndValidate(
       AckResponseDto,
@@ -112,7 +110,7 @@ export class ResponseListenerService {
 
   @OnEvent('mqtt/message/upgrade')
   async handleUpgradeEvent(topic: string, payload: any) {
-    if (!topic.endsWith('/upgrade')) return;
+    if (!topic.endsWith('/upgrade') && !payload?.responseId) return;
     const validatedPayload = await this.transformAndValidate(
       FwUpgradeResponseDto,
       payload,
@@ -122,7 +120,7 @@ export class ResponseListenerService {
 
   @OnEvent('mqtt/message/heartbeat')
   async handleHeartbeatEvent(topic: string, payload: any) {
-    if (!topic.endsWith('/heartbeat')) return;
+    if (!topic.endsWith('/heartbeat') && !payload?.responseId) return;
 
     const validatedPayload = await this.transformAndValidate(
       HeartbeatDto,
@@ -133,7 +131,7 @@ export class ResponseListenerService {
 
   @OnEvent('mqtt/message/reboot')
   async handleRebootEvent(topic: string, payload: any) {
-    if (!topic.endsWith('/reboot')) return;
+    if (!topic.endsWith('/reboot') && !payload?.responseId) return;
 
     const validatedPayload = await this.transformAndValidate(
       DeviceRebootResponseDto,
@@ -144,7 +142,7 @@ export class ResponseListenerService {
 
   @OnEvent('mqtt/message/telemetry')
   async handleTelemetryEvent(topic: string, payload: any) {
-    if (!topic.endsWith('/telemetry')) return;
+    if (!topic.endsWith('/telemetry') && !payload?.responseId) return;
 
     const validatedPayload = await this.transformAndValidate(
       TelemetryResponseDto,
@@ -155,7 +153,7 @@ export class ResponseListenerService {
 
   @OnEvent('mqtt/message/hardware-status')
   async handleMetricsEvent(topic: string, payload: any) {
-    if (!topic.endsWith('/hardware_status')) return;
+    if (!topic.endsWith('/hardware_status') && !payload?.responseId) return;
 
     const validatedPayload = await this.transformAndValidate(
       HardwareStatusResponseDto,
@@ -166,7 +164,7 @@ export class ResponseListenerService {
 
   // @OnEvent('mqtt/message/alert')
   // async handleAlertEvent(topic: string, payload: any) {
-  //   if (!topic.endsWith('/alert')) return;
+  //   if (!topic.endsWith('/alert') && !payload?.responseId) return;
 
   //   const validatedPayload = await this.transformAndValidate(AlertDto, payload);
 

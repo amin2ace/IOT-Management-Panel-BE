@@ -34,7 +34,6 @@ export class TopicService {
       where: {
         brokerUrl,
         topic: deviceTopic,
-        isActive: true,
         deviceId,
       },
     });
@@ -80,7 +79,6 @@ export class TopicService {
       deviceId,
       topic,
       useCase,
-      isActive: true,
     });
 
     await this.topicRepo.save(record);
@@ -88,11 +86,10 @@ export class TopicService {
   }
 
   async getBroadcastTopic(): Promise<string> {
-    const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
     const broadcastTopic = await this.topicRepo.findOne({
       where: {
         useCase: TopicUseCase.BROADCAST,
-        isActive: true,
+        isSubscribed: true,
         deviceId: 'Mqtt_Broker',
       },
     });
@@ -104,12 +101,12 @@ export class TopicService {
       throw new NotFoundException('Broadcast topic not found');
     }
     this.MQTT_BROADCAST_DISCOVERY = broadcastTopic?.topic;
-    return broadcastTopic?.topic;
+    return broadcastTopic.topic;
   }
 
-  async getTopicByDeviceId(
+  async getDeviceTopicsByUseCase(
     deviceId: string,
-    useCase?: TopicUseCase,
+    useCase: TopicUseCase,
   ): Promise<Topic> {
     const topic = await this.topicRepo.findOne({
       where: {
@@ -124,11 +121,10 @@ export class TopicService {
       );
       throw new NotFoundException('Topic not found');
     }
-
     return topic;
   }
 
-  async getDeviceTopics(deviceId: string): Promise<Topic[]> {
+  async getDeviceTopicsByDeviceId(deviceId: string): Promise<Topic[]> {
     const topic = await this.topicRepo.find({
       where: {
         deviceId,
@@ -156,10 +152,10 @@ export class TopicService {
     return storedTopic;
   }
 
-  async getAllTopics(): Promise<Topic[]> {
+  async getAllSubscribedTopics(): Promise<Topic[]> {
     const topics = await this.topicRepo.find({
       where: {
-        isActive: true,
+        isSubscribed: true,
       },
     });
 

@@ -26,7 +26,7 @@ export class Topic {
   useCase: TopicUseCase;
 
   @Column({ type: 'boolean', default: false })
-  isActive: boolean;
+  isSubscribed: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

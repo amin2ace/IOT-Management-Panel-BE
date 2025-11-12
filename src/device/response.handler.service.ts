@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -31,6 +32,9 @@ import { Telemetry } from './repository/sensor-telemetry.entity';
 import { HardwareStatus } from './repository/hardware-status.entity';
 import { LogHandlerService } from 'src/log-handler/log-handler.service';
 import { TopicService } from 'src/topic/topic.service';
+import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
+import { ConfigService } from '@nestjs/config';
+import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 
 @Injectable()
 export class ResponseHandlerService {
@@ -42,9 +46,11 @@ export class ResponseHandlerService {
     @InjectRepository(Telemetry)
     private readonly telemetryRepo: Repository<Telemetry>,
 
+    private readonly deviceService: DeviceService,
+    private readonly mqttClient: MqttClientService,
     private readonly redisCache: RedisService,
     private readonly logger: LogHandlerService,
-    private readonly deviceService: DeviceService,
+    private readonly config: ConfigService,
     private readonly topic: TopicService,
   ) {}
 
@@ -52,25 +58,21 @@ export class ResponseHandlerService {
     const { requestId } = dto;
 
     if (!requestId) {
-      this.logger.fail(
-        LogContext.CACHE,
-        'CacheDelete',
-        LogAction.DELETE,
-        'Request id required for deleting cache',
-      );
+      this.logger.error('Request id required for deleting cache', {
+        context: 'Cache Delete',
+      });
       return;
     }
 
     await this.redisCache.del(`pending:${requestId}`);
-    this.logger.success(
-      LogContext.CACHE,
-      'CacheDelete',
-      LogAction.DELETE,
-      `Cache deleted for requestId=${requestId}`,
-    );
+    this.logger.log('Cache deleted successfully', {
+      context: 'Cache Delete',
+    });
   }
 
   public async handleDiscoveryResponse(payload: DiscoveryResponseDto) {
+    const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
+
     const { deviceId } = payload;
 
     const existingDevice = await this.sensorRepo.findOne({
@@ -97,15 +99,17 @@ export class ResponseHandlerService {
         isDeleted: false,
       });
       await this.sensorRepo.save(deviceRecord);
-      await this.topic.createAllTopics(deviceId);
+
+      // Create and subscribe to all device's topics
+      for (const useCase of Object.values(TopicUseCase)) {
+        const { topic } = await this.topic.createTopic(deviceId, useCase);
+        await this.mqttClient.subscribe(topic);
+      }
+      await this.mqttClient.subscribe(topic);
     }
 
-    this.logger.success(
-      LogContext.DATABASE,
-      'StoreSensor',
-      LogAction.CREATE,
-      `Device added to database`,
-    );
+    await this.deleteCache(payload);
+    this.logger.log(`Device added to database`, { context: 'Add to database' });
     // } catch (error) {
     //   this.logger.fail(
     //     LogContext.DATABASE,
@@ -123,8 +127,6 @@ export class ResponseHandlerService {
       throw new ForbiddenException('Invalid Response');
     }
 
-    await this.deviceService.validateSensorTypes(deviceId, functionality);
-
     if (status !== AckStatus.ACCEPTED) {
       // this.logger.fail(
       //   LogContext.MESSAGE,
@@ -134,6 +136,8 @@ export class ResponseHandlerService {
       // );
       throw new BadRequestException('Sensor functionality assign not accepted');
     }
+
+    await this.deviceService.validateSensorTypes(deviceId, functionality);
 
     await this.sensorRepo.update(
       {
@@ -147,12 +151,9 @@ export class ResponseHandlerService {
 
     await this.deleteCache(payload);
 
-    this.logger.success(
-      LogContext.MESSAGE,
-      'AssignDeviceFunction',
-      LogAction.RESPONSE,
-      `Sensor ${deviceId} assigned to ${functionality}`,
-    );
+    this.logger.log(`Sensor ${deviceId} assigned to ${functionality}`, {
+      context: 'AssignDeviceFunction',
+    });
   }
 
   async handleUpgradeResponse(payload: FwUpgradeResponseDto) {
@@ -176,19 +177,28 @@ export class ResponseHandlerService {
 
       await this.deleteCache(payload);
 
-      this.logger.success(
-        LogContext.MESSAGE,
-        'FirmwareUpgrade',
-        LogAction.RESPONSE,
-        `Sensor ${deviceId} upgraded to successfully`,
-      );
+      this.logger.log(`Sensor ${deviceId} upgraded to successfully`, {
+        context: 'FirmwareUpgrade',
+      });
+
+      // this.logger.success(
+      //   LogContext.MESSAGE,
+      //   'FirmwareUpgrade',
+      //   LogAction.RESPONSE,
+      //   `Sensor ${deviceId} upgraded to successfully`,
+      // );
     }
-    this.logger.fail(
-      LogContext.MESSAGE,
-      'FirmwareUpgrade',
-      LogAction.RESPONSE,
-      `Sensor ${deviceId} upgrade failed`,
-    );
+
+    this.logger.log(`Sensor ${deviceId} upgrade failed`, {
+      context: 'FirmwareUpgrade',
+    });
+
+    // this.logger.fail(
+    //   LogContext.MESSAGE,
+    //   'FirmwareUpgrade',
+    //   LogAction.RESPONSE,
+    //   `Sensor ${deviceId} upgrade failed`,
+    // );
   }
 
   async handleDeviceHeartbeat(payload: HeartbeatDto) {
@@ -203,12 +213,16 @@ export class ResponseHandlerService {
     });
 
     if (!sensor) {
-      this.logger.fail(
-        LogContext.MESSAGE,
-        'DeviceHeartbeat',
-        LogAction.RESPONSE,
-        `Sensor ${deviceId} heartbeat failed`,
-      );
+      this.logger.log(`Sensor ${deviceId} heartbeat failed`, {
+        context: 'DeviceHeartbeat',
+      });
+
+      // this.logger.fail(
+      //   LogContext.MESSAGE,
+      //   'DeviceHeartbeat',
+      //   LogAction.RESPONSE,
+      //   `Sensor ${deviceId} heartbeat failed`,
+      // );
       throw new ForbiddenException('Device not found');
     }
 
@@ -221,12 +235,16 @@ export class ResponseHandlerService {
 
     await this.deleteCache(payload);
 
-    this.logger.success(
-      LogContext.MESSAGE,
-      'DeviceHeartbeat',
-      LogAction.RESPONSE,
-      `Sensor ${deviceId} heartbeat received`,
-    );
+    this.logger.log(`Sensor ${deviceId} heartbeat received`, {
+      context: 'DeviceHeartbeat',
+    });
+
+    // this.logger.success(
+    //   LogContext.MESSAGE,
+    //   'DeviceHeartbeat',
+    //   LogAction.RESPONSE,
+    //   `Sensor ${deviceId} heartbeat received`,
+    // );
   }
 
   async handleRebootResponse(payload: DeviceRebootResponseDto) {
@@ -235,12 +253,12 @@ export class ResponseHandlerService {
     if (responseCode !== ResponseMessageCode.REBOOT_CONFIRMATION) return;
 
     if (status !== RebootStatus.SUCCESS) {
-      this.logger.fail(
-        LogContext.MESSAGE,
-        'HardwareReboot',
-        LogAction.RESPONSE,
-        message ? message : `Sensor ${deviceId} reboot failed`,
-      );
+      // this.logger.fail(
+      //   LogContext.MESSAGE,
+      //   'HardwareReboot',
+      //   LogAction.RESPONSE,
+      //   message ? message : `Sensor ${deviceId} reboot failed`,
+      // );
     }
 
     await this.sensorRepo.update(
@@ -251,24 +269,24 @@ export class ResponseHandlerService {
     );
     await this.deleteCache(payload);
 
-    this.logger.success(
-      LogContext.MESSAGE,
-      'HardwareReboot',
-      LogAction.RESPONSE,
-      `Sensor ${deviceId} rebooted successfully`,
-    );
+    // this.logger.success(
+    //   LogContext.MESSAGE,
+    //   'HardwareReboot',
+    //   LogAction.RESPONSE,
+    //   `Sensor ${deviceId} rebooted successfully`,
+    // );
   }
 
   async handleTelemetryResponse(payload: TelemetryResponseDto) {
     const { responseCode, deviceId, metric, value, meta } = payload;
 
     if (responseCode !== ResponseMessageCode.TELEMETRY_DATA) {
-      this.logger.fail(
-        LogContext.TELEMETRY,
-        'DeviceTelemetry',
-        LogAction.RESPONSE,
-        `Sensor ${deviceId} telemtry failed`,
-      );
+      // this.logger.fail(
+      //   LogContext.TELEMETRY,
+      //   'DeviceTelemetry',
+      //   LogAction.RESPONSE,
+      //   `Sensor ${deviceId} telemtry failed`,
+      // );
       throw new BadRequestException(`Invalid response`);
     }
 
@@ -286,24 +304,24 @@ export class ResponseHandlerService {
 
     await this.deleteCache(payload);
 
-    this.logger.success(
-      LogContext.TELEMETRY,
-      'DeviceTelemetry',
-      LogAction.RESPONSE,
-      `Telemetry:::${deviceId}:::${record.metric}:::${record.value}:::${record.meta}`,
-    );
+    // this.logger.success(
+    //   LogContext.TELEMETRY,
+    //   'DeviceTelemetry',
+    //   LogAction.RESPONSE,
+    //   `Telemetry:::${deviceId}:::${record.metric}:::${record.value}:::${record.meta}`,
+    // );
   }
 
   async handleHardwareStatus(payload: HardwareStatusResponseDto) {
     const { responseCode, requestId, ...statusData } = payload;
 
     if (responseCode !== ResponseMessageCode.HARDWARE_METRICS) {
-      this.logger.fail(
-        LogContext.HARDWARE,
-        'HardwareStatus',
-        LogAction.RESPONSE,
-        `Hardware status from ${statusData.deviceId} failed`,
-      );
+      // this.logger.fail(
+      //   LogContext.HARDWARE,
+      //   'HardwareStatus',
+      //   LogAction.RESPONSE,
+      //   `Hardware status from ${statusData.deviceId} failed`,
+      // );
       throw new UnauthorizedException('Invalid response');
     }
 
@@ -326,12 +344,12 @@ export class ResponseHandlerService {
 
     await this.deleteCache(payload);
 
-    this.logger.success(
-      LogContext.HARDWARE,
-      'HardwareStatus',
-      LogAction.RESPONSE,
-      `Hardware status from ${statusData.deviceId} retrieved`,
-    );
+    // this.logger.success(
+    //   LogContext.HARDWARE,
+    //   'HardwareStatus',
+    //   LogAction.RESPONSE,
+    //   `Hardware status from ${statusData.deviceId} retrieved`,
+    // );
   }
 
   async handleAckMessage(payload: AckResponseDto) {

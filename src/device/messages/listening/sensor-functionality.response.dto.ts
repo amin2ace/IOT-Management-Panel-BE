@@ -80,7 +80,7 @@ export class SensorFunctionalityResponseDto {
         "requestId": "req-sf-39",
         "deviceId": "sensor-67890",
         "functionality": ["TEMPERATURE"],
-        "status": "ACCEPTED"
+        "status": "accepted"
       }
 
  */
