@@ -53,7 +53,7 @@ export class DeviceController {
   async provisionDevice(
     @Body() body: SensorFunctionalityRequestDto,
   ): Promise<string> {
-    return await this.deviceService.provisionDevice(body);
+    return await this.deviceService.AssignDeviceFunction(body);
   }
 
   @Delete(':id')

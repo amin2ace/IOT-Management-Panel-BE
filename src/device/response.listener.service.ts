@@ -72,7 +72,7 @@ export class ResponseListenerService {
   }
 
   // Listen for MQTT discovery topic like: "sensors/+/discovery"
-  @OnEvent('/discovery')
+  @OnEvent('mqtt/message/discovery')
   async handleDiscoveryEvent(topic: string, payload: any) {
     if (!topic.endsWith('/discovery') && !payload?.responseId) return;
 
@@ -84,7 +84,7 @@ export class ResponseListenerService {
     await this.responseService.handleDiscoveryResponse(validatedPayload);
   }
 
-  @OnEvent('/assign')
+  @OnEvent('mqtt/message/assign')
   async handleSensorAssignEvent(topic: string, payload: any) {
     if (!topic.endsWith('/assign') || !payload?.responseId) return;
 

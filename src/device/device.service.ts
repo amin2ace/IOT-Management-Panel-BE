@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -26,7 +27,6 @@ import { RedisService } from 'src/redis/redis.service';
 import { SensorType } from 'src/config/enum/sensor-type.enum';
 import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
 import { HardwareStatusRequestDto } from './messages/publish/hardware-status.request';
-import { LogHandlerService } from 'src/log-handler/log-handler.service';
 import { LogContext } from 'src/log-handler/enum/log-context.enum';
 import { LogAction } from 'src/log-handler/enum/log-action.enum';
 
@@ -37,9 +37,9 @@ export class DeviceService {
     private readonly mqttService: MqttClientService,
     private readonly topicService: TopicService,
     private readonly redisCache: RedisService,
-    private readonly logger: LogHandlerService,
   ) {}
 
+  private readonly logger = new Logger(DeviceService.name, { timestamp: true });
   async getSensors(query: QueryDeviceDto): Promise<Sensor[]> {
     const { deviceId, provisionState, functionality } = query;
 
@@ -65,6 +65,7 @@ export class DeviceService {
       deviceId,
     });
   }
+
   async discoverDevicesBroadcast(discoverRequest: DiscoveryRequestDto) {
     const broadcastTopic = await this.topicService.getBroadcastTopic();
     console.log({ broadcastTopic });
@@ -93,14 +94,8 @@ export class DeviceService {
       });
 
       await this.mqttService.subscribe(topic);
+      this.logger.debug(`Discovery broadcast sent successfully`);
     }
-
-    this.logger.success(
-      LogContext.MESSAGE,
-      'DiscoverBroadcast',
-      LogAction.REQUEST,
-      'Broadcast discovery request sent successfully',
-    );
   }
 
   async discoverDeviceUnicast(discoverRequest: DiscoveryRequestDto) {
@@ -118,13 +113,7 @@ export class DeviceService {
         TopicUseCase.DISCOVERY,
       );
       if (!sensorTopic.topic) {
-        this.logger.fail(
-          LogContext.TOPIC,
-          'Discovery',
-          LogAction.RETRIEVE,
-          `Discovery topic for ${deviceId} is required`,
-        );
-
+        this.logger.error(`Discovery topic for ${deviceId} is required`);
         throw new ForbiddenException(
           `Discovery topic for ${deviceId} is required`,
         );
@@ -137,12 +126,7 @@ export class DeviceService {
       );
       await this.mqttService.subscribe(sensorTopic.topic);
     }
-    this.logger.success(
-      LogContext.MESSAGE,
-      'DiscoverUnicast',
-      LogAction.REQUEST,
-      'Broadcast discovery request sent successfully',
-    );
+    this.logger.debug('Broadcast discovery request sent successfully');
   }
 
   async getUnassignedSensor(): Promise<Sensor[]> {
@@ -153,35 +137,10 @@ export class DeviceService {
       },
     });
     if (!sensors.length) {
-      this.logger.success(
-        LogContext.DEVICE,
-        'Unassigned',
-        LogAction.REQUEST,
-        'No unassigend device was found',
-      );
+      this.logger.debug('No unassigend device was found');
       throw new NotFoundException('No unassigned devices found');
     }
     return sensors;
-  }
-
-  async mapRawPayload(rawPayload: any): Promise<DiscoveryResponseDto> {
-    // Map raw payload to DTO
-    const payload = plainToInstance(DiscoveryResponseDto, {
-      clientId: rawPayload.clientId,
-      macAddress: rawPayload.macAddress,
-      ipAddress: rawPayload.ipAddress,
-      firmwareVersion: rawPayload.firmwareVersion,
-      deviceType: rawPayload.deviceType,
-      capabilities: rawPayload.capabilities, // array of SensorType
-      connectTime: rawPayload.connectTime,
-      state: rawPayload.state,
-      location: rawPayload.location,
-      protocol: rawPayload.protocol,
-      broker: rawPayload.broker,
-      additionalInfo: rawPayload.additionalInfo,
-    });
-
-    return payload;
   }
 
   async getHardwareStatus(statusRequest: HardwareStatusRequestDto) {
@@ -215,24 +174,14 @@ export class DeviceService {
         retain: false,
       });
 
-      this.logger.success(
-        LogContext.MESSAGE,
-        'HardwareStatus',
-        LogAction.RESPONSE,
-        `Hardware_Status ${deviceId} request success`,
-      );
+      this.logger.debug(`Hardware_Status ${deviceId} request success`);
     } catch (error) {
-      this.logger.fail(
-        LogContext.MESSAGE,
-        'HardwareStatus',
-        LogAction.RESPONSE,
-        `Hardware_Status ${deviceId} request failed`,
-      );
+      this.logger.error(`Hardware_Status ${deviceId} request failed`);
       throw new BadRequestException('Hardware status request failed');
     }
   }
 
-  async provisionDevice(
+  async AssignDeviceFunction(
     provisionData: SensorFunctionalityRequestDto,
   ): Promise<string> {
     const { deviceId, functionality, requestCode } = provisionData;
@@ -256,27 +205,13 @@ export class DeviceService {
       retain: false,
     });
 
-    this.logger.log(`Sensor ${deviceId} assignement requested`, {
-      context: 'AssignDeviceFunction',
-    });
+    this.logger.debug(`Sensor ${deviceId} assignement requested`);
 
-    // this.logger.success(
-    //   LogContext.MESSAGE,
-    //   'AssignDeviceFunction',
-    //   LogAction.REQUEST,
-    //   `Sensor ${deviceId} assignement requested`,
-    // );
+    this.logger.log(
+      `Device with id of ${deviceId} provisioned as ${functionality}`,
+    );
 
     return `Device with id of ${deviceId} provisioned as ${functionality}`;
-    // } catch (error) {
-    //   this.logger.fail(
-    //     LogContext.MESSAGE,
-    //     'AssignDeviceFunction',
-    //     LogAction.REQUEST,
-    //     `Sensor ${deviceId} assignement request failed`,
-    //   );
-    //   throw new BadRequestException('Invalid assignement request');
-    // }
   }
 
   async validateSensorTypes(deviceId: string, functionality: SensorType[]) {
@@ -297,10 +232,12 @@ export class DeviceService {
     );
 
     if (invalidSensorTypes.length > 0) {
+      this.logger.error(
+        `Sensor ${deviceId} functionality validation failed for device`,
+      );
       throw new UnauthorizedException(
         `${deviceId} functionality validation failed`,
       );
-      this.logger.error(`${deviceId} functionality validation failed`);
     }
   }
 
@@ -317,12 +254,7 @@ export class DeviceService {
     }
 
     await this.sensorRepo.update({ sensorId }, { isDeleted: true });
-    this.logger.success(
-      LogContext.MESSAGE,
-      'SensorDelete',
-      LogAction.REQUEST,
-      `Sensor ${device.sensorId} deleted successfully`,
-    );
+    this.logger.log(`Sensor ${device.sensorId} deleted successfully`);
   }
 
   async reconfigureDevice(configData: SensorConfigRequestDto) {
@@ -409,11 +341,6 @@ export class DeviceService {
       retain: false,
     });
 
-    this.logger.debug(
-      LogContext.TELEMETRY,
-      'TelemetryRequest',
-      LogAction.REQUEST,
-      `Telemetry requested from ${deviceId}`,
-    );
+    this.logger.debug(`Telemetry requested from ${deviceId}`);
   }
 }
