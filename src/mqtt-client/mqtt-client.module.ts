@@ -1,7 +1,7 @@
+import { TopicModule } from '@/topic/topic.module';
 import { Module } from '@nestjs/common';
-import { MqttClientService } from './mqtt-client.service';
 import { MqttManagementController } from './mqtt-client.controller';
-import { TopicModule } from 'src/topic/topic.module';
+import { MqttClientService } from './mqtt-client.service';
 
 @Module({
   imports: [TopicModule],
