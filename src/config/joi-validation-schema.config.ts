@@ -56,6 +56,12 @@ const configValidationSchema: joi.ObjectSchema = joi.object({
   REDIS_PORT: joi.number().required(),
   REDIS_PASSWORD: joi.string().required(),
   REDIS_DB: joi.number().required(),
+
+  // Session / Authentication
+  AUTH_MODE: joi.string().valid('local', 'jwt').default('local'), // 'local' for offline (session), 'jwt' for online
+  SESSION_TIMEOUT: joi.number().default(24 * 60 * 60 * 1000), // 24 hours in milliseconds
+  SESSION_REFRESH_INTERVAL: joi.number().default(5 * 60 * 1000), // 5 minutes in milliseconds
+  SESSION_SECRET: joi.string().min(16).default('session-secret-change-me'),
 });
 
 export default configValidationSchema;

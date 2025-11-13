@@ -6,11 +6,16 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { RolesGuard } from '@/common/guard/roles.guard';
+import { Roles } from '@/config/decorator/roles.decorator';
+import { Role } from '@/config/types/roles.types';
+import { SessionAuthGuard } from '@/common/guard/session-auth.guard';
 
 @ApiTags('users')
 @Controller('/users')

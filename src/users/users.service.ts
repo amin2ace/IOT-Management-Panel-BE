@@ -15,9 +15,9 @@ export class UsersService implements IUserService {
   constructor(@InjectRepository(User) private userRepo: Repository<User>) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<{ userId: string }> {
-    const { email, password, userName } = createUserDto;
+    const { ...userData } = createUserDto;
 
-    const user = await this.findUserByEmail(email);
+    const user = await this.findUserByEmail(userData.email);
 
     if (user) {
       throw new UnauthorizedException('Email in Use');
@@ -25,9 +25,7 @@ export class UsersService implements IUserService {
 
     // Create a new user record with the hashed data
     const userRecord = this.userRepo.create({
-      email,
-      userName,
-      password,
+      ...userData,
       isActive: true,
     });
 

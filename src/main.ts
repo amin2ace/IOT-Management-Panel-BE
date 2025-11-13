@@ -53,6 +53,11 @@ function initSwagger(app: INestApplication, apiPrefix = 'api') {
     .setTitle('IoT-Management')
     .setDescription('Management panel for IoT sensors')
     .setVersion('1.0')
+    .addCookieAuth('session-id', {
+      type: 'apiKey',
+      in: 'cookie',
+      name: 'session-id',
+    })
     // .addBearerAuth(
     //   {
     //     type: 'http',
@@ -64,11 +69,7 @@ function initSwagger(app: INestApplication, apiPrefix = 'api') {
     //   },
     //   'access-token', // Reference name for @ApiBearerAuth()
     // )
-    .addCookieAuth('refresh-token', {
-      type: 'apiKey',
-      in: 'cookie',
-      name: 'refresh-token',
-    })
+    .addCookieAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
