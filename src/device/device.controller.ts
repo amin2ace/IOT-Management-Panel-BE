@@ -19,14 +19,25 @@ import {
 } from './messages';
 import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
 import { HardwareStatusRequestDto } from './messages/publish/hardware-status.request';
+import { GetAllDevicesResponseDto } from './dto/get-all-devices.response.dto';
+import { SensorResponseDto } from './dto/sensor-response.dto';
 
 @Controller('devices')
 export class DeviceController {
   constructor(private readonly deviceService: DeviceService) {}
 
   @Get('all')
-  async getSensors(@Query() query: QueryDeviceDto): Promise<Sensor[]> {
+  async getSensors(
+    @Query() query: QueryDeviceDto,
+  ): Promise<GetAllDevicesResponseDto> {
     return await this.deviceService.getSensors(query);
+  }
+
+  @Get(':id')
+  async getSingleSensor(
+    @Param('id') sensorId: string,
+  ): Promise<SensorResponseDto> {
+    return await this.deviceService.getSensor(sensorId);
   }
 
   @Post('discover-broadcast')
