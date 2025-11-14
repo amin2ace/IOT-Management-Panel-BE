@@ -258,7 +258,7 @@ export class DeviceService {
   }
 
   async reconfigureDevice(configData: SensorConfigRequestDto) {
-    const { sensorId, requestCode } = configData;
+    const { deviceId: sensorId, requestCode } = configData;
     if (requestCode != RequestMessageCode.SENSOR_CONFIGURATION) return;
 
     const storedDevice = await this.sensorRepo.findOne({

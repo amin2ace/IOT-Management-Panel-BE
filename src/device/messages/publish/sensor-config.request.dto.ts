@@ -49,7 +49,7 @@ export class SensorConfigRequestDto {
   })
   @IsString()
   @IsNotEmpty()
-  sensorId: string; // Request from specific device
+  deviceId: string; // Request from specific device
 
   @ApiProperty({
     description: 'Time of the request in epoch milli second',

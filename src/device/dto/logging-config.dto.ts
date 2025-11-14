@@ -18,13 +18,13 @@ export class LoggingConfigDto {
     enumName: 'LogLevel',
   })
   @IsEnum(LogLevel)
-  @IsNotEmpty()
-  level: LogLevel;
+  @IsOptional()
+  level?: LogLevel;
 
   @ApiProperty({ description: 'Enable serial debug output', example: true })
   @IsBoolean()
-  @IsNotEmpty()
-  enableSerial: boolean;
+  @IsOptional()
+  enableSerial?: boolean;
 
   @ApiProperty({
     description: 'Enable serial debug output',
