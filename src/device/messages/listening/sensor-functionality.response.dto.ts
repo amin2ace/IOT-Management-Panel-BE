@@ -1,0 +1,85 @@
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsString,
+  IsNumber,
+  IsArray,
+  IsNotEmpty,
+  IsBoolean,
+  IsEnum,
+} from 'class-validator';
+import { AckStatus } from 'src/config/enum/ack-status.enum';
+import { SensorType } from 'src/config/enum/sensor-type.enum';
+
+export class SensorFunctionalityResponseDto {
+  @ApiProperty({
+    description: 'Unique identifier of the user who initiated the request',
+    example: 'user-001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty({
+    description: 'Unique identifier for the response',
+    example: 'fw-20251104-status',
+  })
+  @IsNotEmpty()
+  @IsString()
+  responseId: string;
+
+  @ApiProperty({
+    description: 'Response code from the device or system',
+    example: '206',
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  responseCode: number;
+
+  @ApiProperty({
+    description: 'Unique identifier for the request',
+    example: 'fw-20251104-0004',
+  })
+  @IsNotEmpty()
+  @IsString()
+  requestId: string;
+
+  @ApiProperty({
+    description: 'Device ID that performed the diagnostic',
+    example: 'sensor-67890',
+  })
+  @IsString()
+  @IsNotEmpty()
+  deviceId: string;
+
+  @ApiProperty({
+    description: 'Provisioned functionalities',
+    enum: SensorType,
+    isArray: true,
+    example: [SensorType.TEMPERATURE],
+  })
+  @IsArray()
+  @IsNotEmpty()
+  functionality: SensorType[];
+
+  @ApiProperty({
+    description: 'Provisioning status message',
+    enum: AckStatus,
+    example: AckStatus.ACCEPTED,
+  })
+  @IsEnum(AckStatus)
+  status: AckStatus;
+}
+
+/**
+    Example:
+      {
+        "userId": "user-001",
+        "responseId": "fw-20251104-status",
+        "responseCode": 206,
+        "requestId": "fw-20251104-0004",
+        "deviceId": "sensor-67890",
+        "functionality": ["TEMPERATURE"],
+        "status": "ACCEPTED"
+      }
+
+ */

@@ -1,0 +1,15 @@
+export enum TopicUseCase {
+  ASSIGN_DEVICE_FUNCTION = 'assign',
+  NETWORK_CONFIGURATION = 'netconfig',
+  SENSOR_CONFIGURATION = 'config',
+  HARDWARE_STATUS = 'hardware-status',
+  FIRMWARE_STATUS = 'firmware/status',
+  FIRMWARE_UPDATE = 'firmware/upgrade',
+  TELEMETRY_QUEUE = 'telemetry-queue',
+  REBOOT_COMMAND = 'reboot',
+  DIAGNOSTICS = 'diagnose',
+  DISCOVERY = 'discover',
+  TELEMETRY = 'telemetry',
+  HEARTBEAT = 'heartbeat',
+  BROADCAST = 'broadcast',
+}

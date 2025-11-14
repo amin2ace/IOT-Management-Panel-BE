@@ -42,6 +42,10 @@ $ npm run start:dev
 
 # production mode
 $ npm run start:prod
+
+# Run mosquitto broker
+$ mosquitto_sub -h localhost -t "test/topic" -u username -P password
+
 ```
 
 ## Run tests
@@ -71,6 +75,7 @@ $ mau deploy
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
 ## Modules Structure
+
 REST API Modules:
 auth - User authentication
 users - User management
@@ -100,7 +105,6 @@ modbus-rtu-handler - Modbus RTU real-time data
 sensor-data - Real-time sensor data streaming
 alarms - Real-time alarm notifications
 dashboard - Real-time dashboard updates
-
 
 ## Support
 
