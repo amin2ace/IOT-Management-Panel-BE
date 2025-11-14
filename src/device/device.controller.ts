@@ -40,14 +40,12 @@ import { SensorResponseDto } from './dto/sensor-response.dto';
 export class DeviceController {
   constructor(private readonly deviceService: DeviceService) {}
 
-  @Get()
+  @Get('all')
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.VIEWER, Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get all devices' })
   @ApiCookieAuth()
   @ApiResponse({ status: 200, description: 'List of devices' })
-  async getSensors(@Query() query: QueryDeviceDto): Promise<Sensor[]> {
-  @Get('all')
   async getSensors(
     @Query() query: QueryDeviceDto,
   ): Promise<GetAllDevicesResponseDto> {
