@@ -8,6 +8,7 @@ import {
 } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { RebootStatus } from 'src/config/enum/reboot-status.enum';
+import { ResponseMessageCode } from '../enum/response-message-code.enum';
 
 export class DeviceRebootResponseDto {
   @ApiProperty({
@@ -28,7 +29,7 @@ export class DeviceRebootResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: '206',
+    example: ResponseMessageCode.REBOOT_CONFIRMATION,
   })
   @IsNotEmpty()
   @IsNumber()
@@ -36,7 +37,7 @@ export class DeviceRebootResponseDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'req-r-61',
   })
   @IsNotEmpty()
   @IsString()
@@ -80,8 +81,8 @@ export class DeviceRebootResponseDto {
     {
       "userId": "user-001",
       "responseId": "fw-20251104-status",
-      "responseCode": 206,
-      "requestId": "fw-20251104-0004",
+      "responseCode": 205,
+      "requestId": "req-r-61",
       "deviceId": "sensor-67890",
       "timestamp": "1762379573804",
       "status": "SUCCESS",

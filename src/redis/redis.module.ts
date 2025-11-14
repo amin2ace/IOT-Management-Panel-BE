@@ -1,30 +1,31 @@
 import { Module, Global } from '@nestjs/common';
 import Redis from 'ioredis';
 import { RedisService } from './redis.service';
+import { ConfigService } from '@nestjs/config';
 
 @Global()
 @Module({
   providers: [
     {
       provide: 'REDIS_CLIENT',
-      useFactory: () => {
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
         return new Redis({
-          host: process.env.REDIS_HOST,
-          port: Number(process.env.REDIS_PORT || 6379),
-          password: process.env.REDIS_PASSWORD || undefined,
-          db: Number(process.env.REDIS_DB || 0),
+          host: config.getOrThrow<string>('REDIS_HOST'),
+          port: config.getOrThrow<number>('REDIS_PORT'),
+          db: config.getOrThrow<number>('REDIS_DB'),
         });
       },
     },
     {
       provide: 'REDIS_SUBSCRIBER',
-      useFactory: () => {
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
         // separate client for pub/sub
         return new Redis({
-          host: process.env.REDIS_HOST,
-          port: Number(process.env.REDIS_PORT || 6379),
-          password: process.env.REDIS_PASSWORD || undefined,
-          db: Number(process.env.REDIS_DB || 0),
+          host: config.getOrThrow<string>('REDIS_HOST'),
+          port: config.getOrThrow<number>('REDIS_PORT'),
+          db: config.getOrThrow<number>('REDIS_DB'),
         });
       },
     },

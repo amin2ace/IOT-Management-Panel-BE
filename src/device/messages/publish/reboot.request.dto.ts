@@ -2,6 +2,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
+import { RequestMessageCode } from '../enum/request-message-code.enum';
 
 export class DeviceRebootRequestDto {
   @ApiProperty({
@@ -14,7 +15,7 @@ export class DeviceRebootRequestDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'req-12345',
+    example: 'req-r-61',
   })
   @IsString()
   @IsNotEmpty()
@@ -22,7 +23,7 @@ export class DeviceRebootRequestDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: 105,
+    example: RequestMessageCode.REBOOT_COMMAND,
   })
   @IsNumber()
   @IsNotEmpty()
@@ -58,7 +59,7 @@ export class DeviceRebootRequestDto {
   Example:
     {
       "userId": "user-001",
-      "requestId": "req-12345",
+      "requestId": "req-r-61",
       "requestCode": 105,
       "deviceId": "sensor-67890",
       "timestamp": 1762379573804,

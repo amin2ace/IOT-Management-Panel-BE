@@ -12,13 +12,13 @@ import { IsSubnetMask } from 'src/config/decorator/subnetmask-validation.decrato
 export class NetworkConfigDto {
   @ApiProperty({ description: 'WiFi SSID' })
   @IsString()
-  @IsNotEmpty()
-  wifiSsid: string;
+  @IsOptional()
+  wifiSsid?: string;
 
   @ApiProperty({ description: 'WiFi Password' })
   @IsString()
-  @IsNotEmpty()
-  wifiPassword: string;
+  @IsOptional()
+  wifiPassword?: string;
 
   @ApiProperty({
     description: 'DHCP server address',
@@ -26,8 +26,8 @@ export class NetworkConfigDto {
     example: '192.168.1.1',
   })
   @IsBoolean()
-  @IsNotEmpty()
-  dhcp: boolean;
+  @IsOptional()
+  dhcp?: boolean;
 
   @ApiProperty({
     description: 'Device IP address if dhcp disabled',
@@ -43,8 +43,8 @@ export class NetworkConfigDto {
     required: false,
     example: '255.255.255.0',
   })
-  @IsOptional()
   @IsSubnetMask({ message: 'Invalid subnet mask' })
+  @IsOptional()
   subnetMask?: string;
 
   @ApiProperty({

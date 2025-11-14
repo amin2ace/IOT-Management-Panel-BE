@@ -8,7 +8,8 @@ import {
   IsEnum,
 } from 'class-validator';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
-import { SensorType } from 'src/config/enum/sensor-type.enum';
+import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
+import { ResponseMessageCode } from '../enum/response-message-code.enum';
 
 export class SensorFunctionalityResponseDto {
   @ApiProperty({
@@ -29,7 +30,7 @@ export class SensorFunctionalityResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: '206',
+    example: ResponseMessageCode.DEVICE_FUNCTION_ASSIGNED,
   })
   @IsNotEmpty()
   @IsNumber()
@@ -37,7 +38,7 @@ export class SensorFunctionalityResponseDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'req-sf-39',
   })
   @IsNotEmpty()
   @IsString()
@@ -53,13 +54,13 @@ export class SensorFunctionalityResponseDto {
 
   @ApiProperty({
     description: 'Provisioned functionalities',
-    enum: SensorType,
+    enum: DeviceCapabilities,
     isArray: true,
-    example: [SensorType.TEMPERATURE],
+    example: [DeviceCapabilities.TEMPERATURE],
   })
   @IsArray()
   @IsNotEmpty()
-  functionality: SensorType[];
+  functionality: DeviceCapabilities[];
 
   @ApiProperty({
     description: 'Provisioning status message',
@@ -75,11 +76,11 @@ export class SensorFunctionalityResponseDto {
       {
         "userId": "user-001",
         "responseId": "fw-20251104-status",
-        "responseCode": 206,
-        "requestId": "fw-20251104-0004",
+        "responseCode": 201,
+        "requestId": "req-sf-39",
         "deviceId": "sensor-67890",
         "functionality": ["TEMPERATURE"],
-        "status": "ACCEPTED"
+        "status": "accepted"
       }
 
  */

@@ -1,11 +1,10 @@
+import { TopicModule } from '@/topic/topic.module';
 import { Module } from '@nestjs/common';
-import { MqttClientService } from './mqtt-client.service';
 import { MqttManagementController } from './mqtt-client.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { TopicService } from 'src/topic/topic.service';
+import { MqttClientService } from './mqtt-client.service';
 
 @Module({
-  imports: [TopicService],
+  imports: [TopicModule],
   controllers: [MqttManagementController],
   providers: [MqttClientService],
   exports: [MqttClientService],

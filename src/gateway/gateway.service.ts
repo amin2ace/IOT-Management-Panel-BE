@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MqttClientService } from '../mqtt-client/mqtt-client.service';
 import { IClientPublishOptions } from 'mqtt';
 import { QoS } from 'src/config/types/mqtt-qos.types';
@@ -11,103 +12,362 @@ import { Repository } from 'typeorm';
 import { IncomeMessageDto, MessageFormat } from './dto/message-income.dto';
 import { SensorDataDto, DataQuality } from './dto/sensor-data.dto';
 
+/**
+ * MqttGatewayService
+ *
+ * Acts as a bridge between MQTT client service and WebSocket gateway
+ * Responsibilities:
+ * - Subscribe to MQTT topics via MqttClientService
+ * - Process incoming MQTT messages
+ * - Store message history in database
+ * - Maintain in-memory cache of recent sensor data
+ * - Emit events for WebSocket broadcast
+ *
+ * Architecture:
+ * MQTT → MqttClientService → MqttGatewayService → EventEmitter2 → WsGateway → Frontend
+ */
 @Injectable()
 export class MqttGatewayService implements OnModuleInit {
-  private messageCallbacks: ((message: IncomeMessageDto) => void)[] = [];
-  private gatewayCallbacks: ((data: any) => void)[] = [];
   private readonly logger = new Logger(MqttGatewayService.name);
   private recentSensorData: IncomeMessageDto[] = [];
   private readonly MAX_RECENT_DATA = 100;
+  private subscriptionTracking = new Map<string, boolean>();
 
   constructor(
     @InjectRepository(MessageIncoming)
     private readonly messageRepo: Repository<MessageIncoming>,
     private readonly mqttClientService: MqttClientService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async onModuleInit() {
-    // Subscribe to incoming MQTT messages
-    this.setupMqttMessageHandlers();
+    /**
+     * Listen to MQTT message events from MqttClientService
+     * The service emits typed events via EventEmitter2
+     * This gateway processes and stores messages, then emits WebSocket events
+     */
+    this.setupMqttEventListeners();
   }
 
   /**
-   * Simple callback registration for the gateway
+   * Setup listeners for MQTT message events emitted by MqttClientService
+   * These events come from the message router which routes based on topic patterns
    */
-  public registerGatewayCallback(callback: (data: any) => void): void {
-    this.gatewayCallbacks.push(callback);
+  private setupMqttEventListeners(): void {
+    // Listen for all message types from MQTT client service
+    // Events are emitted by message handlers via EventEmitter2
+
+    // Discovery messages
+    this.eventEmitter.on('mqtt/message/discovery', async (topic, payload) => {
+      await this.handleDiscoveryMessage(topic, payload);
+    });
+
+    // Assignment messages
+    this.eventEmitter.on('mqtt/message/assign', async (topic, payload) => {
+      await this.handleAssignmentMessage(topic, payload);
+    });
+
+    // Acknowledgment messages
+    this.eventEmitter.on('mqtt/message/ack', async (topic, payload) => {
+      await this.handleAckMessage(topic, payload);
+    });
+
+    // Firmware upgrade messages
+    this.eventEmitter.on('mqtt/message/upgrade', async (topic, payload) => {
+      await this.handleFirmwareUpgradeMessage(topic, payload);
+    });
+
+    // Heartbeat messages
+    this.eventEmitter.on('mqtt/message/heartbeat', async (topic, payload) => {
+      await this.handleHeartbeatMessage(topic, payload);
+    });
+
+    // Reboot messages
+    this.eventEmitter.on('mqtt/message/reboot', async (topic, payload) => {
+      await this.handleRebootMessage(topic, payload);
+    });
+
+    // Telemetry messages
+    this.eventEmitter.on('mqtt/message/telemetry', async (topic, payload) => {
+      await this.handleTelemetryMessage(topic, payload);
+    });
+
+    // Hardware status messages
+    this.eventEmitter.on(
+      'mqtt/message/hardware-status',
+      async (topic, payload) => {
+        await this.handleHardwareStatusMessage(topic, payload);
+      },
+    );
+
+    // Alert messages
+    this.eventEmitter.on('mqtt/message/alert', async (topic, payload) => {
+      await this.handleAlertMessage(topic, payload);
+    });
+
+    this.logger.log('MQTT event listeners configured for 9 message types');
   }
+
+  // ============================================================================
+  // MESSAGE TYPE HANDLERS
+  // ============================================================================
+  // Each handler processes its specific message type and emits WebSocket events
 
   /**
-   * Notify gateway when new data arrives
+   * Handles device discovery messages
    */
-  private notifyGateway(data: any): void {
-    this.gatewayCallbacks.forEach((callback) => {
-      try {
-        callback(data);
-      } catch (error) {
-        this.logger.error(`Gateway callback error: ${error.message}`);
-      }
-    });
-  }
-
-  private setupMqttMessageHandlers() {
-    this.mqttClientService.onMessage(async (topic: string, message: Buffer) => {
-      try {
-        const startTime = Date.now();
-        const incomeMessage = await this.processIncomingMessage(topic, message);
-
-        // Store in database
-        await this.storeMessageInDatabase(
-          incomeMessage,
-          Date.now() - startTime,
-        );
-
-        // Store in recent data cache
-        this.storeRecentData(incomeMessage);
-
-        // ✅ Simple notification to gateway
-        this.notifyGateway(incomeMessage);
-
-        this.logger.log(
-          `Processed message from ${incomeMessage.parsedData.sensorId}`,
-        );
-
-        return incomeMessage;
-      } catch (error) {
-        this.logger.error(`Error processing MQTT message: ${error.message}`);
-        // Store error message in database
-        await this.storeErrorInDatabase(topic, message, error.message);
-      }
-    });
-  }
-
-  private async processIncomingMessage(
-    topic: string,
-    message: Buffer,
-  ): Promise<IncomeMessageDto> {
-    const rawData = message.toString();
-    const messageFormat = this.detectMessageFormat(rawData);
-
-    let parsedPayload: any;
+  private async handleDiscoveryMessage(topic: string, payload: any) {
     try {
-      parsedPayload =
-        messageFormat === MessageFormat.JSON
-          ? JSON.parse(rawData)
-          : { raw: rawData };
-    } catch (error) {
-      throw new Error(`Failed to parse message: ${error.message}`);
-    }
+      const incomeMessage = await this.createMessageDto(
+        topic,
+        payload,
+        'discovery',
+      );
+      await this.storeMessageInDatabase(incomeMessage, 0);
+      this.storeRecentData(incomeMessage);
 
-    const parsedData = await this.parseSensorData(topic, parsedPayload);
+      // Emit WebSocket event for discovery
+      this.eventEmitter.emit('ws/discovery', {
+        event: 'device-discovered',
+        data: payload,
+        timestamp: new Date(),
+      });
+
+      this.logger.log(`Discovery message processed from ${topic}`);
+    } catch (error) {
+      this.logger.error(`Error handling discovery message: ${error.message}`);
+      await this.storeErrorInDatabase(topic, payload, error.message);
+    }
+  }
+
+  /**
+   * Handles device assignment messages
+   */
+  private async handleAssignmentMessage(topic: string, payload: any) {
+    try {
+      const incomeMessage = await this.createMessageDto(
+        topic,
+        payload,
+        'assignment',
+      );
+      await this.storeMessageInDatabase(incomeMessage, 0);
+      this.storeRecentData(incomeMessage);
+
+      this.eventEmitter.emit('ws/assignment', {
+        event: 'device-assigned',
+        data: payload,
+        timestamp: new Date(),
+      });
+
+      this.logger.log(`Assignment message processed from ${topic}`);
+    } catch (error) {
+      this.logger.error(`Error handling assignment message: ${error.message}`);
+      await this.storeErrorInDatabase(topic, payload, error.message);
+    }
+  }
+
+  /**
+   * Handles acknowledgment messages
+   */
+  private async handleAckMessage(topic: string, payload: any) {
+    try {
+      const incomeMessage = await this.createMessageDto(topic, payload, 'ack');
+      await this.storeMessageInDatabase(incomeMessage, 0);
+      this.storeRecentData(incomeMessage);
+
+      this.eventEmitter.emit('ws/ack', {
+        event: 'acknowledgment-received',
+        data: payload,
+        timestamp: new Date(),
+      });
+
+      this.logger.log(`ACK message processed from ${topic}`);
+    } catch (error) {
+      this.logger.error(`Error handling ACK message: ${error.message}`);
+      await this.storeErrorInDatabase(topic, payload, error.message);
+    }
+  }
+
+  /**
+   * Handles firmware upgrade messages
+   */
+  private async handleFirmwareUpgradeMessage(topic: string, payload: any) {
+    try {
+      const incomeMessage = await this.createMessageDto(
+        topic,
+        payload,
+        'upgrade',
+      );
+      await this.storeMessageInDatabase(incomeMessage, 0);
+      this.storeRecentData(incomeMessage);
+
+      this.eventEmitter.emit('ws/upgrade', {
+        event: 'firmware-upgrade-status',
+        data: payload,
+        timestamp: new Date(),
+      });
+
+      this.logger.log(`Firmware upgrade message processed from ${topic}`);
+    } catch (error) {
+      this.logger.error(
+        `Error handling firmware upgrade message: ${error.message}`,
+      );
+      await this.storeErrorInDatabase(topic, payload, error.message);
+    }
+  }
+
+  /**
+   * Handles heartbeat messages
+   */
+  private async handleHeartbeatMessage(topic: string, payload: any) {
+    try {
+      const incomeMessage = await this.createMessageDto(
+        topic,
+        payload,
+        'heartbeat',
+      );
+      await this.storeMessageInDatabase(incomeMessage, 0);
+      this.storeRecentData(incomeMessage);
+
+      this.eventEmitter.emit('ws/heartbeat', {
+        event: 'heartbeat-received',
+        data: payload,
+        timestamp: new Date(),
+      });
+
+      this.logger.log(`Heartbeat message processed from ${topic}`);
+    } catch (error) {
+      this.logger.error(`Error handling heartbeat message: ${error.message}`);
+      await this.storeErrorInDatabase(topic, payload, error.message);
+    }
+  }
+
+  /**
+   * Handles device reboot messages
+   */
+  private async handleRebootMessage(topic: string, payload: any) {
+    try {
+      const incomeMessage = await this.createMessageDto(
+        topic,
+        payload,
+        'reboot',
+      );
+      await this.storeMessageInDatabase(incomeMessage, 0);
+      this.storeRecentData(incomeMessage);
+
+      this.eventEmitter.emit('ws/reboot', {
+        event: 'device-rebooted',
+        data: payload,
+        timestamp: new Date(),
+      });
+
+      this.logger.log(`Reboot message processed from ${topic}`);
+    } catch (error) {
+      this.logger.error(`Error handling reboot message: ${error.message}`);
+      await this.storeErrorInDatabase(topic, payload, error.message);
+    }
+  }
+
+  /**
+   * Handles telemetry messages (sensor data)
+   */
+  private async handleTelemetryMessage(topic: string, payload: any) {
+    try {
+      const incomeMessage = await this.createMessageDto(
+        topic,
+        payload,
+        'telemetry',
+      );
+      await this.storeMessageInDatabase(incomeMessage, 0);
+      this.storeRecentData(incomeMessage);
+
+      this.eventEmitter.emit('ws/telemetry', {
+        event: 'telemetry-received',
+        data: payload,
+        timestamp: new Date(),
+      });
+
+      this.logger.log(`Telemetry message processed from ${topic}`);
+    } catch (error) {
+      this.logger.error(`Error handling telemetry message: ${error.message}`);
+      await this.storeErrorInDatabase(topic, payload, error.message);
+    }
+  }
+
+  /**
+   * Handles hardware status messages
+   */
+  private async handleHardwareStatusMessage(topic: string, payload: any) {
+    try {
+      const incomeMessage = await this.createMessageDto(
+        topic,
+        payload,
+        'hardware-status',
+      );
+      await this.storeMessageInDatabase(incomeMessage, 0);
+      this.storeRecentData(incomeMessage);
+
+      this.eventEmitter.emit('ws/hardware-status', {
+        event: 'hardware-status-received',
+        data: payload,
+        timestamp: new Date(),
+      });
+
+      this.logger.log(`Hardware status message processed from ${topic}`);
+    } catch (error) {
+      this.logger.error(
+        `Error handling hardware status message: ${error.message}`,
+      );
+      await this.storeErrorInDatabase(topic, payload, error.message);
+    }
+  }
+
+  /**
+   * Handles alert messages
+   */
+  private async handleAlertMessage(topic: string, payload: any) {
+    try {
+      const incomeMessage = await this.createMessageDto(
+        topic,
+        payload,
+        'alert',
+      );
+      await this.storeMessageInDatabase(incomeMessage, 0);
+      this.storeRecentData(incomeMessage);
+
+      this.eventEmitter.emit('ws/alert', {
+        event: 'alert-received',
+        data: payload,
+        timestamp: new Date(),
+      });
+
+      this.logger.log(`Alert message processed from ${topic}`);
+    } catch (error) {
+      this.logger.error(`Error handling alert message: ${error.message}`);
+      await this.storeErrorInDatabase(topic, payload, error.message);
+    }
+  }
+
+  /**
+   * Creates a standardized message DTO for any incoming message
+   */
+  private async createMessageDto(
+    topic: string,
+    payload: any,
+    messageType: string,
+  ): Promise<IncomeMessageDto> {
+    const rawData =
+      typeof payload === 'string' ? payload : JSON.stringify(payload);
+    const parsedData = await this.parseSensorData(topic, payload);
 
     return {
       topic,
       rawData,
       parsedData,
       timestamp: new Date(),
-      messageFormat,
-      messageSize: message.length,
-      qualityScore: this.calculateQualityScore(parsedData, parsedPayload),
+      messageFormat: MessageFormat.JSON,
+      messageSize: Buffer.byteLength(rawData),
+      qualityScore: this.calculateQualityScore(parsedData, payload),
     };
   }
 
@@ -214,6 +474,99 @@ export class MqttGatewayService implements OnModuleInit {
     return Math.max(0, Math.min(1, score));
   }
 
+  /**
+   * Get current MQTT connection status
+   * Uses the refactored MqttClientService for accurate status
+   */
+  async getMqttStatus() {
+    return this.mqttClientService.getConnectionStatus();
+  }
+
+  /**
+   * Subscribe to MQTT topics via MqttClientService
+   * The service handles connection state checking and topic repository updates
+   *
+   * @param topics - Array of MQTT topic paths to subscribe to
+   * @param deviceId - Device ID for tracking subscriptions
+   */
+  async subscribeToTopics(topics: string[], deviceId: string) {
+    for (const topic of topics) {
+      try {
+        await this.mqttClientService.subscribe(topic);
+        this.subscriptionTracking.set(topic, true);
+        this.logger.log(
+          `Subscribed to topic: ${topic} for device: ${deviceId}`,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to subscribe to topic ${topic}: ${error.message}`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Unsubscribe from MQTT topics via MqttClientService
+   *
+   * @param topics - Array of MQTT topic paths to unsubscribe from
+   */
+  async unsubscribeFromTopics(topics: string[]) {
+    for (const topic of topics) {
+      try {
+        await this.mqttClientService.unsubscribe(topic);
+        this.subscriptionTracking.delete(topic);
+        this.logger.log(`Unsubscribed from topic: ${topic}`);
+      } catch (error) {
+        this.logger.error(
+          `Failed to unsubscribe from topic ${topic}: ${error.message}`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Publish command to device via MQTT
+   *
+   * @param deviceId - Target device ID
+   * @param command - Command name
+   * @param parameters - Command parameters
+   */
+  async publishCommand(deviceId: string, command: string, parameters?: any) {
+    const topic = `devices/${deviceId}/commands`;
+    const options: Partial<IClientPublishOptions> = {
+      qos: 1,
+      retain: false,
+    };
+
+    const payload = {
+      command,
+      parameters,
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      await this.mqttClientService.publish(
+        topic,
+        JSON.stringify(payload),
+        options,
+      );
+      this.logger.log(`Command published to ${topic}: ${command}`);
+    } catch (error) {
+      this.logger.error(`Failed to publish command: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get recent sensor data from in-memory cache
+   */
+  async getRecentSensorData() {
+    return this.recentSensorData;
+  }
+
+  /**
+   * Store message in database with processing time metadata
+   */
   private async storeMessageInDatabase(
     incomeMessage: IncomeMessageDto,
     processingTime: number,
@@ -238,10 +591,10 @@ export class MqttGatewayService implements OnModuleInit {
       parsedPayload,
       messageSize: incomeMessage.messageSize,
       messageFormat: incomeMessage.messageFormat as any,
-      qos: 0, // You might want to capture this from MQTT
-      retain: false, // You might want to capture this from MQTT
-      dup: false, // You might want to capture this from MQTT
-      direction: 'incoming' as any, // Assuming incoming direction
+      qos: 0,
+      retain: false,
+      dup: false,
+      direction: 'incoming' as any,
       status: 'processed',
       processingTime,
       processedAt: new Date(),
@@ -250,24 +603,36 @@ export class MqttGatewayService implements OnModuleInit {
     await this.messageRepo.save(messageEntity);
   }
 
+  /**
+   * Store error message in database
+   */
   private async storeErrorInDatabase(
     topic: string,
-    message: Buffer,
+    payload: any,
     error: string,
   ) {
     const errorEntity = new MessageIncoming({
       deviceId: 'unknown',
       topic,
-      payload: message.toString(),
+      payload: typeof payload === 'string' ? payload : JSON.stringify(payload),
       status: 'error',
       error,
       direction: 'incoming' as any,
     });
 
-    await this.messageRepo.save(errorEntity);
+    try {
+      await this.messageRepo.save(errorEntity);
+    } catch (dbError) {
+      this.logger.error(
+        `Failed to store error in database: ${dbError.message}`,
+      );
+    }
   }
 
-  private async storeRecentData(sensorData: IncomeMessageDto) {
+  /**
+   * Store recent data in in-memory cache
+   */
+  private storeRecentData(sensorData: IncomeMessageDto) {
     this.recentSensorData.unshift(sensorData);
 
     if (this.recentSensorData.length > this.MAX_RECENT_DATA) {
@@ -276,51 +641,5 @@ export class MqttGatewayService implements OnModuleInit {
         this.MAX_RECENT_DATA,
       );
     }
-  }
-  // Get current MQTT connection status
-  async getMqttStatus() {
-    return this.mqttClientService.getConnectionStatus();
-  }
-
-  // Subscribe to MQTT topics
-  async subscribeToTopics(topics: string[]) {
-    const qos: QoS = QoS.AtLeastOnce;
-    for (const topic of topics) {
-      await this.mqttClientService.subscribe(topic, qos);
-    }
-  }
-
-  // Publish command to devices
-  async publishCommand(deviceId: string, command: string, parameters?: any) {
-    const topic = `devices/${deviceId}/commands`;
-    const options = { qos: 0, retain: false } as IClientPublishOptions;
-    const payload = {
-      command,
-      parameters,
-      timestamp: new Date().toISOString(),
-    };
-
-    await this.mqttClientService.publish(
-      topic,
-      JSON.stringify(payload),
-      options,
-    );
-  }
-
-  // Get recent sensor data for new connections
-  async getRecentSensorData() {
-    return this.recentSensorData;
-  }
-
-  // Process and broadcast sensor data (called by MQTT client service)
-  public handleSensorData(sensorData: any) {
-    this.recentSensorData.unshift(sensorData);
-
-    // Keep data size manageable
-    if (this.recentSensorData.length > this.MAX_RECENT_DATA) {
-      this.recentSensorData.pop();
-    }
-
-    return sensorData;
   }
 }

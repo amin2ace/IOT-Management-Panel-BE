@@ -1,4 +1,4 @@
-export enum SensorType {
+export enum DeviceCapabilities {
   TEMPERATURE = 'temperature',
   HUMIDITY = 'humidity',
   PRESSURE = 'pressure',

@@ -9,11 +9,12 @@ import {
 } from 'class-validator';
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
 import { Protocol } from 'src/config/enum/protocol.enum';
-import { SensorType } from 'src/config/enum/sensor-type.enum';
+import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 import { DeviceLocationDto } from '../../dto/device-location.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
+import { ResponseMessageCode } from '../enum/response-message-code.enum';
 
 export class AdditionalInfoDto {
   @ApiProperty()
@@ -46,7 +47,7 @@ export class DiscoveryResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: '206',
+    example: ResponseMessageCode.DISCOVERY_ANNOUNCEMENT,
   })
   @IsNotEmpty()
   @IsNumber()
@@ -54,7 +55,7 @@ export class DiscoveryResponseDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'req-d-79',
   })
   @IsNotEmpty()
   @IsString()
@@ -79,7 +80,7 @@ export class DiscoveryResponseDto {
   @ApiProperty()
   @IsArray()
   @IsString({ each: true })
-  capabilities: SensorType[]; // e.g. ["temperature", "humidity"]
+  capabilities: DeviceCapabilities[]; // e.g. ["temperature", "humidity"]
 
   @ApiProperty()
   @IsString()
@@ -131,23 +132,22 @@ export class DiscoveryResponseDto {
       {
         "userId": "user-001",
         "responseId": "fw-20251104-status",
-        "responseCode": 206,
-        "requestId": "fw-20251104-0004",
+        "responseCode": 200,
+        "requestId": "req-d-79",
         "deviceId": "sensor-67890",
         "timestamp": 1762379573804,
         "capabilities": ["temperature", "humidity", "pressure"],
         "deviceHardware": "ESP32-DevKitC",
         "topicPrefix": "sensors/lab01/temperature/sensor-67890",
-        "connectionState": "connected",
+        "connectionState": "online",
         "firmware": "v2.3.7",
         "mac": "00:1B:44:11:3A:B7",
         "ip": "192.168.1.45",
         "uptime": 1762379500000,
         "location": {
-          "latitude": 35.6895,
-          "longitude": 51.389,
-          "altitude": 1200,
-          "description": "Main laboratory - floor 2"
+          "site": "main",
+          "floor": 1,
+          "unit": "tomato"
         },
         "protocol": "MQTT",
         "broker": "mqtt://broker.lab.local",

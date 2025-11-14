@@ -6,13 +6,23 @@ import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 export class TopicController {
   constructor(private readonly topicService: TopicService) {}
 
-  @Get('subscribed/:id')
+  @Get('device/:id')
+  @ApiOperation({ summary: 'Get all topics for device' })
+  @ApiResponse({
+    status: 200,
+    description: "Returns list of device's topics",
+  })
+  async getDeviceTopicsByDeviceId(@Param('id') deviceId: string) {
+    return await this.topicService.getDeviceTopicsByDeviceId(deviceId);
+  }
+
+  @Get('subscribed/')
   @ApiOperation({ summary: 'Get all subscribed topics' })
   @ApiResponse({
     status: 200,
     description: 'Returns list of subscribed topics',
   })
-  async getSubscribedTopics(@Param('id') deviceId: string) {
-    return await this.topicService.getDeviceTopics(deviceId);
+  async getSubscribedTopics() {
+    return await this.topicService.getAllSubscribedTopics();
   }
 }

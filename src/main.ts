@@ -27,7 +27,7 @@ async function bootstrap() {
   // CORS setup
   app.enableCors({
     origin:
-      configService.get<string>('FRONTEND_URL') || 'http://localhost:3000',
+      configService.get<string>('FRONTEND_URL') || 'http://localhost:3001',
     credentials: true, // Allow credentials (cookies)
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -43,9 +43,9 @@ async function bootstrap() {
   // Start server
   const port = configService.get<number>('PORT') || 3000;
   await app.listen(port);
-  console.log(
-    `Application is running on: http://localhost:${port}/${apiPrefix}`,
-  );
+  // console.log(
+  //   `Application is running on: http://localhost:${port}/${apiPrefix}`,
+  // );
 }
 
 function initSwagger(app: INestApplication, apiPrefix = 'api') {

@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { SensorType } from 'src/config/enum/sensor-type.enum';
+import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 
 @Entity('devices')
 export class Sensor {
@@ -21,19 +21,19 @@ export class Sensor {
   @Index({ unique: true })
   sensorId: string; // ESP unique ID (MAC or custom ID)
 
-  @Column({ type: 'enum', enum: SensorType, array: true })
-  capabilities: SensorType[]; // e.g. ["temperature", "humidity"]
+  @Column({ type: 'enum', enum: DeviceCapabilities, array: true })
+  capabilities: DeviceCapabilities[]; // e.g. ["temperature", "humidity"]
 
   @Column()
   deviceHardware: string; // device model or hardware ID
 
   @Column({
     type: 'enum',
-    enum: SensorType,
+    enum: DeviceCapabilities,
     array: true,
     nullable: true,
   })
-  assignedFunctionality: SensorType[]; // selected from capabilities
+  assignedFunctionality: DeviceCapabilities[]; // selected from capabilities
 
   @Column({ nullable: true })
   deviceBaseTopic: string; // like "<mqttPrefix>/<sensorId>/temperature"

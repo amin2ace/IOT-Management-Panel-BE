@@ -13,6 +13,7 @@ import { Type } from 'class-transformer';
 import { DiagnosticComponent } from 'src/config/enum/diagnostic-component.enum';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
 import { DiagnosticLevel } from 'src/config/enum/diagnostic-Level.enum';
+import { ResponseMessageCode } from '../enum/response-message-code.enum';
 
 export enum DiagnosticStatus {
   SUCCESS = 'success',
@@ -60,7 +61,7 @@ export class AutoDiagnosticResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: '206',
+    example: ResponseMessageCode.DIAGNOSTIC,
   })
   @IsNotEmpty()
   @IsNumber()
@@ -68,7 +69,7 @@ export class AutoDiagnosticResponseDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'req-ad-852',
   })
   @IsNotEmpty()
   @IsString()
@@ -124,7 +125,7 @@ export class AutoDiagnosticResponseDto {
       "userId": "user-001",
       "responseId": "res-56789",
       "responseCode": 206,
-      "requestId": "req-12345",
+      "requestId": "req-ad-852",
       "deviceId": "sensor-67890",
       "timestamp": 1762379573804,
       "diagnosticLevel": "full",

@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
+import { ResponseMessageCode } from '../enum/response-message-code.enum';
 
 export class HardwareStatusResponseDto {
   @ApiProperty({
@@ -22,7 +23,7 @@ export class HardwareStatusResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: '206',
+    example: ResponseMessageCode.HARDWARE_METRICS,
   })
   @IsNotEmpty()
   @IsNumber()
@@ -30,7 +31,7 @@ export class HardwareStatusResponseDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'req-hs-35',
   })
   @IsNotEmpty()
   @IsString()
@@ -92,8 +93,8 @@ export class HardwareStatusResponseDto {
     {
       "userId": "user-001",
       "responseId": "fw-20251104-status",
-      "responseCode": 206,
-      "requestId": "fw-20251104-0004",
+      "responseCode": 210,
+      "requestId": "req-hs-35",
       "deviceId": "sensor-67890",
       "memoryUsage": 232500,
       "cpuUsage": 32,

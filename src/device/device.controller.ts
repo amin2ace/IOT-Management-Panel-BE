@@ -19,22 +19,33 @@ import {
 } from './messages';
 import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
 import { HardwareStatusRequestDto } from './messages/publish/hardware-status.request';
+import { GetAllDevicesResponseDto } from './dto/get-all-devices.response.dto';
+import { SensorResponseDto } from './dto/sensor-response.dto';
 
 @Controller('devices')
 export class DeviceController {
   constructor(private readonly deviceService: DeviceService) {}
 
   @Get('all')
-  async getSensors(@Query() query: QueryDeviceDto): Promise<Sensor[]> {
+  async getSensors(
+    @Query() query: QueryDeviceDto,
+  ): Promise<GetAllDevicesResponseDto> {
     return await this.deviceService.getSensors(query);
   }
 
-  @Get('discover-broadcast')
+  @Get(':id')
+  async getSingleSensor(
+    @Param('id') sensorId: string,
+  ): Promise<SensorResponseDto> {
+    return await this.deviceService.getSensor(sensorId);
+  }
+
+  @Post('discover-broadcast')
   async discoverDevicesBroadcast(@Body() discoverRequest: DiscoveryRequestDto) {
     return await this.deviceService.discoverDevicesBroadcast(discoverRequest);
   }
 
-  @Get('discover-unicast')
+  @Post('discover-unicast')
   async discoverDeviceUnicast(@Body() discoverRequest: DiscoveryRequestDto) {
     return await this.deviceService.discoverDeviceUnicast(discoverRequest);
   }
@@ -44,7 +55,7 @@ export class DeviceController {
     return await this.deviceService.getUnassignedSensor();
   }
 
-  @Get('hardware-status')
+  @Post('hardware-status')
   async getHardwareStatus(@Body() statusRequest: HardwareStatusRequestDto) {
     return await this.deviceService.getHardwareStatus(statusRequest);
   }
@@ -53,7 +64,7 @@ export class DeviceController {
   async provisionDevice(
     @Body() body: SensorFunctionalityRequestDto,
   ): Promise<string> {
-    return await this.deviceService.provisionDevice(body);
+    return await this.deviceService.AssignDeviceFunction(body);
   }
 
   @Delete(':id')

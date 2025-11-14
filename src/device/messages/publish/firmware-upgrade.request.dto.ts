@@ -9,6 +9,7 @@ import {
   IsNumber,
 } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
+import { RequestMessageCode } from '../enum/request-message-code.enum';
 
 export class FwUpgradeRequestDto {
   @ApiProperty({
@@ -21,7 +22,7 @@ export class FwUpgradeRequestDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'req-12345',
+    example: 'req-fu-41',
   })
   @IsString()
   @IsNotEmpty()
@@ -29,7 +30,7 @@ export class FwUpgradeRequestDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: 101,
+    example: RequestMessageCode.FIRMWARE_UPDATE,
   })
   @IsNumber()
   @IsNotEmpty()
@@ -112,8 +113,8 @@ export class FwUpgradeRequestDto {
   Example:
     {
       "userId": "user-001",
-      "requestId": "req-12345",
-      "requestCode": 101,
+      "requestId": "req-fu-41",
+      "requestCode": 104,
       "deviceId": "sensor-67890",
       "timestamp": 1762379573804,
       "version": "v1.2.3",

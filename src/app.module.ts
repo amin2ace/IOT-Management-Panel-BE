@@ -18,6 +18,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TopicModule } from './topic/topic.module';
 import { RedisModule } from './redis/redis.module';
 import { ExceptionHandlerInterceptor } from './common';
+import { LogHandlerModule } from './log-handler/log-handler.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { ExceptionHandlerInterceptor } from './common';
     DeviceModule,
     TopicModule,
     RedisModule,
+    LogHandlerModule,
   ],
   controllers: [AppController],
   providers: [

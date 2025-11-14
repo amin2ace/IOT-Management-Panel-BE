@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNumber, IsNotEmpty } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
+import { RequestMessageCode } from '../enum/request-message-code.enum';
 
 export class TelemetryRequestDto {
   @ApiProperty({
@@ -13,7 +14,7 @@ export class TelemetryRequestDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: 101,
+    example: RequestMessageCode.TELEMETRY_DATA,
   })
   @IsNotEmpty()
   @IsNumber()
@@ -21,7 +22,7 @@ export class TelemetryRequestDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'fw-t-43',
   })
   @IsNotEmpty()
   @IsString()
@@ -48,7 +49,7 @@ export class TelemetryRequestDto {
     {
       "userId": "user-001",
       "requestCode": 111,
-      "requestId": "fw-20251104-0004",
+      "requestId": "fw-t-43",
       "deviceId": "sensor-67890",
       "timestamp": 1762379573804
     }

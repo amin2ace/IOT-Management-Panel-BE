@@ -8,7 +8,8 @@ import {
   IsString,
 } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { SensorType } from 'src/config/enum/sensor-type.enum';
+import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
+import { RequestMessageCode } from '../enum/request-message-code.enum';
 
 export class SensorFunctionalityRequestDto {
   @ApiProperty({
@@ -21,7 +22,7 @@ export class SensorFunctionalityRequestDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'req-12345',
+    example: 'req-sf-39',
   })
   @IsString()
   @IsNotEmpty()
@@ -29,7 +30,7 @@ export class SensorFunctionalityRequestDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: 101,
+    example: RequestMessageCode.ASSIGN_DEVICE_FUNCTION,
   })
   @IsNumber()
   @IsNotEmpty()
@@ -51,15 +52,15 @@ export class SensorFunctionalityRequestDto {
 
   @ApiProperty({
     description: 'The provisioning state of the device',
-    enum: SensorType, // the enum itself
+    enum: DeviceCapabilities, // the enum itself
     enumName: 'DeviceCapabilities', // optional but helps Swagger
     isArray: true,
-    example: [SensorType.TEMPERATURE], // optional example
+    example: [DeviceCapabilities.TEMPERATURE], // optional example
   })
-  @IsEnum(SensorType, { each: true })
+  @IsEnum(DeviceCapabilities, { each: true })
   @IsArray()
   @IsNotEmpty()
-  functionality: SensorType[]; // e.g. ["temperature", "humidity"]
+  functionality: DeviceCapabilities[]; // e.g. ["temperature", "humidity"]
 
   @ApiProperty({
     description: 'MQTT topic to publish sensor data to',
@@ -111,7 +112,7 @@ export class SensorFunctionalityRequestDto {
   Example:
     {
       "userId": "user-001",
-      "requestId": "req-12345",
+      "requestId": "req-sf-39",
       "requestCode": 101,
       "deviceId": "sensor-67890",
       "timestamp": 1762379573804,

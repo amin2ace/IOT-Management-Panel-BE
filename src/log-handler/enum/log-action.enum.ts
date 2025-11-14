@@ -4,4 +4,6 @@ export enum LogAction {
   REQUEST = 'request',
   PUBLISH = 'publish',
   SUBSCRIBE = 'subscribe',
+  CREATE = 'Create',
+  DELETE = 'Delete',
 }

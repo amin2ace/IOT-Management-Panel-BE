@@ -9,7 +9,7 @@ import {
 import { TopicUseCase } from '../enum/topic-usecase.enum';
 
 @Entity()
-export class MqttTopic {
+export class Topic {
   @ObjectIdColumn()
   _id: ObjectId;
 
@@ -26,7 +26,7 @@ export class MqttTopic {
   useCase: TopicUseCase;
 
   @Column({ type: 'boolean', default: false })
-  isActive: boolean;
+  isSubscribed: boolean;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -35,4 +35,4 @@ export class MqttTopic {
   updatedAt: Date;
 }
 
-export default MqttTopic;
+export default Topic;

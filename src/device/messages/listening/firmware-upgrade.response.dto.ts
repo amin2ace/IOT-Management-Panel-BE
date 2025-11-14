@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNumber, IsEnum, IsNotEmpty } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { UpgradeStatus } from 'src/config/enum/upgrade-status.enum';
+import { ResponseMessageCode } from '../enum/response-message-code.enum';
 
 export class FwUpgradeResponseDto {
   @ApiProperty({
@@ -22,7 +23,7 @@ export class FwUpgradeResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: '206',
+    example: ResponseMessageCode.FIRMWARE_UPDATE_STATUS,
   })
   @IsNotEmpty()
   @IsNumber()
@@ -30,7 +31,7 @@ export class FwUpgradeResponseDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'req-fu-41',
   })
   @IsNotEmpty()
   @IsString()
@@ -72,8 +73,8 @@ export class FwUpgradeResponseDto {
     {
       "userId": "user-001",
       "responseId": "fw-20251104-status",
-      "responseCode": 206,
-      "requestId": "fw-20251104-0004",
+      "responseCode": 204,
+      "requestId": "req-fu-41",
       "deviceId": "sensor-67890",
       "timestamp": "1762379573804",
       "status": "IN_PROGRESS",
