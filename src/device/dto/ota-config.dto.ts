@@ -4,8 +4,8 @@ import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 export class OtaConfigDto {
   @ApiProperty({ description: 'Enable OTA updates', example: true })
   @IsBoolean()
-  @IsNotEmpty()
-  enabled: boolean;
+  @IsOptional()
+  enabled?: boolean;
 
   @ApiProperty({ description: 'OTA firmware URL', required: false })
   @IsOptional()

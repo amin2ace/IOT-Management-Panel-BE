@@ -24,11 +24,13 @@ import {
 import { TopicService } from 'src/topic/topic.service';
 import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
 import { RedisService } from 'src/redis/redis.service';
-import { SensorType } from 'src/config/enum/sensor-type.enum';
+import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
 import { HardwareStatusRequestDto } from './messages/publish/hardware-status.request';
 import { LogContext } from 'src/log-handler/enum/log-context.enum';
 import { LogAction } from 'src/log-handler/enum/log-action.enum';
+import { GetAllDevicesResponseDto } from './dto/get-all-devices.response.dto';
+import { SensorResponseDto } from './dto/sensor-response.dto';
 
 @Injectable()
 export class DeviceService {
@@ -40,7 +42,7 @@ export class DeviceService {
   ) {}
 
   private readonly logger = new Logger(DeviceService.name, { timestamp: true });
-  async getSensors(query: QueryDeviceDto): Promise<Sensor[]> {
+  async getSensors(query: QueryDeviceDto): Promise<GetAllDevicesResponseDto> {
     const { deviceId, provisionState, functionality } = query;
 
     // Build dynamic filter object Mongo db doesn't support query builder
@@ -50,9 +52,28 @@ export class DeviceService {
     if (provisionState) filter.provisionState = provisionState;
     if (functionality) filter.functionality = functionality;
 
-    return await this.sensorRepo.find({
+    const devices = await this.sensorRepo.find({
       where: filter,
     });
+
+    return {
+      data: devices,
+    };
+  }
+
+  async getSensor(sensorId: string): Promise<SensorResponseDto> {
+    const device = await this.sensorRepo.findOne({
+      where: {
+        sensorId,
+        isDeleted: false,
+      },
+    });
+
+    if (!device) {
+      throw new NotFoundException(`Device with ID ${sensorId} not found`);
+    }
+
+    return device;
   }
 
   private async setCache(dto: any) {
@@ -214,7 +235,10 @@ export class DeviceService {
     return `Device with id of ${deviceId} provisioned as ${functionality}`;
   }
 
-  async validateSensorTypes(deviceId: string, functionality: SensorType[]) {
+  async validateSensorTypes(
+    deviceId: string,
+    functionality: DeviceCapabilities[],
+  ) {
     const storedDevice = await this.sensorRepo.findOne({
       where: {
         sensorId: deviceId,
@@ -258,7 +282,7 @@ export class DeviceService {
   }
 
   async reconfigureDevice(configData: SensorConfigRequestDto) {
-    const { sensorId, requestCode } = configData;
+    const { deviceId: sensorId, requestCode } = configData;
     if (requestCode != RequestMessageCode.SENSOR_CONFIGURATION) return;
 
     const storedDevice = await this.sensorRepo.findOne({

@@ -32,6 +32,8 @@ import { SessionAuthGuard } from '@/common/guard/session-auth.guard';
 import { RolesGuard } from '@/common/guard/roles.guard';
 import { Roles } from '@/config/decorator/roles.decorator';
 import { Role } from '@/config/types/roles.types';
+import { GetAllDevicesResponseDto } from './dto/get-all-devices.response.dto';
+import { SensorResponseDto } from './dto/sensor-response.dto';
 
 @ApiTags('Devices')
 @Controller('devices')
@@ -45,7 +47,18 @@ export class DeviceController {
   @ApiCookieAuth()
   @ApiResponse({ status: 200, description: 'List of devices' })
   async getSensors(@Query() query: QueryDeviceDto): Promise<Sensor[]> {
+  @Get('all')
+  async getSensors(
+    @Query() query: QueryDeviceDto,
+  ): Promise<GetAllDevicesResponseDto> {
     return await this.deviceService.getSensors(query);
+  }
+
+  @Get(':id')
+  async getSingleSensor(
+    @Param('id') sensorId: string,
+  ): Promise<SensorResponseDto> {
+    return await this.deviceService.getSensor(sensorId);
   }
 
   @Post('discover-broadcast')

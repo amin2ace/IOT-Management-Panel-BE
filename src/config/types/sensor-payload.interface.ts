@@ -1,4 +1,4 @@
-import { SensorType } from '../enum/sensor-type.enum';
+import { DeviceCapabilities } from '../enum/sensor-type.enum';
 import {
   AmmoniaPayload,
   CO2Payload,
@@ -12,19 +12,21 @@ import {
 } from './sensor-type.interface';
 
 export type SensorPayloadMap = {
-  [SensorType.TEMPERATURE]: TemperaturePayload;
-  [SensorType.HUMIDITY]: HumidityPayload;
-  [SensorType.PRESSURE]: PressurePayload;
-  [SensorType.LIGHT]: LightPayload;
-  [SensorType.MOTION]: MotionPayload;
-  [SensorType.CO2]: CO2Payload;
-  [SensorType.RELAY]: RelayPayload;
-  [SensorType.GPS]: GPSPayload;
-  [SensorType.AMMONIA]: AmmoniaPayload;
+  [DeviceCapabilities.TEMPERATURE]: TemperaturePayload;
+  [DeviceCapabilities.HUMIDITY]: HumidityPayload;
+  [DeviceCapabilities.PRESSURE]: PressurePayload;
+  [DeviceCapabilities.LIGHT]: LightPayload;
+  [DeviceCapabilities.MOTION]: MotionPayload;
+  [DeviceCapabilities.CO2]: CO2Payload;
+  [DeviceCapabilities.RELAY]: RelayPayload;
+  [DeviceCapabilities.GPS]: GPSPayload;
+  [DeviceCapabilities.AMMONIA]: AmmoniaPayload;
 };
 
 // Generic interface for a sensor message
-export interface SensorMessage<T extends SensorType = SensorType> {
+export interface SensorMessage<
+  T extends DeviceCapabilities = DeviceCapabilities,
+> {
   sensorType: T;
   topic: string;
   payload: SensorPayloadMap[T];

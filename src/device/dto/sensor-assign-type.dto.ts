@@ -1,18 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsEnum, IsArray } from 'class-validator';
-import { SensorType } from 'src/config/enum/sensor-type.enum';
+import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 
 export class SensorFunctionAssignDto {
   @ApiProperty({
     description: 'The provisioning state of the device',
-    enum: SensorType, // the enum itself
+    enum: DeviceCapabilities, // the enum itself
     enumName: 'DeviceCapabilities', // optional but helps Swagger
     isArray: true,
 
-    example: [SensorType.TEMPERATURE], // optional example
+    example: [DeviceCapabilities.TEMPERATURE], // optional example
   })
-  @IsEnum(SensorType, { each: true })
+  @IsEnum(DeviceCapabilities, { each: true })
   @IsArray()
   @IsNotEmpty()
-  assignedType: SensorType[];
+  assignedType: DeviceCapabilities[];
 }

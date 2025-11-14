@@ -7,13 +7,13 @@ export class DeviceLocationDto {
     required: false,
     example: 'greenhouse-1',
   })
-  @IsOptional()
   @IsString()
+  @IsOptional()
   site?: string;
 
   @ApiProperty({ description: 'Floor number', required: false, example: 1 })
-  @IsOptional()
   @IsNumber()
+  @IsOptional()
   floor?: number;
 
   @ApiProperty({
@@ -21,7 +21,7 @@ export class DeviceLocationDto {
     required: false,
     example: 'tomato-section',
   })
-  @IsOptional()
   @IsString()
+  @IsOptional()
   unit?: string;
 }

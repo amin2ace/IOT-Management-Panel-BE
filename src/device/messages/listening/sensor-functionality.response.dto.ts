@@ -8,7 +8,7 @@ import {
   IsEnum,
 } from 'class-validator';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
-import { SensorType } from 'src/config/enum/sensor-type.enum';
+import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 import { ResponseMessageCode } from '../enum/response-message-code.enum';
 
 export class SensorFunctionalityResponseDto {
@@ -54,13 +54,13 @@ export class SensorFunctionalityResponseDto {
 
   @ApiProperty({
     description: 'Provisioned functionalities',
-    enum: SensorType,
+    enum: DeviceCapabilities,
     isArray: true,
-    example: [SensorType.TEMPERATURE],
+    example: [DeviceCapabilities.TEMPERATURE],
   })
   @IsArray()
   @IsNotEmpty()
-  functionality: SensorType[];
+  functionality: DeviceCapabilities[];
 
   @ApiProperty({
     description: 'Provisioning status message',
