@@ -24,7 +24,7 @@ import {
 import { TopicService } from 'src/topic/topic.service';
 import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
 import { RedisService } from 'src/redis/redis.service';
-import { SensorType } from 'src/config/enum/sensor-type.enum';
+import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
 import { HardwareStatusRequestDto } from './messages/publish/hardware-status.request';
 import { LogContext } from 'src/log-handler/enum/log-context.enum';
@@ -214,7 +214,10 @@ export class DeviceService {
     return `Device with id of ${deviceId} provisioned as ${functionality}`;
   }
 
-  async validateSensorTypes(deviceId: string, functionality: SensorType[]) {
+  async validateSensorTypes(
+    deviceId: string,
+    functionality: DeviceCapabilities[],
+  ) {
     const storedDevice = await this.sensorRepo.findOne({
       where: {
         sensorId: deviceId,

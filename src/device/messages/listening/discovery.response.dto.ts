@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
 import { Protocol } from 'src/config/enum/protocol.enum';
-import { SensorType } from 'src/config/enum/sensor-type.enum';
+import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 import { DeviceLocationDto } from '../../dto/device-location.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
@@ -80,7 +80,7 @@ export class DiscoveryResponseDto {
   @ApiProperty()
   @IsArray()
   @IsString({ each: true })
-  capabilities: SensorType[]; // e.g. ["temperature", "humidity"]
+  capabilities: DeviceCapabilities[]; // e.g. ["temperature", "humidity"]
 
   @ApiProperty()
   @IsString()
