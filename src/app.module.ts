@@ -12,13 +12,14 @@ import jwtModuleOptions from './config/jwt-module.config';
 import typeOrmModuleConfig from './config/typeorm-module-config';
 import configModuleOptions from './config/config-module.config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { RolesGuard } from './users/guard/roles.guard';
+import { RolesGuard } from './common/guard/roles.guard';
 import { DeviceModule } from './device/device.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TopicModule } from './topic/topic.module';
 import { RedisModule } from './redis/redis.module';
 import { ExceptionHandlerInterceptor } from './common';
 import { LogHandlerModule } from './log-handler/log-handler.module';
+import { SessionAuthGuard } from './common/guard/session-auth.guard';
 
 @Module({
   imports: [
@@ -54,16 +55,23 @@ import { LogHandlerModule } from './log-handler/log-handler.module';
   providers: [
     AppService,
     MqttGatewayModule,
-
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: ExceptionHandlerInterceptor, // Nest will instantiate it via DI
-    },
-
     {
       provide: APP_GUARD,
       useClass: RolesGuard, // Apply RolesGuard globally
     },
+    // NOTE: SessionAuthGuard should NOT be global because:
+    // - Signup and login endpoints must be public (no session yet)
+    // - Only protected routes need SessionAuthGuard
+    // - Use @UseGuards(SessionAuthGuard) on specific routes instead
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: SessionAuthGuard,
+    // },
+
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: ExceptionHandlerInterceptor, // Nest will instantiate it via DI
+    // },
   ],
 })
 export class AppModule {}

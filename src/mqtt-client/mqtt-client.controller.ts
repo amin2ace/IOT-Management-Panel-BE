@@ -6,12 +6,23 @@ import {
   Delete,
   Param,
   Put,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiCookieAuth,
+} from '@nestjs/swagger';
 import { MqttClientService } from './mqtt-client.service';
 import { MqttPublishDto } from './dto/mqtt-publish.dto';
 import { MqttSubscribeDto } from './dto/mqtt-subscribe.dto';
 import { MqttConfigDto } from './dto/mqtt-config.dto';
+import { SessionAuthGuard } from '@/common/guard/session-auth.guard';
+import { RolesGuard } from '@/common/guard/roles.guard';
+import { Roles } from '@/config/decorator/roles.decorator';
+import { Role } from '@/config/types/roles.types';
 
 /**
  * MQTT Management Controller
@@ -25,6 +36,9 @@ export class MqttManagementController {
   constructor(private readonly mqttClientService: MqttClientService) {}
 
   @Get('config')
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiCookieAuth()
   @ApiOperation({
     summary: 'Get current MQTT configuration',
     description:
@@ -58,6 +72,9 @@ export class MqttManagementController {
   }
 
   @Put('config')
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiCookieAuth()
   @ApiOperation({
     summary: 'Update MQTT configuration',
     description:
@@ -93,6 +110,9 @@ export class MqttManagementController {
   }
 
   @Post('config/validate')
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiCookieAuth()
   @ApiOperation({
     summary: 'Validate MQTT configuration',
     description:
@@ -125,6 +145,9 @@ export class MqttManagementController {
   }
 
   @Post('config/test-connection')
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiCookieAuth()
   @ApiOperation({
     summary: 'Test MQTT connection',
     description:
@@ -157,6 +180,9 @@ export class MqttManagementController {
   }
 
   @Post('connect/:broker')
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiCookieAuth()
   @ApiOperation({
     summary: 'Connect to MQTT broker',
     description:
@@ -180,6 +206,9 @@ export class MqttManagementController {
   }
 
   @Get('status')
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiCookieAuth()
   @ApiOperation({
     summary: 'Get MQTT connection status',
     description: 'Retrieves the current status of the MQTT broker connection',
@@ -198,6 +227,9 @@ export class MqttManagementController {
   }
 
   @Post('publish')
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiCookieAuth()
   @ApiOperation({
     summary: 'Publish message to MQTT topic',
     description:
@@ -229,6 +261,9 @@ export class MqttManagementController {
   }
 
   @Post('subscribe')
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiCookieAuth()
   @ApiOperation({
     summary: 'Subscribe to MQTT topics',
     description:
@@ -262,6 +297,9 @@ export class MqttManagementController {
   }
 
   @Delete('unsubscribe/:topic')
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiCookieAuth()
   @ApiOperation({
     summary: 'Unsubscribe from MQTT topic',
     description: 'Removes subscription to a specified MQTT topic',
@@ -287,6 +325,9 @@ export class MqttManagementController {
   }
 
   @Post('reconnect')
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiCookieAuth()
   @ApiOperation({
     summary: 'Reconnect to MQTT broker',
     description:

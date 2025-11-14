@@ -1,5 +1,5 @@
 import { Inject, Injectable, OnModuleDestroy, Logger } from '@nestjs/common';
-import Redis from 'ioredis';
+import Redis, { RedisKey } from 'ioredis';
 
 @Injectable()
 export class RedisService implements OnModuleDestroy {
@@ -27,6 +27,30 @@ export class RedisService implements OnModuleDestroy {
     } else {
       await this.client.set(key, payload);
     }
+  }
+
+  async setex(
+    key: RedisKey,
+    ttlSeconds: number | string,
+    value: string | Buffer | number,
+  ) {
+    return await this.client.setex(key, ttlSeconds, value);
+  }
+
+  async scan(
+    scanCursor: string,
+    patternArg: 'MATCH',
+    pattern: string,
+    countArg: 'COUNT',
+    count: number,
+  ): Promise<[string, string[]]> {
+    return await this.client.scan(
+      scanCursor,
+      patternArg,
+      pattern,
+      countArg,
+      count,
+    );
   }
 
   async del(key: string): Promise<number> {
