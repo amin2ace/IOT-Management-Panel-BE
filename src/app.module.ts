@@ -55,10 +55,10 @@ import { SessionAuthGuard } from './common/guard/session-auth.guard';
   providers: [
     AppService,
     MqttGatewayModule,
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard, // Apply RolesGuard globally
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: RolesGuard, // Apply RolesGuard globally
+    // },
     // NOTE: SessionAuthGuard should NOT be global because:
     // - Signup and login endpoints must be public (no session yet)
     // - Only protected routes need SessionAuthGuard
