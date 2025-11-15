@@ -22,7 +22,8 @@ import { QueryDeviceDto } from './dto/query-device.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
 import { Sensor } from './repository/sensor.entity';
 import {
-  DiscoveryRequestDto,
+  DiscoveryBroadcastRequestDto,
+  DiscoveryUnicastRequestDto,
   SensorConfigRequestDto,
   SensorFunctionalityRequestDto,
 } from './messages';
@@ -60,20 +61,24 @@ export class DeviceController {
   }
 
   @Post('discover-broadcast')
-  @UseGuards(SessionAuthGuard, RolesGuard)
-  @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  // @UseGuards(SessionAuthGuard, RolesGuard)
+  // @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Discover devices via broadcast' })
-  @ApiCookieAuth()
-  async discoverDevicesBroadcast(@Body() discoverRequest: DiscoveryRequestDto) {
+  // @ApiCookieAuth()
+  async discoverDevicesBroadcast(
+    @Body() discoverRequest: DiscoveryBroadcastRequestDto,
+  ) {
     return await this.deviceService.discoverDevicesBroadcast(discoverRequest);
   }
 
   @Post('discover-unicast')
-  @UseGuards(SessionAuthGuard, RolesGuard)
-  @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  // @UseGuards(SessionAuthGuard, RolesGuard)
+  // @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Discover devices via unicast' })
-  @ApiCookieAuth()
-  async discoverDeviceUnicast(@Body() discoverRequest: DiscoveryRequestDto) {
+  // @ApiCookieAuth()
+  async discoverDeviceUnicast(
+    @Body() discoverRequest: DiscoveryUnicastRequestDto,
+  ) {
     return await this.deviceService.discoverDeviceUnicast(discoverRequest);
   }
 

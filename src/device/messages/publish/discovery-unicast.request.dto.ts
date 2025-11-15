@@ -1,32 +1,18 @@
 import {
-  IsISO8601,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   ValidateNested,
-  IsArray,
   IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { RequestMessageCode } from '../enum/request-message-code.enum';
+import { DiscoverFilterDto } from './discovery-broadcast.request.dto';
 
-class FilterDto {
-  @ApiProperty()
-  @IsOptional()
-  @IsString()
-  subnet?: string;
-
-  @ApiProperty()
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  hardware?: string[];
-}
-
-export class DiscoveryRequestDto {
+export class DiscoveryUnicastRequestDto {
   @ApiProperty({
     description: 'Unique identifier of the user who initiated the request',
     example: 'user-001',
@@ -82,8 +68,8 @@ export class DiscoveryRequestDto {
   @ApiProperty()
   @IsOptional()
   @ValidateNested()
-  @Type(() => FilterDto)
-  filters?: FilterDto;
+  @Type(() => DiscoverFilterDto)
+  filters?: DiscoverFilterDto;
 }
 
 /*
@@ -94,7 +80,7 @@ export class DiscoveryRequestDto {
       "requestCode": 100,
       "deviceId": "sensor-12345",
       "timestamp": 1762379573804,
-      "isBroadcast": true,
+      "isBroadcast": false,
       "filters": {
         "subnet": "192.168.1.0/24",
         "hardware": ["ESP32", "ESP8266"]

@@ -74,15 +74,27 @@ export class TopicService {
   ): Promise<Topic> {
     const brokerUrl = await this.config.getOrThrow<string>('MQTT_BROKER_URL');
 
-    const record = this.topicRepo.create({
-      brokerUrl,
-      deviceId,
-      topic,
-      useCase,
+    const isTopicExist = await this.topicRepo.findOne({
+      where: {
+        topic,
+        useCase,
+        deviceId,
+      },
     });
 
-    await this.topicRepo.save(record);
-    return record;
+    if (!isTopicExist) {
+      const record = this.topicRepo.create({
+        brokerUrl,
+        deviceId,
+        topic,
+        useCase,
+      });
+
+      await this.topicRepo.save(record);
+      return record;
+    }
+    this.logger.debug('Topic already exists in database');
+    return isTopicExist;
   }
 
   async getBroadcastTopic(): Promise<string> {

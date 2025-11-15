@@ -15,8 +15,9 @@ import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 import { plainToInstance } from 'class-transformer';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import {
-  DiscoveryRequestDto,
+  DiscoveryBroadcastRequestDto,
   DiscoveryResponseDto,
+  DiscoveryUnicastRequestDto,
   RequestMessageCode,
   SensorConfigRequestDto,
   SensorFunctionalityRequestDto,
@@ -87,9 +88,10 @@ export class DeviceService {
     });
   }
 
-  async discoverDevicesBroadcast(discoverRequest: DiscoveryRequestDto) {
+  async discoverDevicesBroadcast(
+    discoverRequest: DiscoveryBroadcastRequestDto,
+  ) {
     const broadcastTopic = await this.topicService.getBroadcastTopic();
-    console.log({ broadcastTopic });
 
     const { isBroadcast, requestCode } = discoverRequest;
 
@@ -119,8 +121,9 @@ export class DeviceService {
     }
   }
 
-  async discoverDeviceUnicast(discoverRequest: DiscoveryRequestDto) {
+  async discoverDeviceUnicast(discoverRequest: DiscoveryUnicastRequestDto) {
     const { isBroadcast, deviceId, requestCode } = discoverRequest;
+    const broadcastTopic = await this.topicService.getBroadcastTopic();
 
     if (requestCode !== RequestMessageCode.DISCOVERY) {
       throw new BadRequestException('Invalid request');
@@ -129,23 +132,17 @@ export class DeviceService {
     if (deviceId && !isBroadcast) {
       await this.setCache(discoverRequest);
 
-      const sensorTopic = await this.topicService.getDeviceTopicsByUseCase(
-        deviceId,
-        TopicUseCase.DISCOVERY,
+      const { topic } = await this.topicService.storeTopic(
+        'Mqtt_Broker',
+        `${broadcastTopic}/${TopicUseCase.DISCOVERY}`,
+        TopicUseCase.BROADCAST,
       );
-      if (!sensorTopic.topic) {
-        this.logger.error(`Discovery topic for ${deviceId} is required`);
-        throw new ForbiddenException(
-          `Discovery topic for ${deviceId} is required`,
-        );
-      }
 
-      this.mqttService.publish(
-        sensorTopic.topic,
-        JSON.stringify(discoverRequest),
-        { qos: 0, retain: false },
-      );
-      await this.mqttService.subscribe(sensorTopic.topic);
+      this.mqttService.publish(topic, JSON.stringify(discoverRequest), {
+        qos: 0,
+        retain: false,
+      });
+      await this.mqttService.subscribe(topic);
     }
     this.logger.debug('Broadcast discovery request sent successfully');
   }
