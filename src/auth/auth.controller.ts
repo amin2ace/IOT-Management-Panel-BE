@@ -25,6 +25,8 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthService } from './auth.service';
+import { Serialize } from '@/common';
+import { UserResponseDto } from '@/users/dto/user-response.dto';
 
 /**
  * AuthController - Handles all authentication-related endpoints
@@ -106,6 +108,7 @@ export class AuthController {
    * - 401 Unauthorized: Invalid credentials
    */
   @Post('login')
+  @Serialize(UserResponseDto)
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({
     status: 200,

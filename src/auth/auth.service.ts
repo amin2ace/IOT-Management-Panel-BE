@@ -69,7 +69,7 @@ export class AuthService {
     email: string;
     roles: Role[];
   }> {
-    const { email, userName, password } = signupData;
+    const { email, username: userName, password } = signupData;
 
     // Validate input
     if (!email || !userName || !password) {
