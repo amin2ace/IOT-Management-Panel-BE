@@ -12,7 +12,7 @@ export class CreateUserDto {
   @ApiProperty({ default: 'John Wick' })
   @IsString()
   @IsNotEmpty()
-  userName: string;
+  username: string;
 
   @ApiProperty({ default: 'john@wick.com' })
   @IsEmail()

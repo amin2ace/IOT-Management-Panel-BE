@@ -2,7 +2,8 @@ export * from './enum/request-message-code.enum';
 export * from './enum/response-message-code.enum';
 // Publish
 export * from './publish/auto-diagnose.request';
-export * from './publish/discovery.request.dto';
+export * from './publish/discovery-broadcast.request.dto';
+export * from './publish/discovery-unicast.request.dto';
 export * from './publish/firmware-upgrade.request.dto';
 export * from './publish/hardware-status.request';
 export * from './publish/reboot.request.dto';

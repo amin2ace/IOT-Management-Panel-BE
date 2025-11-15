@@ -4,7 +4,7 @@ import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 export class SignupInputDto {
   @ApiProperty({ default: 'John Wick' })
   @IsString()
-  userName: string;
+  username: string;
 
   @ApiProperty({ default: 'john@wick.com' })
   @IsEmail()

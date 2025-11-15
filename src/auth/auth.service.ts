@@ -18,6 +18,8 @@ import { UsersService } from 'src/users/users.service';
 import { Role } from 'src/config/types/roles.types';
 import { v4 as uuidv4 } from 'uuid';
 import { RedisService } from '@/redis/redis.service';
+import { LoginResponseDto } from './dto/login-response.dto';
+import { SignupResponseDto } from './dto/signup-response.dto';
 
 /**
  * AuthService - Hybrid authentication service
@@ -63,16 +65,11 @@ export class AuthService {
     signupData: SignupInputDto,
     req: Request,
     res: Response,
-  ): Promise<{
-    userId: string;
-    userName: string;
-    email: string;
-    roles: Role[];
-  }> {
-    const { email, userName, password } = signupData;
+  ): Promise<SignupResponseDto> {
+    const { email, username, password } = signupData;
 
     // Validate input
-    if (!email || !userName || !password) {
+    if (!email || !username || !password) {
       throw new BadRequestException(
         'Email, username, and password are required',
       );
@@ -100,7 +97,7 @@ export class AuthService {
     const createdUser = await this.usersService.createUser({
       email,
       password: hashedPassword,
-      userName,
+      username,
       roles: defaultRoles,
     });
 
@@ -109,7 +106,7 @@ export class AuthService {
     // Create session
     const sessionId = await this.sessionService.createSession(
       createdUser.userId,
-      userName,
+      username,
       email,
       defaultRoles,
       this.getClientIp(req),
@@ -123,8 +120,7 @@ export class AuthService {
 
     return {
       userId: createdUser.userId,
-      userName,
-      email,
+      username,
       roles: defaultRoles,
     };
   }
@@ -145,12 +141,7 @@ export class AuthService {
     loginData: loginInputDto,
     req: Request,
     res: Response,
-  ): Promise<{
-    userId: string;
-    userName: string;
-    email: string;
-    roles: Role[];
-  }> {
+  ): Promise<LoginResponseDto> {
     try {
       const { email, password } = loginData;
 
@@ -171,20 +162,16 @@ export class AuthService {
         throw new UnauthorizedException('Invalid email or password');
       }
 
-      // TODO: Fetch user roles from database
-      // For now, use default roles. Implement role assignment in users module
-      const userRoles: Role[] = [Role.VIEWER]; // Will be fetched from DB
-
       // Create session
       const sessionId = await this.sessionService.createSession(
         user.userId,
-        user.userName,
+        user.username,
         user.email,
-        userRoles,
+        user.roles,
         this.getClientIp(req),
         this.getClientUserAgent(req),
       );
-      console.log({ sessionId });
+
       // Set secure httpOnly cookie
       this.setSessionCookie(res, sessionId);
 
@@ -192,9 +179,8 @@ export class AuthService {
 
       return {
         userId: user.userId,
-        userName: user.userName,
-        email: user.email,
-        roles: userRoles,
+        username: user.username,
+        roles: user.roles,
       };
     } catch (error) {
       throw new UnauthorizedException();
@@ -248,9 +234,7 @@ export class AuthService {
     changePasswordData: ChangePasswordDto,
   ): Promise<{ message: string }> {
     const { oldPassword, newPassword, retypePassword } = changePasswordData;
-    const sessionId = (req as any).sessionId;
     const userId = (req as any).user?.userId;
-    console.log('AuthService.changePassword - userId:', userId);
 
     if (!userId) {
       throw new UnauthorizedException('User not found in session');

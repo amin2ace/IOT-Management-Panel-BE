@@ -1,6 +1,6 @@
 import { Role } from '@/config/types/roles.types';
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 
 /**
  * User Response DTO
@@ -8,30 +8,35 @@ import { Exclude } from 'class-transformer';
  * Excludes sensitive information like password
  */
 export class UserResponseDto {
+  @Expose()
   @ApiProperty({
     description: 'Unique user identifier',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   userId: string;
 
+  @Exclude()
   @ApiProperty({
     description: 'User email address',
     example: 'john@example.com',
   })
   email: string;
 
+  @Expose()
   @ApiProperty({
     description: 'User display name',
     example: 'John Doe',
   })
-  userName: string;
+  username: string;
 
+  @Exclude()
   @ApiProperty({
     description: 'User active status',
     example: true,
   })
   isActive: boolean;
 
+  @Expose()
   @ApiProperty({
     description: 'User roles for RBAC',
     enum: Role,
