@@ -15,7 +15,7 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true, // strip unknown properties
       forbidNonWhitelisted: true, // throw on unknown properties
-      transform: true, // transform payloads to DTO instances
+      // transform: true, // transform payloads to DTO instances
     }),
   );
 

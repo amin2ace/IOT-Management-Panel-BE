@@ -18,6 +18,7 @@ import { UsersService } from 'src/users/users.service';
 import { Role } from 'src/config/types/roles.types';
 import { v4 as uuidv4 } from 'uuid';
 import { RedisService } from '@/redis/redis.service';
+import { LoginResponseDto } from './dto/login-response.dto';
 
 /**
  * AuthService - Hybrid authentication service
@@ -145,12 +146,7 @@ export class AuthService {
     loginData: loginInputDto,
     req: Request,
     res: Response,
-  ): Promise<{
-    userId: string;
-    userName: string;
-    email: string;
-    roles: Role[];
-  }> {
+  ): Promise<LoginResponseDto> {
     try {
       const { email, password } = loginData;
 
@@ -171,20 +167,16 @@ export class AuthService {
         throw new UnauthorizedException('Invalid email or password');
       }
 
-      // TODO: Fetch user roles from database
-      // For now, use default roles. Implement role assignment in users module
-      const userRoles: Role[] = [Role.VIEWER]; // Will be fetched from DB
-
       // Create session
       const sessionId = await this.sessionService.createSession(
         user.userId,
         user.userName,
         user.email,
-        userRoles,
+        user.roles,
         this.getClientIp(req),
         this.getClientUserAgent(req),
       );
-      console.log({ sessionId });
+
       // Set secure httpOnly cookie
       this.setSessionCookie(res, sessionId);
 
@@ -192,9 +184,8 @@ export class AuthService {
 
       return {
         userId: user.userId,
-        userName: user.userName,
-        email: user.email,
-        roles: userRoles,
+        username: user.userName,
+        roles: user.roles,
       };
     } catch (error) {
       throw new UnauthorizedException();
@@ -248,9 +239,7 @@ export class AuthService {
     changePasswordData: ChangePasswordDto,
   ): Promise<{ message: string }> {
     const { oldPassword, newPassword, retypePassword } = changePasswordData;
-    const sessionId = (req as any).sessionId;
     const userId = (req as any).user?.userId;
-    console.log('AuthService.changePassword - userId:', userId);
 
     if (!userId) {
       throw new UnauthorizedException('User not found in session');
