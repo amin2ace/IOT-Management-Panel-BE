@@ -28,6 +28,7 @@ import { AuthService } from './auth.service';
 import { Serialize } from '@/common';
 import { UserResponseDto } from '@/users/dto/user-response.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
+import { SignupResponseDto } from './dto/signup-response.dto';
 
 /**
  * AuthController - Handles all authentication-related endpoints
@@ -66,6 +67,7 @@ export class AuthController {
    * - 409 Conflict: Email already exists
    */
   @Post('signup')
+  @Serialize(SignupResponseDto)
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({
     status: 201,

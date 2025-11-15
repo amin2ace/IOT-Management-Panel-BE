@@ -19,6 +19,7 @@ import { Role } from 'src/config/types/roles.types';
 import { v4 as uuidv4 } from 'uuid';
 import { RedisService } from '@/redis/redis.service';
 import { LoginResponseDto } from './dto/login-response.dto';
+import { SignupResponseDto } from './dto/signup-response.dto';
 
 /**
  * AuthService - Hybrid authentication service
@@ -64,16 +65,11 @@ export class AuthService {
     signupData: SignupInputDto,
     req: Request,
     res: Response,
-  ): Promise<{
-    userId: string;
-    userName: string;
-    email: string;
-    roles: Role[];
-  }> {
-    const { email, username: userName, password } = signupData;
+  ): Promise<SignupResponseDto> {
+    const { email, username, password } = signupData;
 
     // Validate input
-    if (!email || !userName || !password) {
+    if (!email || !username || !password) {
       throw new BadRequestException(
         'Email, username, and password are required',
       );
@@ -101,7 +97,7 @@ export class AuthService {
     const createdUser = await this.usersService.createUser({
       email,
       password: hashedPassword,
-      userName,
+      username,
       roles: defaultRoles,
     });
 
@@ -110,7 +106,7 @@ export class AuthService {
     // Create session
     const sessionId = await this.sessionService.createSession(
       createdUser.userId,
-      userName,
+      username,
       email,
       defaultRoles,
       this.getClientIp(req),
@@ -124,8 +120,7 @@ export class AuthService {
 
     return {
       userId: createdUser.userId,
-      userName,
-      email,
+      username,
       roles: defaultRoles,
     };
   }
@@ -170,7 +165,7 @@ export class AuthService {
       // Create session
       const sessionId = await this.sessionService.createSession(
         user.userId,
-        user.userName,
+        user.username,
         user.email,
         user.roles,
         this.getClientIp(req),
@@ -184,7 +179,7 @@ export class AuthService {
 
       return {
         userId: user.userId,
-        username: user.userName,
+        username: user.username,
         roles: user.roles,
       };
     } catch (error) {

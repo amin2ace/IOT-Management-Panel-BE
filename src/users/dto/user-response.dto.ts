@@ -27,7 +27,7 @@ export class UserResponseDto {
     description: 'User display name',
     example: 'John Doe',
   })
-  userName: string;
+  username: string;
 
   @Exclude()
   @ApiProperty({
