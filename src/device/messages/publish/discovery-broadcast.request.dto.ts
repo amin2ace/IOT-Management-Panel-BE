@@ -11,7 +11,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { RequestMessageCode } from '../enum/request-message-code.enum';
+import { RequestMessageCode } from '../../../common/enum/request-message-code.enum';
 
 export class DiscoverFilterDto {
   @ApiProperty()

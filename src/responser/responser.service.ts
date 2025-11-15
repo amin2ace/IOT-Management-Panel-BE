@@ -13,29 +13,28 @@ import {
   FwUpgradeResponseDto,
   HardwareStatusResponseDto,
   HeartbeatDto,
-  ResponseMessageCode,
   SensorFunctionalityResponseDto,
   TelemetryResponseDto,
-} from './messages';
+} from './dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Sensor } from './repository/sensor.entity';
 import { RedisService } from 'src/redis/redis.service';
-import { DeviceService } from './device.service';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import { UpgradeStatus } from 'src/config/enum/upgrade-status.enum';
 import { RebootStatus } from 'src/config/enum/reboot-status.enum';
-import { Telemetry } from './repository/sensor-telemetry.entity';
-import { HardwareStatus } from './repository/hardware-status.entity';
 import { TopicService } from 'src/topic/topic.service';
 import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
-import { ConfigService } from '@nestjs/config';
 import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Sensor } from '@/device/repository/sensor.entity';
+import { HardwareStatus } from '@/device/repository/hardware-status.entity';
+import { Telemetry } from '@/device/repository/sensor-telemetry.entity';
+import { DeviceService } from '@/device/device.service';
+import { ResponseMessageCode } from '@/common';
 
 @Injectable()
-export class ResponseHandlerService {
+export class ResponserService {
   constructor(
     @InjectRepository(Sensor) private readonly sensorRepo: Repository<Sensor>,
     @InjectRepository(HardwareStatus)
@@ -51,7 +50,7 @@ export class ResponseHandlerService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  private readonly logger = new Logger(ResponseHandlerService.name, {
+  private readonly logger = new Logger(ResponserService.name, {
     timestamp: true,
   });
 

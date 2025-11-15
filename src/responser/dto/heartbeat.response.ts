@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
-import { ResponseMessageCode } from '../enum/response-message-code.enum';
+import { ConnectionState } from 'src/config/enum/connection-state.enum';
+import { ResponseMessageCode } from '../../common/enum/response-message-code.enum';
 
-export class HardwareStatusResponseDto {
+export class HeartbeatDto {
   @ApiProperty({
     description: 'Unique identifier of the user who initiated the request',
     example: 'user-001',
@@ -23,7 +24,7 @@ export class HardwareStatusResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: ResponseMessageCode.HARDWARE_METRICS,
+    example: ResponseMessageCode.HEARTBEAT,
   })
   @IsNotEmpty()
   @IsNumber()
@@ -31,7 +32,7 @@ export class HardwareStatusResponseDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'req-hs-35',
+    example: 'fw-20251104-0004',
   })
   @IsNotEmpty()
   @IsString()
@@ -45,21 +46,9 @@ export class HardwareStatusResponseDto {
   @IsNotEmpty()
   deviceId: string;
 
-  @ApiProperty({
-    description: 'Memory usage in KB',
-    example: '232500',
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  memoryUsage: number;
-
-  @ApiProperty({
-    description: 'CPU usage in percent',
-    example: '32',
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  cpuUsage: number;
+  @ApiProperty()
+  @IsEnum(ConnectionState)
+  connectionState: ConnectionState;
 
   @IsValidEpochMillis({ message: 'Uptime must be valid epoch milliseconds' })
   uptime: number;
@@ -72,14 +61,6 @@ export class HardwareStatusResponseDto {
   timestamp: number;
 
   @ApiProperty({
-    description: 'Hardware internal temperature in celcius degree',
-    example: '78',
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  internalTemp: number;
-
-  @ApiProperty({
     description: 'Wifi Received Signal Strength Indicator',
     example: '-52',
   })
@@ -89,18 +70,17 @@ export class HardwareStatusResponseDto {
 }
 
 /**
-  Example:
-    {
-      "userId": "user-001",
-      "responseId": "fw-20251104-status",
-      "responseCode": 210,
-      "requestId": "req-hs-35",
-      "deviceId": "sensor-67890",
-      "memoryUsage": 232500,
-      "cpuUsage": 32,
-      "uptime": 1762379000000,
-      "timestamp": 1762379573804,
-      "internalTemp": 78,
-      "wifiRssi": -52
-    }
+    Example:
+      {
+        "userId": "user-001",
+        "responseId": "fw-20251104-status",
+        "responseCode": 209,
+        "requestId": "fw-20251104-0004",
+        "deviceId": "sensor-67890",
+        "connectionState": "CONNECTED",
+        "uptime": 86400000,
+        "timestamp": 1762379573804,
+        "wifiRssi": -52
+      }
+
  */

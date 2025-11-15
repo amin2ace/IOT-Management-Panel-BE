@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
 import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
-import { ResponseMessageCode } from '../enum/response-message-code.enum';
+import { ResponseMessageCode } from '../../common/enum/response-message-code.enum';
 
 export class SensorFunctionalityResponseDto {
   @ApiProperty({

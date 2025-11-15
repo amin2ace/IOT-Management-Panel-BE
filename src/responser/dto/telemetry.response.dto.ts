@@ -12,7 +12,7 @@ import { Type } from 'class-transformer';
 import { TelemetryMetric } from 'src/config/enum/telemetry-metrics.enum';
 import { TelemetryMetaDto } from 'src/device/dto/telemetry-meta.dto';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { ResponseMessageCode } from '../enum/response-message-code.enum';
+import { ResponseMessageCode } from '../../common/enum/response-message-code.enum';
 
 export class TelemetryResponseDto {
   @ApiProperty({

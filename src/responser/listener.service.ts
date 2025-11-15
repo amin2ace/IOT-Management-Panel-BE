@@ -1,29 +1,25 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { DeviceService } from './device.service';
+import { RedisService } from 'src/redis/redis.service';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { ResponserService } from './responser.service';
+import { LogHandlerService } from '@/log-handler/log-handler.service';
 import {
   AckResponseDto,
   DeviceRebootResponseDto,
   DiscoveryResponseDto,
   FwUpgradeResponseDto,
-  HeartbeatDto,
   HardwareStatusResponseDto,
-} from './messages';
-import { TelemetryResponseDto } from './messages/listening/telemetry.response.dto';
-import { RedisService } from 'src/redis/redis.service';
-import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
-import { SensorFunctionalityResponseDto } from './messages/listening/sensor-functionality.response.dto';
-import { ResponseHandlerService } from './response.handler.service';
-import { TopicService } from 'src/topic/topic.service';
-import { LogHandlerService } from 'src/log-handler/log-handler.service';
+  HeartbeatDto,
+  SensorFunctionalityResponseDto,
+  TelemetryResponseDto,
+} from './dto';
 
 @Injectable()
-export class ResponseListenerService {
+export class ListenerService {
   constructor(
-    private readonly responseService: ResponseHandlerService,
-    private readonly deviceService: DeviceService,
-    private readonly topicService: TopicService,
+    private readonly responserService: ResponserService,
     private readonly redisCache: RedisService,
     private readonly logger: LogHandlerService,
   ) {}
@@ -81,7 +77,7 @@ export class ResponseListenerService {
       payload,
     );
 
-    await this.responseService.handleDiscoveryResponse(validatedPayload);
+    await this.responserService.handleDiscoveryResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/assign')
@@ -93,7 +89,7 @@ export class ResponseListenerService {
       payload,
     );
 
-    await this.responseService.handleAssignResponse(validatedPayload);
+    await this.responserService.handleAssignResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/ack')
@@ -105,7 +101,7 @@ export class ResponseListenerService {
       payload,
     );
 
-    await this.responseService.handleAckMessage(validatedPayload);
+    await this.responserService.handleAckMessage(validatedPayload);
   }
 
   @OnEvent('mqtt/message/upgrade')
@@ -115,7 +111,7 @@ export class ResponseListenerService {
       FwUpgradeResponseDto,
       payload,
     );
-    await this.responseService.handleUpgradeResponse(validatedPayload);
+    await this.responserService.handleUpgradeResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/heartbeat')
@@ -126,7 +122,7 @@ export class ResponseListenerService {
       HeartbeatDto,
       payload,
     );
-    await this.responseService.handleDeviceHeartbeat(validatedPayload);
+    await this.responserService.handleDeviceHeartbeat(validatedPayload);
   }
 
   @OnEvent('mqtt/message/reboot')
@@ -137,7 +133,7 @@ export class ResponseListenerService {
       DeviceRebootResponseDto,
       payload,
     );
-    await this.responseService.handleRebootResponse(validatedPayload);
+    await this.responserService.handleRebootResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/telemetry')
@@ -148,7 +144,7 @@ export class ResponseListenerService {
       TelemetryResponseDto,
       payload,
     );
-    await this.responseService.handleTelemetryResponse(validatedPayload);
+    await this.responserService.handleTelemetryResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/hardware-status')
@@ -159,7 +155,7 @@ export class ResponseListenerService {
       HardwareStatusResponseDto,
       payload,
     );
-    await this.responseService.handleHardwareStatus(validatedPayload);
+    await this.responserService.handleHardwareStatus(validatedPayload);
   }
 
   // @OnEvent('mqtt/message/alert')
@@ -173,6 +169,6 @@ export class ResponseListenerService {
 
   @OnEvent('mqtt/message/unknown')
   async handleUnknownEvent(topic: string, payload: any) {
-    await this.responseService.handleUnknownMessage(payload);
+    await this.responserService.handleUnknownMessage(payload);
   }
 }

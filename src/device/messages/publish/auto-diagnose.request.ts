@@ -10,7 +10,7 @@ import {
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { DiagnosticComponent } from 'src/config/enum/diagnostic-component.enum';
 import { DiagnosticLevel } from 'src/config/enum/diagnostic-Level.enum';
-import { RequestMessageCode } from '../enum/request-message-code.enum';
+import { RequestMessageCode } from '../../../common/enum/request-message-code.enum';
 
 export class AutoDiagnosticRequestDto {
   @ApiProperty({

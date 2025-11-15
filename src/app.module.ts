@@ -20,6 +20,7 @@ import { RedisModule } from './redis/redis.module';
 import { ExceptionHandlerInterceptor } from './common';
 import { LogHandlerModule } from './log-handler/log-handler.module';
 import { SessionAuthGuard } from './common/guard/session-auth.guard';
+import { ResponserModule } from './responser/responser.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { SessionAuthGuard } from './common/guard/session-auth.guard';
     TopicModule,
     RedisModule,
     LogHandlerModule,
+    ResponserModule,
   ],
   controllers: [AppController],
   providers: [
