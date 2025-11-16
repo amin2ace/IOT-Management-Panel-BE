@@ -26,7 +26,7 @@ export class TopicController {
 
   @Get('device/:id')
   @UseGuards(SessionAuthGuard, RolesGuard)
-  @Roles(Role.VIEWER, Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get all topics for device' })
   @ApiCookieAuth()
   @ApiResponse({

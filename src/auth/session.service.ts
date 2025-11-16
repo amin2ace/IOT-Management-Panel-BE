@@ -51,7 +51,6 @@ export class SessionService implements ISessionService {
   async createSession(
     userId: string,
     userName: string,
-    email: string,
     roles: Role[],
     ipAddress: string,
     userAgent: string,
@@ -63,7 +62,6 @@ export class SessionService implements ISessionService {
       const sessionData: ISessionData = {
         userId,
         userName,
-        email,
         roles,
         loginTime: now,
         lastActivity: now,

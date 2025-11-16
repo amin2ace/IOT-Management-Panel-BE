@@ -107,7 +107,6 @@ export class AuthService {
     const sessionId = await this.sessionService.createSession(
       createdUser.userId,
       username,
-      email,
       defaultRoles,
       this.getClientIp(req),
       this.getClientUserAgent(req),
@@ -166,7 +165,6 @@ export class AuthService {
       const sessionId = await this.sessionService.createSession(
         user.userId,
         user.username,
-        user.email,
         user.roles,
         this.getClientIp(req),
         this.getClientUserAgent(req),
