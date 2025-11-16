@@ -1,4 +1,10 @@
-import { MiddlewareConsumer, Module, NestModule, Global } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  Global,
+  RequestMethod,
+} from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from '../users/users.module';
 import { Token } from './repository/token.entity';
@@ -10,6 +16,8 @@ import { SessionService } from './session.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RedisModule } from '@/redis/redis.module';
+import { SessionMiddleware } from './middleware/session.middleware';
+import { RouteInfo } from '@nestjs/common/interfaces';
 
 /**
  * AuthModule - Provides authentication services
@@ -43,19 +51,6 @@ import { RedisModule } from '@/redis/redis.module';
     CookieService,
     TokenService,
     SessionService,
-
-    // // Redis provider
-    // {
-    //   provide: 'REDIS_CLIENT',
-    //   useFactory: (configService: ConfigService) => {
-    //     const redisUrl = configService.get<string>(
-    //       'REDIS_URL',
-    //       'redis://localhost:6379',
-    //     );
-    //     return new Redis(redisUrl);
-    //   },
-    //   inject: [ConfigService],
-    // },
   ],
   exports: [
     AuthService,
@@ -63,10 +58,26 @@ import { RedisModule } from '@/redis/redis.module';
     HashService,
     TokenService,
     CookieService,
-    // 'REDIS_CLIENT',
   ],
 })
 export class AuthModule {
+  // private readonly routes: RouteInfo[] = [
+  //   {
+  //     method: RequestMethod.POST,
+  //     path: 'auth/logout',
+  //   },
+  //   {
+  //     path: '/auth/refresh',
+  //     method: RequestMethod.POST,
+  //   },
+  //   {
+  //     path: '/auth/change-password',
+  //     method: RequestMethod.POST,
+  //   },
+  // ];
+  // configure(consumer: MiddlewareConsumer) {
+  //   consumer.apply(SessionMiddleware).forRoutes();
+  // }
   // Implementation for online JWT authentication
   // configure(consumer: MiddlewareConsumer) {
   //   // Keep original JWT middleware for backward compatibility

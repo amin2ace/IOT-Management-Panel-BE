@@ -196,8 +196,7 @@ export class AuthController {
    * - 400 Bad Request: Password mismatch
    */
   @Post('change-password')
-  @UseGuards(SessionAuthGuard, RolesGuard)
-  @Roles(Role.VIEWER, Role.TEST, Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @UseGuards(SessionAuthGuard)
   @ApiOperation({ summary: 'Change password for authenticated user' })
   @ApiCookieAuth()
   @ApiResponse({

@@ -10,11 +10,11 @@ import {
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
 import { Protocol } from 'src/config/enum/protocol.enum';
 import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
-import { DeviceLocationDto } from '../../dto/device-location.dto';
+import { DeviceLocationDto } from '../../device/dto/device-location.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { ResponseMessageCode } from '../enum/response-message-code.enum';
+import { ResponseMessageCode } from '../../common/enum/response-message-code.enum';
 
 export class AdditionalInfoDto {
   @ApiProperty()

@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { MqttGatewayService } from './gateway.service';
+import { GatewayService } from './gateway.service';
 import { MqttClientModule } from '../mqtt-client/mqtt-client.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import MessageIncoming from './repository/message-incoming.entity';
 import { DeviceModule } from '@/device/device.module';
+import { ResponserService } from '@/responser/responser.service';
 
 @Module({
   imports: [
@@ -11,7 +12,7 @@ import { DeviceModule } from '@/device/device.module';
     MqttClientModule,
     DeviceModule,
   ],
-  providers: [MqttGatewayService],
-  exports: [MqttGatewayService],
+  providers: [GatewayService],
+  exports: [GatewayService],
 })
-export class MqttGatewayModule {}
+export class GatewayModule {}

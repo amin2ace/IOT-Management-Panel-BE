@@ -28,21 +28,21 @@ export class SessionService implements ISessionService {
   private readonly logger = new Logger(SessionService.name);
   private readonly sessionTimeout: number; // milliseconds
   private readonly refreshInterval: number; // milliseconds
+  private readonly ttl: number; // seconds
 
   constructor(
     private configService: ConfigService,
     private readonly redis: RedisService,
   ) {
     // Session timeout from config (default 24 hours)
-    this.sessionTimeout = this.configService.get<number>(
-      'SESSION_TIMEOUT',
-      24 * 60 * 60 * 1000,
-    );
+    this.sessionTimeout =
+      this.configService.getOrThrow<number>('SESSION_TIMEOUT');
     // Refresh interval for lastActivity (default 5 minutes)
-    this.refreshInterval = this.configService.get<number>(
+    this.refreshInterval = this.configService.getOrThrow<number>(
       'SESSION_REFRESH_INTERVAL',
-      5 * 60 * 1000,
     );
+    // Cache TTL in seconds
+    this.ttl = this.configService.getOrThrow<number>('REDIS_TTL');
   }
 
   /**
@@ -51,7 +51,6 @@ export class SessionService implements ISessionService {
   async createSession(
     userId: string,
     userName: string,
-    email: string,
     roles: Role[],
     ipAddress: string,
     userAgent: string,
@@ -63,7 +62,6 @@ export class SessionService implements ISessionService {
       const sessionData: ISessionData = {
         userId,
         userName,
-        email,
         roles,
         loginTime: now,
         lastActivity: now,
@@ -72,18 +70,18 @@ export class SessionService implements ISessionService {
       };
 
       // Store session in Redis with TTL
-      const ttlSeconds = Math.floor(this.sessionTimeout / 1000);
+      const ttlSeconds = this.ttl;
       await this.redis.setex(
         `session:${sessionId}`,
-        ttlSeconds,
         JSON.stringify(sessionData),
+        ttlSeconds,
       );
 
       // Track session ID under user for invalidation purposes
       await this.redis.setex(
         `user:sessions:${userId}:${sessionId}`,
-        ttlSeconds,
         'true',
+        ttlSeconds,
       );
 
       this.logger.log(
@@ -172,18 +170,18 @@ export class SessionService implements ISessionService {
       session.lastActivity = new Date();
 
       // Re-set with extended TTL
-      const ttlSeconds = Math.floor(this.sessionTimeout / 1000);
+      const ttlSeconds = this.ttl;
       await this.redis.setex(
         `session:${sessionId}`,
-        ttlSeconds,
         JSON.stringify(session),
+        ttlSeconds,
       );
 
       // Also extend tracking key
       await this.redis.setex(
         `user:sessions:${session.userId}:${sessionId}`,
-        ttlSeconds,
         'true',
+        ttlSeconds,
       );
 
       this.logger.debug(`Session extended: ${sessionId}`);

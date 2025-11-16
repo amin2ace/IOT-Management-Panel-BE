@@ -7,7 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MqttClientModule } from './mqtt-client/mqtt-client.module';
-import { MqttGatewayModule } from './gateway/gateway.module';
+import { GatewayModule } from './gateway/gateway.module';
 import jwtModuleOptions from './config/jwt-module.config';
 import typeOrmModuleConfig from './config/typeorm-module-config';
 import configModuleOptions from './config/config-module.config';
@@ -20,6 +20,7 @@ import { RedisModule } from './redis/redis.module';
 import { ExceptionHandlerInterceptor } from './common';
 import { LogHandlerModule } from './log-handler/log-handler.module';
 import { SessionAuthGuard } from './common/guard/session-auth.guard';
+import { ResponserModule } from './responser/responser.module';
 
 @Module({
   imports: [
@@ -45,16 +46,17 @@ import { SessionAuthGuard } from './common/guard/session-auth.guard';
     AuthModule,
     UsersModule,
     MqttClientModule,
-    MqttGatewayModule,
+    GatewayModule,
     DeviceModule,
     TopicModule,
     RedisModule,
     LogHandlerModule,
+    ResponserModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    MqttGatewayModule,
+    GatewayModule,
     // {
     //   provide: APP_GUARD,
     //   useClass: RolesGuard, // Apply RolesGuard globally

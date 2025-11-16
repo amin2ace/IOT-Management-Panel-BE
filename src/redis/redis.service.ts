@@ -31,8 +31,8 @@ export class RedisService implements OnModuleDestroy {
 
   async setex(
     key: RedisKey,
-    ttlSeconds: number | string,
     value: string | Buffer | number,
+    ttlSeconds: number | string,
   ) {
     return await this.client.setex(key, ttlSeconds, value);
   }

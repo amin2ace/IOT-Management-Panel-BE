@@ -1,32 +1,30 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { DeviceService } from './device.service';
+import { RedisService } from 'src/redis/redis.service';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { ResponserService } from './responser.service';
 import {
   AckResponseDto,
   DeviceRebootResponseDto,
   DiscoveryResponseDto,
   FwUpgradeResponseDto,
-  HeartbeatDto,
   HardwareStatusResponseDto,
-} from './messages';
-import { TelemetryResponseDto } from './messages/listening/telemetry.response.dto';
-import { RedisService } from 'src/redis/redis.service';
-import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
-import { SensorFunctionalityResponseDto } from './messages/listening/sensor-functionality.response.dto';
-import { ResponseHandlerService } from './response.handler.service';
-import { TopicService } from 'src/topic/topic.service';
-import { LogHandlerService } from 'src/log-handler/log-handler.service';
+  HeartbeatDto,
+  SensorFunctionalityResponseDto,
+  TelemetryResponseDto,
+} from './dto';
 
 @Injectable()
-export class ResponseListenerService {
+export class ListenerService {
   constructor(
-    private readonly responseService: ResponseHandlerService,
-    private readonly deviceService: DeviceService,
-    private readonly topicService: TopicService,
+    private readonly responserService: ResponserService,
     private readonly redisCache: RedisService,
-    private readonly logger: LogHandlerService,
   ) {}
+
+  private readonly logger = new Logger(ListenerService.name, {
+    timestamp: true,
+  });
 
   async transformAndValidate<T>(
     dtoClass: new () => T,
@@ -36,42 +34,39 @@ export class ResponseListenerService {
     const dtoInstance = plainToInstance(dtoClass, payload);
 
     const errors = await validate(dtoInstance as object);
-    const { requestId, deviceId } = dtoInstance as any;
+    const { requestId, userId } = dtoInstance as any;
 
     if (errors.length > 0) {
       const errorString = errors
         .map((e) => JSON.stringify(e.constraints))
         .join(', ');
-      Logger.error(
-        `Validation failed for requestId=${requestId}: ${errorString}`,
+      this.logger.error(
+        `Response Validation failed for requestId=${requestId}: ${errorString}`,
       );
       throw new BadRequestException('Invalid payload');
     }
 
     // 2: Check Redis cache for pending request
     const cached = await this.redisCache.get(`pending:${requestId}`);
-    if (!cached) {
-      this.logger.log(`No pending request found for requestId=${requestId}`);
+    if (cached === null) {
       throw new BadRequestException('Invalid request id in payload');
     }
 
     // 3: Check requested id validation
     const {
+      requestCode,
       requestId: cachedRequestId,
-      deviceId: cachedDeviceId,
-      userId,
+      userId: cachedUserId,
     } = cached;
-    if (cachedRequestId !== requestId) {
-      this.logger.log('Invalid request id in response payload');
-    }
 
-    if (cachedDeviceId !== deviceId) {
-      this.logger.log('Invalid device id in response payload');
+    if (cachedRequestId !== requestId || cachedUserId !== userId) {
+      throw new BadRequestException('Invalid id in response payload');
     }
+    this.logger.debug('Response validated with cache');
     return dtoInstance;
   }
 
-  // Listen for MQTT discovery topic like: "sensors/+/discovery"
+  // MQTT Broker ---> Web Socket Gateway: Via WebSocket Gateway
   @OnEvent('mqtt/message/discovery')
   async handleDiscoveryEvent(topic: string, payload: any) {
     if (!topic.endsWith('/discovery') && !payload?.responseId) return;
@@ -81,7 +76,7 @@ export class ResponseListenerService {
       payload,
     );
 
-    await this.responseService.handleDiscoveryResponse(validatedPayload);
+    await this.responserService.handleDiscoveryResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/assign')
@@ -93,7 +88,7 @@ export class ResponseListenerService {
       payload,
     );
 
-    await this.responseService.handleAssignResponse(validatedPayload);
+    await this.responserService.handleAssignResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/ack')
@@ -105,7 +100,7 @@ export class ResponseListenerService {
       payload,
     );
 
-    await this.responseService.handleAckMessage(validatedPayload);
+    await this.responserService.handleAckMessage(validatedPayload);
   }
 
   @OnEvent('mqtt/message/upgrade')
@@ -115,7 +110,7 @@ export class ResponseListenerService {
       FwUpgradeResponseDto,
       payload,
     );
-    await this.responseService.handleUpgradeResponse(validatedPayload);
+    await this.responserService.handleUpgradeResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/heartbeat')
@@ -126,7 +121,7 @@ export class ResponseListenerService {
       HeartbeatDto,
       payload,
     );
-    await this.responseService.handleDeviceHeartbeat(validatedPayload);
+    await this.responserService.handleDeviceHeartbeat(validatedPayload);
   }
 
   @OnEvent('mqtt/message/reboot')
@@ -137,7 +132,7 @@ export class ResponseListenerService {
       DeviceRebootResponseDto,
       payload,
     );
-    await this.responseService.handleRebootResponse(validatedPayload);
+    await this.responserService.handleRebootResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/telemetry')
@@ -148,7 +143,7 @@ export class ResponseListenerService {
       TelemetryResponseDto,
       payload,
     );
-    await this.responseService.handleTelemetryResponse(validatedPayload);
+    await this.responserService.handleTelemetryResponse(validatedPayload);
   }
 
   @OnEvent('mqtt/message/hardware-status')
@@ -159,7 +154,7 @@ export class ResponseListenerService {
       HardwareStatusResponseDto,
       payload,
     );
-    await this.responseService.handleHardwareStatus(validatedPayload);
+    await this.responserService.handleHardwareStatus(validatedPayload);
   }
 
   // @OnEvent('mqtt/message/alert')
@@ -173,6 +168,6 @@ export class ResponseListenerService {
 
   @OnEvent('mqtt/message/unknown')
   async handleUnknownEvent(topic: string, payload: any) {
-    await this.responseService.handleUnknownMessage(payload);
+    await this.responserService.handleUnknownMessage(payload);
   }
 }

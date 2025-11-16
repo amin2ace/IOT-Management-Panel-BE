@@ -9,13 +9,13 @@ import {
 } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
-import { ResponseMessageCode } from '../enum/response-message-code.enum';
+import { ResponseMessageCode } from '../../common/enum/response-message-code.enum';
 import { Type } from 'class-transformer';
-import { DeviceLocationDto } from '../../dto/device-location.dto';
+import { DeviceLocationDto } from '../../device/dto/device-location.dto';
 import { Protocol } from 'src/config/enum/protocol.enum';
-import { NetworkConfigDto } from '../../dto/network-config.dto';
-import { LoggingConfigDto } from '../../dto/logging-config.dto';
-import { OtaConfigDto } from '../../dto/ota-config.dto';
+import { NetworkConfigDto } from '../../device/dto/network-config.dto';
+import { LoggingConfigDto } from '../../device/dto/logging-config.dto';
+import { OtaConfigDto } from '../../device/dto/ota-config.dto';
 
 export class SensorConfigResponseDto {
   @ApiProperty({

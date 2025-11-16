@@ -1,11 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
-import { ConnectionState } from 'src/config/enum/connection-state.enum';
-import { ResponseMessageCode } from '../enum/response-message-code.enum';
+import { ResponseMessageCode } from '../../common/enum/response-message-code.enum';
 
-export class HeartbeatDto {
+export class HardwareStatusResponseDto {
   @ApiProperty({
     description: 'Unique identifier of the user who initiated the request',
     example: 'user-001',
@@ -24,7 +23,7 @@ export class HeartbeatDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: ResponseMessageCode.HEARTBEAT,
+    example: ResponseMessageCode.HARDWARE_METRICS,
   })
   @IsNotEmpty()
   @IsNumber()
@@ -32,7 +31,7 @@ export class HeartbeatDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'fw-20251104-0004',
+    example: 'req-hs-35',
   })
   @IsNotEmpty()
   @IsString()
@@ -46,9 +45,21 @@ export class HeartbeatDto {
   @IsNotEmpty()
   deviceId: string;
 
-  @ApiProperty()
-  @IsEnum(ConnectionState)
-  connectionState: ConnectionState;
+  @ApiProperty({
+    description: 'Memory usage in KB',
+    example: '232500',
+  })
+  @IsNumber()
+  @IsNotEmpty()
+  memoryUsage: number;
+
+  @ApiProperty({
+    description: 'CPU usage in percent',
+    example: '32',
+  })
+  @IsNumber()
+  @IsNotEmpty()
+  cpuUsage: number;
 
   @IsValidEpochMillis({ message: 'Uptime must be valid epoch milliseconds' })
   uptime: number;
@@ -61,6 +72,14 @@ export class HeartbeatDto {
   timestamp: number;
 
   @ApiProperty({
+    description: 'Hardware internal temperature in celcius degree',
+    example: '78',
+  })
+  @IsNumber()
+  @IsNotEmpty()
+  internalTemp: number;
+
+  @ApiProperty({
     description: 'Wifi Received Signal Strength Indicator',
     example: '-52',
   })
@@ -70,17 +89,18 @@ export class HeartbeatDto {
 }
 
 /**
-    Example:
-      {
-        "userId": "user-001",
-        "responseId": "fw-20251104-status",
-        "responseCode": 209,
-        "requestId": "fw-20251104-0004",
-        "deviceId": "sensor-67890",
-        "connectionState": "CONNECTED",
-        "uptime": 86400000,
-        "timestamp": 1762379573804,
-        "wifiRssi": -52
-      }
-
+  Example:
+    {
+      "userId": "user-001",
+      "responseId": "fw-20251104-status",
+      "responseCode": 210,
+      "requestId": "req-hs-35",
+      "deviceId": "sensor-67890",
+      "memoryUsage": 232500,
+      "cpuUsage": 32,
+      "uptime": 1762379000000,
+      "timestamp": 1762379573804,
+      "internalTemp": 78,
+      "wifiRssi": -52
+    }
  */

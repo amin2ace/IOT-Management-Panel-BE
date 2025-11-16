@@ -27,7 +27,9 @@ import { Request, Response } from 'express';
  */
 @Injectable()
 export class SessionAuthGuard implements CanActivate {
-  private readonly logger = new Logger(SessionAuthGuard.name);
+  private readonly logger = new Logger(SessionAuthGuard.name, {
+    timestamp: true,
+  });
   private readonly SESSION_COOKIE_NAME = 'sessionId';
 
   constructor(private readonly sessionService: SessionService) {}
@@ -68,7 +70,6 @@ export class SessionAuthGuard implements CanActivate {
       (request as any).user = {
         userId: sessionData.userId,
         userName: sessionData.userName,
-        email: sessionData.email,
         roles: sessionData.roles,
         loginTime: sessionData.loginTime,
         lastActivity: sessionData.lastActivity,

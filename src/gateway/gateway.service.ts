@@ -1,9 +1,8 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
-import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MqttClientService } from '../mqtt-client/mqtt-client.service';
 import { IClientPublishOptions } from 'mqtt';
-import { QoS } from 'src/config/types/mqtt-qos.types';
 import { InjectRepository } from '@nestjs/typeorm';
 import MessageIncoming, {
   ParsedMessagePayload,
@@ -14,6 +13,7 @@ import { SensorDataDto, DataQuality } from './dto/sensor-data.dto';
 import { DeviceService } from '@/device/device.service';
 import {
   DiscoveryBroadcastRequestDto,
+  DiscoveryResponseDto,
   DiscoveryUnicastRequestDto,
 } from '@/device/messages';
 import {
@@ -48,10 +48,10 @@ import { Server, Socket } from 'socket.io';
   namespace: '/mqtt',
 })
 @Injectable()
-export class MqttGatewayService
+export class GatewayService
   implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
 {
-  private readonly logger = new Logger(MqttGatewayService.name);
+  private readonly logger = new Logger(GatewayService.name);
   private recentSensorData: IncomeMessageDto[] = [];
   private readonly MAX_RECENT_DATA = 100;
   private subscriptionTracking = new Map<string, boolean>();
@@ -114,6 +114,7 @@ export class MqttGatewayService
     this.logger.log(`Total clients: ${this.connectedClients.size}`);
   }
 
+  // UI ---> Web Socket Gateway ---> MQTT Broker
   @SubscribeMessage('react/message/discovery/broadcast/req')
   private async handleDiscoveryBroadcast(
     client: Socket,
@@ -140,7 +141,7 @@ export class MqttGatewayService
 
     // Discovery messages
     this.eventEmitter.on('mqtt/message/discovery', async (topic, payload) => {
-      await this.handleDiscoveryMessage(topic, payload);
+      await this.emitDiscoveryBroadcastMessage(payload);
     });
 
     // Assignment messages
@@ -197,27 +198,21 @@ export class MqttGatewayService
   /**
    * Handles device discovery messages
    */
-  private async handleDiscoveryMessage(topic: string, payload: any) {
+  public async emitDiscoveryBroadcastMessage(payload: DiscoveryResponseDto) {
     try {
-      const incomeMessage = await this.createMessageDto(
-        topic,
-        payload,
-        'discovery',
-      );
-      await this.storeMessageInDatabase(incomeMessage, 0);
-      this.storeRecentData(incomeMessage);
+      // const incomeMessage = await this.createMessageDto(payload, 'discovery');
+      // await this.storeMessageInDatabase(incomeMessage, 0);
+      // this.storeRecentData(incomeMessage);
 
       // Emit WebSocket event for discovery
-      this.eventEmitter.emit('ws/discovery', {
-        event: 'device-discovered',
-        data: payload,
-        timestamp: new Date(),
-      });
+      this.eventEmitter.emit(
+        'ws/message/discovery/broadcast/response',
+        payload,
+      );
 
-      this.logger.log(`Discovery message processed from ${topic}`);
+      this.logger.log(`Discovery message passed to react`);
     } catch (error) {
       this.logger.error(`Error handling discovery message: ${error.message}`);
-      await this.storeErrorInDatabase(topic, payload, error.message);
     }
   }
 

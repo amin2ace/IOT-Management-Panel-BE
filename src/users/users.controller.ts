@@ -63,7 +63,7 @@ export class UsersController {
   @Get(':id')
   @Serialize(UserResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
-  @Roles(Role.VIEWER, Role.TEST, Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiCookieAuth()
   @ApiResponse({
@@ -79,7 +79,7 @@ export class UsersController {
   @Patch(':id')
   @Serialize(UserResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
-  @Roles(Role.VIEWER, Role.TEST, Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Update user details' })
   @ApiCookieAuth()
   @ApiResponse({

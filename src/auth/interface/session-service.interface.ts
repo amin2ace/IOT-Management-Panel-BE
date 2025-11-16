@@ -7,7 +7,6 @@ import { Role } from 'src/config/types/roles.types';
 export interface ISessionData {
   userId: string;
   userName: string;
-  email: string;
   roles: Role[];
   loginTime: Date;
   lastActivity: Date;
@@ -33,7 +32,6 @@ export interface ISessionService {
   createSession(
     userId: string,
     userName: string,
-    email: string,
     roles: Role[],
     ipAddress: string,
     userAgent: string,

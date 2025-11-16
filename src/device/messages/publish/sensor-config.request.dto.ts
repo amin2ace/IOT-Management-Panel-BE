@@ -16,7 +16,7 @@ import { Type } from 'class-transformer';
 import { NetworkConfigDto } from '../../dto/network-config.dto';
 import { LoggingConfigDto } from '../../dto/logging-config.dto';
 import { OtaConfigDto } from '../../dto/ota-config.dto';
-import { RequestMessageCode } from '../enum/request-message-code.enum';
+import { RequestMessageCode } from '../../../common/enum/request-message-code.enum';
 
 export class SensorConfigRequestDto {
   @ApiProperty({

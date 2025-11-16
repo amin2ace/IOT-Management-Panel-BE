@@ -13,7 +13,7 @@ import { Type } from 'class-transformer';
 import { DiagnosticComponent } from 'src/config/enum/diagnostic-component.enum';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
 import { DiagnosticLevel } from 'src/config/enum/diagnostic-Level.enum';
-import { ResponseMessageCode } from '../enum/response-message-code.enum';
+import { ResponseMessageCode } from '../../common/enum/response-message-code.enum';
 
 export enum DiagnosticStatus {
   SUCCESS = 'success',

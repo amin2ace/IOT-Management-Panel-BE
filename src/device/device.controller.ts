@@ -43,7 +43,7 @@ export class DeviceController {
 
   @Get('all')
   @UseGuards(SessionAuthGuard, RolesGuard)
-  @Roles(Role.VIEWER, Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get all devices' })
   @ApiCookieAuth()
   @ApiResponse({ status: 200, description: 'List of devices' })
@@ -54,6 +54,11 @@ export class DeviceController {
   }
 
   @Get(':id')
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Get single device' })
+  @ApiCookieAuth()
+  @ApiResponse({ status: 200, description: "List device's information" })
   async getSingleSensor(
     @Param('id') sensorId: string,
   ): Promise<SensorResponseDto> {
@@ -61,10 +66,10 @@ export class DeviceController {
   }
 
   @Post('discover-broadcast')
-  // @UseGuards(SessionAuthGuard, RolesGuard)
-  // @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Discover devices via broadcast' })
-  // @ApiCookieAuth()
+  @ApiCookieAuth()
   async discoverDevicesBroadcast(
     @Body() discoverRequest: DiscoveryBroadcastRequestDto,
   ) {
@@ -72,10 +77,10 @@ export class DeviceController {
   }
 
   @Post('discover-unicast')
-  // @UseGuards(SessionAuthGuard, RolesGuard)
-  // @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Discover devices via unicast' })
-  // @ApiCookieAuth()
+  @ApiCookieAuth()
   async discoverDeviceUnicast(
     @Body() discoverRequest: DiscoveryUnicastRequestDto,
   ) {
@@ -126,8 +131,8 @@ export class DeviceController {
   @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Reconfigure device' })
   @ApiCookieAuth()
-  reconfigureDevice(@Body() configData: SensorConfigRequestDto) {
-    return this.deviceService.reconfigureDevice(configData);
+  async reconfigureDevice(@Body() configData: SensorConfigRequestDto) {
+    return await this.deviceService.reconfigureDevice(configData);
   }
 
   @Get(':id/history')
@@ -135,7 +140,7 @@ export class DeviceController {
   @Roles(Role.VIEWER, Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get device history' })
   @ApiCookieAuth()
-  getHistory(@Param('id') id: string) {
+  async getHistory(@Param('id') id: string) {
     return this.deviceService.getDeviceHistory(id);
   }
 
@@ -144,7 +149,7 @@ export class DeviceController {
   @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Control device' })
   @ApiCookieAuth()
-  controlDevice(@Param('id') id: string, @Body() body: ControlDeviceDto) {
+  async controlDevice(@Param('id') id: string, @Body() body: ControlDeviceDto) {
     return this.deviceService.controlDevice(id, body);
   }
 
@@ -153,7 +158,7 @@ export class DeviceController {
   @Roles(Role.VIEWER, Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get device status' })
   @ApiCookieAuth()
-  getDeviceStatus(@Param('id') id: string) {
+  async getDeviceStatus(@Param('id') id: string) {
     return this.deviceService.getDeviceStatus(id);
   }
 

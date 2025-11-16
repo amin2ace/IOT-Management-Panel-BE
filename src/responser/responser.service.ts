@@ -13,29 +13,29 @@ import {
   FwUpgradeResponseDto,
   HardwareStatusResponseDto,
   HeartbeatDto,
-  ResponseMessageCode,
   SensorFunctionalityResponseDto,
   TelemetryResponseDto,
-} from './messages';
+} from './dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Sensor } from './repository/sensor.entity';
 import { RedisService } from 'src/redis/redis.service';
-import { DeviceService } from './device.service';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import { UpgradeStatus } from 'src/config/enum/upgrade-status.enum';
 import { RebootStatus } from 'src/config/enum/reboot-status.enum';
-import { Telemetry } from './repository/sensor-telemetry.entity';
-import { HardwareStatus } from './repository/hardware-status.entity';
 import { TopicService } from 'src/topic/topic.service';
 import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
-import { ConfigService } from '@nestjs/config';
 import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Sensor } from '@/device/repository/sensor.entity';
+import { HardwareStatus } from '@/device/repository/hardware-status.entity';
+import { Telemetry } from '@/device/repository/sensor-telemetry.entity';
+import { DeviceService } from '@/device/device.service';
+import { ResponseMessageCode } from '@/common';
+import { GatewayService } from '@/gateway/gateway.service';
 
 @Injectable()
-export class ResponseHandlerService {
+export class ResponserService {
   constructor(
     @InjectRepository(Sensor) private readonly sensorRepo: Repository<Sensor>,
     @InjectRepository(HardwareStatus)
@@ -49,9 +49,10 @@ export class ResponseHandlerService {
     private readonly redisCache: RedisService,
     private readonly topic: TopicService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly gatewayService: GatewayService,
   ) {}
 
-  private readonly logger = new Logger(ResponseHandlerService.name, {
+  private readonly logger = new Logger(ResponserService.name, {
     timestamp: true,
   });
 
@@ -59,16 +60,12 @@ export class ResponseHandlerService {
     const { requestId } = dto;
 
     if (!requestId) {
-      this.logger.error('Request id required for deleting cache', {
-        context: 'Cache Delete',
-      });
+      this.logger.error('Request id required for cache delete');
       return;
     }
 
     await this.redisCache.del(`pending:${requestId}`);
-    this.logger.debug('Cache deleted successfully', {
-      context: 'Cache Delete',
-    });
+    this.logger.debug('Cache deleted successfully');
   }
 
   public async handleDiscoveryResponse(payload: DiscoveryResponseDto) {
@@ -99,6 +96,8 @@ export class ResponseHandlerService {
       });
       await this.sensorRepo.save(deviceRecord);
 
+      this.logger.debug(`Device ${deviceId} added to database`);
+
       // Create and subscribe to all device's topics
       for (const useCase of Object.values(TopicUseCase)) {
         const { topic } = await this.topic.createTopic(deviceId, useCase);
@@ -106,12 +105,12 @@ export class ResponseHandlerService {
       }
       // Subscribe to device base topic
       await this.mqttClient.subscribe(topic);
-      // ✨ ADD THIS: Emit event for WebSocket broadcast
-      this.eventEmitter.emit('/ws/message/discovery', payload);
     }
+    // ---> Web Socket gateway
+    this.gatewayService.emitDiscoveryBroadcastMessage(payload);
 
+    // Delete cached request appropriate to this response
     await this.deleteCache(payload);
-    this.logger.debug(`Device ${deviceId} added to database`);
   }
 
   async handleAssignResponse(payload: SensorFunctionalityResponseDto) {
@@ -167,10 +166,10 @@ export class ResponseHandlerService {
 
       await this.deleteCache(payload);
 
-      this.logger.log(`Sensor ${deviceId} upgraded to successfully`);
+      this.logger.log(`Sensor ${deviceId} upgraded successfully`);
     }
 
-    this.logger.warn(`Sensor ${deviceId} upgrade failed`);
+    this.logger.error(`Sensor ${deviceId} upgrade failed`);
   }
 
   async handleDeviceHeartbeat(payload: HeartbeatDto) {
@@ -206,7 +205,7 @@ export class ResponseHandlerService {
     if (responseCode !== ResponseMessageCode.REBOOT_CONFIRMATION) return;
 
     if (status !== RebootStatus.SUCCESS) {
-      this.logger.warn(`Sensor ${deviceId} reboot failed`);
+      this.logger.error(`Sensor ${deviceId} reboot failed`);
     }
 
     await this.sensorRepo.update(
