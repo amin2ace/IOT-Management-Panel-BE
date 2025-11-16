@@ -291,7 +291,6 @@ export class MqttManagementController {
 
     return {
       deviceId: subscribeDto.deviceId,
-      subscribedTopics: subscribeDto.topics,
       results: subscriptions,
     };
   }

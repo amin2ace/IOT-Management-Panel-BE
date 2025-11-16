@@ -61,6 +61,11 @@ export interface IMqttClient {
   getBrokerUrl(): string;
 
   /**
+   * Returns the broker URL
+   */
+  getClientId(): string | null;
+
+  /**
    * Registers callback for incoming messages
    */
   onMessage(callback: (topic: string, payload: Buffer) => void): void;
