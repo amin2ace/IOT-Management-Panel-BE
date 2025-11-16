@@ -4,7 +4,6 @@ import { HashService } from './hash.service';
 import { SessionModule } from '@/session/session.module';
 
 @Module({
-  imports: [SessionModule],
   controllers: [HashController],
   providers: [HashService],
   exports: [HashService],

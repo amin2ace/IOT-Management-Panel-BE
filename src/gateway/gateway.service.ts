@@ -205,10 +205,22 @@ export class GatewayService
       // this.storeRecentData(incomeMessage);
 
       // Emit WebSocket event for discovery
-      this.eventEmitter.emit(
-        'ws/message/discovery/broadcast/response',
-        payload,
-      );
+      this.server.emit('ws/message/discovery/broadcast/response', payload);
+
+      this.logger.log(`Discovery message passed to react`);
+    } catch (error) {
+      this.logger.error(`Error handling discovery message: ${error.message}`);
+    }
+  }
+
+  public async emitDiscoveryUnicastMessage(payload: DiscoveryResponseDto) {
+    try {
+      // const incomeMessage = await this.createMessageDto(payload, 'discovery');
+      // await this.storeMessageInDatabase(incomeMessage, 0);
+      // this.storeRecentData(incomeMessage);
+
+      // Emit WebSocket event for discovery
+      this.server.emit('ws/message/discovery/broadcast/response', payload);
 
       this.logger.log(`Discovery message passed to react`);
     } catch (error) {

@@ -5,10 +5,11 @@ import { AssignRolesDto } from '../dto/assign-roles.dto';
 import { Role } from '@/config/types/roles.types';
 
 export interface IUserService {
-  createUser(createUserDto: CreateUserDto): Promise<{ userId: string }>;
-  findAllUsers();
-  findUserById(userId: string): Promise<User>;
-  findUserByEmail(email: string): Promise<User>;
+  createUser(createUserDto: CreateUserDto): Promise<User>;
+  createUserManually(createUserDto: CreateUserDto): Promise<User>;
+  findAllUsers(): Promise<User[] | null>;
+  findUserById(userId: string): Promise<User | null>;
+  findUserByEmail(email: string): Promise<User | null>;
   updateUser(userId: string, updateUserDto: UpdateUserDto): Promise<User>;
   deleteUser(userId: string): Promise<string>;
   assignRoles(userId: string, assignRolesDto: AssignRolesDto): Promise<User>;

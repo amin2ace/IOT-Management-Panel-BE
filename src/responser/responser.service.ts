@@ -47,7 +47,7 @@ export class ResponserService {
     private readonly deviceService: DeviceService,
     private readonly mqttClient: MqttClientService,
     private readonly redisCache: RedisService,
-    private readonly topic: TopicService,
+    private readonly topicService: TopicService,
     private readonly eventEmitter: EventEmitter2,
     private readonly gatewayService: GatewayService,
   ) {}
@@ -69,42 +69,46 @@ export class ResponserService {
   }
 
   public async handleDiscoveryResponse(payload: DiscoveryResponseDto) {
-    const { deviceId } = payload;
+    const { deviceId, ...discoveredData } = payload;
 
-    const existingDevice = await this.sensorRepo.findOne({
+    const storedDevice = await this.sensorRepo.findOne({
       where: { sensorId: deviceId },
     });
 
     // try {
-    if (existingDevice?.isDeleted) {
+    if (storedDevice?.isDeleted) {
       await this.sensorRepo.update(
         { sensorId: deviceId },
         { isDeleted: false },
       );
     }
+    const { topic } = await this.topicService.createDeviceBaseTopic(deviceId);
 
-    if (!existingDevice) {
-      const { topic } = await this.topic.createDeviceBaseTopic(deviceId);
+    if (!storedDevice) {
+      try {
+        const deviceRecord = this.sensorRepo.create({
+          ...discoveredData,
+          sensorId: deviceId,
+          provisionState: ProvisionState.DISCOVERED,
+          deviceBaseTopic: topic,
+          isActuator: false,
+          isDeleted: false,
+        });
+        await this.sensorRepo.save(deviceRecord);
 
-      const deviceRecord = this.sensorRepo.create({
-        ...payload,
-        sensorId: deviceId,
-        provisionState: ProvisionState.DISCOVERED,
-        deviceBaseTopic: topic,
-        isActuator: false,
-        isDeleted: false,
-      });
-      await this.sensorRepo.save(deviceRecord);
-
-      this.logger.debug(`Device ${deviceId} added to database`);
-
-      // Create and subscribe to all device's topics
-      for (const useCase of Object.values(TopicUseCase)) {
-        const { topic } = await this.topic.createTopic(deviceId, useCase);
+        // Create and subscribe device's base topic
         await this.mqttClient.subscribe(topic);
+
+        // Create and subscibe all topics specified for device
+        const otherTopics =
+          await this.topicService.createAllTopicsForDevice(deviceId);
+        const topicNames = otherTopics.map((topic) => topic.topic);
+        await this.mqttClient.subscribe(topicNames);
+
+        this.logger.debug(`Device ${deviceId} added to database`);
+      } catch (error) {
+        throw new ForbiddenException('Discovery data malformed');
       }
-      // Subscribe to device base topic
-      await this.mqttClient.subscribe(topic);
     }
     // ---> Web Socket gateway
     this.gatewayService.emitDiscoveryBroadcastMessage(payload);

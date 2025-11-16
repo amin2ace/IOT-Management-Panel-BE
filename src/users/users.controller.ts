@@ -50,7 +50,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   async create(@Body() createUserDto: CreateUserDto) {
-    return await this.usersService.createUser(createUserDto);
+    return await this.usersService.createUserManually(createUserDto);
   }
 
   @Get()

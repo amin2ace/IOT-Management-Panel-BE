@@ -44,7 +44,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     private readonly config: ConfigService,
   ) {}
 
-  private mqttClient: IMqttClient;
+  private mqtt: IMqttClient;
   private messageRouter: IMqttMessageRouter;
   private isConnected = false;
   private connectionAttempts = 0;
@@ -121,11 +121,11 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     }
     try {
       // Create adapter-wrapped MQTT client
-      this.mqttClient = new MqttClientAdapter();
+      this.mqtt = new MqttClientAdapter();
 
       // Register event handlers before connecting
-      this.mqttClient.onConnect(async () => {
-        this.isConnected = this.mqttClient.isConnected();
+      this.mqtt.onConnect(async () => {
+        this.isConnected = this.mqtt.isConnected();
         this.connectionAttempts++;
         this.logger.log(`Connected to MQTT broker: ${broker}`);
 
@@ -135,7 +135,6 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
           TopicUseCase.BROADCAST,
         );
         await this.subscribe(broadcastTopic.topic);
-
         this.eventEmitter.emit('mqtt/event/connected', {
           broker,
           status: true,
@@ -143,18 +142,18 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
         });
       });
 
-      this.mqttClient.onMessage(async (topic: string, payload: Buffer) => {
+      this.mqtt.onMessage(async (topic: string, payload: Buffer) => {
         const parsedPayload = JSON.parse(payload.toString());
         const eventName = this.messageRouter.route(topic, parsedPayload);
         this.emitter(eventName, topic, parsedPayload);
       });
 
-      this.mqttClient.onError((error) => {
+      this.mqtt.onError((error) => {
         this.logger.error(`MQTT error: ${error.message}`);
         this.eventEmitter.emit('mqtt/event/error', error);
       });
 
-      this.mqttClient.onDisconnect(() => {
+      this.mqtt.onDisconnect(() => {
         this.isConnected = false;
         this.logger.warn('Disconnected from MQTT broker');
         this.eventEmitter.emit('mqtt/event/disconnected', {
@@ -164,7 +163,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
         });
       });
 
-      this.mqttClient.onReconnect(() => {
+      this.mqtt.onReconnect(() => {
         if (this.connectionAttempts < this.MAX_RECONNECTION_ATTEMPTS) {
           this.connectionAttempts++;
           this.logger.log(
@@ -174,7 +173,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
       });
 
       // Connect to broker
-      await this.mqttClient.connect(broker, opts);
+      await this.mqtt.connect(broker, opts);
     } catch (error) {
       this.logger.error(`Failed to connect to MQTT broker: ${error.message}`);
       throw new UnauthorizedException('Failed to connect to MQTT broker');
@@ -208,31 +207,26 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
    * Updates the topic repository to mark the topic as subscribed
    * Emits 'mqtt/message/*' events when messages arrive on the topic
    *
-   * @param topic - MQTT topic path to subscribe to (supports wildcards: +, #)
+   * @param topics - MQTT topic path to subscribe to (supports wildcards: +, #)
    * @throws Error if MQTT client is not connected
    * @returns Promise<SubscriptionResult> with subscription status and details
    */
-  async subscribe(topic: string): Promise<SubscriptionResult> {
+  async subscribe(topics: string | string[]): Promise<SubscriptionResult> {
     if (!this.isConnected) {
       throw new Error('MQTT client not connected');
     }
 
     try {
-      await this.mqttClient.subscribe(topic);
-
-      await this.topicService.updateTopic(topic, {
-        isSubscribed: true,
-      } as UpdateTopicDto);
-      this.logger.debug(`Subscribed to ${topic}`);
-
+      await this.mqtt.subscribe(topics);
+      this.logger.debug(`Subscribed to ${topics}`);
       return {
         success: true,
-        topic,
+        topics,
         description: 'Successfully subscribed to topic',
         timestamp: new Date(),
       };
     } catch (error) {
-      this.logger.error(`Failed to subscribe to ${topic}: ${error.message}`);
+      this.logger.error(`Failed to subscribe to ${topics}: ${error.message}`);
       throw error;
     }
   }
@@ -252,10 +246,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      await this.mqttClient.unsubscribe(topic);
-      await this.topicService.updateTopic(topic, {
-        isSubscribed: false,
-      } as UpdateTopicDto);
+      await this.mqtt.unsubscribe(topic);
 
       this.logger.log(`Unsubscribed from topic: ${topic}`);
       return {
@@ -299,7 +290,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
       const payloadStr =
         typeof payload === 'string' ? payload : JSON.stringify(payload);
 
-      await this.mqttClient.publish(topic, payloadStr, { qos, retain });
+      await this.mqtt.publish(topic, payloadStr, { qos, retain });
 
       return {
         success: true,
@@ -339,7 +330,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
    * @returns The broker hostname/URL or 'unknown' if not connected
    */
   async getBrokerUrl(): Promise<string> {
-    return this.mqttClient?.getBrokerUrl() || 'unknown';
+    return this.mqtt?.getBrokerUrl() || 'unknown';
   }
 
   /**
@@ -354,12 +345,12 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     try {
       const topics = await this.topicService.getAllSubscribedTopics();
       topics.forEach((topic) =>
-        this.topicService.updateTopic(topic, {
+        this.topicService.updateTopic(topic.topic, {
           isSubscribed: false,
         } as UpdateTopicDto),
       );
       this.isConnected = false;
-      await this.mqttClient.disconnect();
+      await this.mqtt.disconnect();
     } catch (error) {
       throw new UnauthorizedException('Failed to disconnect MQTT');
     }
@@ -373,9 +364,9 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
    * @returns Promise that resolves when client is fully closed
    */
   async onModuleDestroy() {
-    if (this.mqttClient) {
+    if (this.mqtt) {
       try {
-        await this.mqttClient.disconnect();
+        await this.mqtt.disconnect();
         this.logger.log('MQTT client disconnected');
       } catch (error) {
         this.logger.error(`Error disconnecting MQTT client: ${error.message}`);
@@ -410,7 +401,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
    * @returns Promise<ConfigurationResult> containing current MQTT configuration and connection status
    */
   async getConfiguration(): Promise<ConfigurationResult> {
-    if (!this.mqttClient) {
+    if (!this.mqtt) {
       throw new Error('MQTT client not initialized');
     }
 
@@ -439,7 +430,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
   async updateConfiguration(config: any): Promise<void> {
     try {
       // Disconnect from current connection
-      if (this.mqttClient && this.isConnected) {
+      if (this.mqtt && this.isConnected) {
         await this.disconnect();
       }
 

@@ -16,7 +16,6 @@ import { SessionService } from '../session/session.service';
 import { UsersService } from 'src/users/users.service';
 import { Role } from 'src/config/types/roles.types';
 import { v4 as uuidv4 } from 'uuid';
-import { RedisService } from '@/redis/redis.service';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { SignupResponseDto } from './dto/signup-response.dto';
 import { HashService } from '@/hash/hash.service';
@@ -183,7 +182,7 @@ export class AuthService {
         roles: user.roles,
       };
     } catch (error) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(error);
     }
   }
 
