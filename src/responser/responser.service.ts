@@ -60,9 +60,7 @@ export class ResponserService {
     const { requestId } = dto;
 
     if (!requestId) {
-      this.logger.error('Request id required for deleting cache', {
-        context: 'Cache Delete',
-      });
+      this.logger.error('Request id required for cache delete');
       return;
     }
 
@@ -168,10 +166,10 @@ export class ResponserService {
 
       await this.deleteCache(payload);
 
-      this.logger.log(`Sensor ${deviceId} upgraded to successfully`);
+      this.logger.log(`Sensor ${deviceId} upgraded successfully`);
     }
 
-    this.logger.warn(`Sensor ${deviceId} upgrade failed`);
+    this.logger.error(`Sensor ${deviceId} upgrade failed`);
   }
 
   async handleDeviceHeartbeat(payload: HeartbeatDto) {
@@ -207,7 +205,7 @@ export class ResponserService {
     if (responseCode !== ResponseMessageCode.REBOOT_CONFIRMATION) return;
 
     if (status !== RebootStatus.SUCCESS) {
-      this.logger.warn(`Sensor ${deviceId} reboot failed`);
+      this.logger.error(`Sensor ${deviceId} reboot failed`);
     }
 
     await this.sensorRepo.update(

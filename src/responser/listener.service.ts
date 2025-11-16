@@ -4,7 +4,6 @@ import { RedisService } from 'src/redis/redis.service';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { ResponserService } from './responser.service';
-import { LogHandlerService } from '@/log-handler/log-handler.service';
 import {
   AckResponseDto,
   DeviceRebootResponseDto,
@@ -15,15 +14,17 @@ import {
   SensorFunctionalityResponseDto,
   TelemetryResponseDto,
 } from './dto';
-import { RequestCacheDto } from '@/redis/dto/request.cache.to';
 
 @Injectable()
 export class ListenerService {
   constructor(
     private readonly responserService: ResponserService,
     private readonly redisCache: RedisService,
-    private readonly logger: LogHandlerService,
   ) {}
+
+  private readonly logger = new Logger(ListenerService.name, {
+    timestamp: true,
+  });
 
   async transformAndValidate<T>(
     dtoClass: new () => T,
@@ -39,8 +40,8 @@ export class ListenerService {
       const errorString = errors
         .map((e) => JSON.stringify(e.constraints))
         .join(', ');
-      Logger.error(
-        `Validation failed for requestId=${requestId}: ${errorString}`,
+      this.logger.error(
+        `Response Validation failed for requestId=${requestId}: ${errorString}`,
       );
       throw new BadRequestException('Invalid payload');
     }
@@ -59,9 +60,9 @@ export class ListenerService {
     } = cached;
 
     if (cachedRequestId !== requestId || cachedUserId !== userId) {
-      throw new BadRequestException('Invalid request id in response payload');
+      throw new BadRequestException('Invalid id in response payload');
     }
-    // this.logger.debug("Response validated with cache")
+    this.logger.debug('Response validated with cache');
     return dtoInstance;
   }
 
