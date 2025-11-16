@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { MqttClientService } from '../mqtt-client/mqtt-client.service';
 import { IClientPublishOptions } from 'mqtt';
 import { QoS } from 'src/config/types/mqtt-qos.types';
@@ -11,6 +11,19 @@ import MessageIncoming, {
 import { Repository } from 'typeorm';
 import { IncomeMessageDto, MessageFormat } from './dto/message-income.dto';
 import { SensorDataDto, DataQuality } from './dto/sensor-data.dto';
+import { DeviceService } from '@/device/device.service';
+import {
+  DiscoveryBroadcastRequestDto,
+  DiscoveryUnicastRequestDto,
+} from '@/device/messages';
+import {
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
 
 /**
  * MqttGatewayService
@@ -26,18 +39,34 @@ import { SensorDataDto, DataQuality } from './dto/sensor-data.dto';
  * Architecture:
  * MQTT → MqttClientService → MqttGatewayService → EventEmitter2 → WsGateway → Frontend
  */
+
+@WebSocketGateway(30005, {
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+    credentials: true,
+  },
+  namespace: '/mqtt',
+})
 @Injectable()
-export class MqttGatewayService implements OnModuleInit {
+export class MqttGatewayService
+  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
+{
   private readonly logger = new Logger(MqttGatewayService.name);
   private recentSensorData: IncomeMessageDto[] = [];
   private readonly MAX_RECENT_DATA = 100;
   private subscriptionTracking = new Map<string, boolean>();
+  private connectedClients = new Map<string, Socket>();
+  private clientSubscriptions = new Map<string, Set<string>>();
+
+  @WebSocketServer()
+  server: Server;
 
   constructor(
     @InjectRepository(MessageIncoming)
     private readonly messageRepo: Repository<MessageIncoming>,
     private readonly mqttClientService: MqttClientService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly deviceService: DeviceService,
   ) {}
 
   async onModuleInit() {
@@ -47,6 +76,58 @@ export class MqttGatewayService implements OnModuleInit {
      * This gateway processes and stores messages, then emits WebSocket events
      */
     this.setupMqttEventListeners();
+  }
+
+  // Handle new client connections
+  async handleConnection(client: Socket) {
+    const clientId = client.id;
+    this.connectedClients.set(clientId, client);
+    this.clientSubscriptions.set(clientId, new Set());
+
+    this.logger.log(`Client connected: ${clientId}`);
+    this.logger.log(`Total clients: ${this.connectedClients.size}`);
+
+    // try {
+    //   // Send current MQTT status to newly connected client
+    //   const status = await this.mqttGatewayService.getMqttStatus();
+    //   client.emit('mqtt-status', status);
+
+    //   // Send recent sensor data if available
+    //   const recentData = await this.mqttGatewayService.getRecentSensorData();
+    //   client.emit('sensor-data-batch', recentData);
+    // } catch (error) {
+    //   this.logger.error(`Error during client connection: ${error.message}`);
+    //   client.emit('connection-error', {
+    //     error: 'Failed to initialize connection',
+    //     timestamp: new Date(),
+    //   });
+    // }
+  }
+
+  // Handle client disconnections
+  handleDisconnect(client: Socket) {
+    const clientId = client.id;
+    this.connectedClients.delete(clientId);
+    this.clientSubscriptions.delete(clientId);
+
+    this.logger.log(`Client disconnected: ${clientId}`);
+    this.logger.log(`Total clients: ${this.connectedClients.size}`);
+  }
+
+  @SubscribeMessage('react/message/discovery/broadcast/req')
+  private async handleDiscoveryBroadcast(
+    client: Socket,
+    payload: DiscoveryBroadcastRequestDto,
+  ) {
+    await this.deviceService.discoverDevicesBroadcast(payload);
+  }
+
+  @SubscribeMessage('react/message/discovery/unicast/req')
+  private async handleDiscoveryUnicast(
+    client: Socket,
+    payload: DiscoveryUnicastRequestDto,
+  ) {
+    await this.deviceService.discoverDeviceUnicast(payload);
   }
 
   /**

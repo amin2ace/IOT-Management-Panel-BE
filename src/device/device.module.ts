@@ -20,5 +20,6 @@ import { LogHandlerModule } from 'src/log-handler/log-handler.module';
   ],
   controllers: [DeviceController],
   providers: [DeviceService, ResponseListenerService, ResponseHandlerService],
+  exports: [DeviceService],
 })
 export class DeviceModule {}
