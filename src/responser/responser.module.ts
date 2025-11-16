@@ -11,6 +11,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Sensor } from '@/device/repository/sensor.entity';
 import { Telemetry } from '@/device/repository/sensor-telemetry.entity';
 import { HardwareStatus } from '@/device/repository/hardware-status.entity';
+import { GatewayModule } from '@/gateway/gateway.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { HardwareStatus } from '@/device/repository/hardware-status.entity';
     DeviceModule,
     MqttClientModule,
     TopicModule,
+    GatewayModule,
   ],
   controllers: [ResponserController],
   providers: [ResponserService, ListenerService],
