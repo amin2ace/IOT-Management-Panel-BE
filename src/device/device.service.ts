@@ -213,7 +213,7 @@ export class DeviceService {
       throw new BadRequestException('Invalid Request');
     }
 
-    const { topic } = await this.topicService.getDeviceTopicsByUseCase(
+    const { topic } = await this.topicService.getDeviceTopicByUseCase(
       deviceId,
       TopicUseCase.ASSIGN_DEVICE_FUNCTION,
     );
@@ -298,7 +298,7 @@ export class DeviceService {
       throw new NotFoundException(`Device with id ${sensorId} not found`);
     }
 
-    const { topic } = await this.topicService.getDeviceTopicsByUseCase(
+    const { topic } = await this.topicService.getDeviceTopicByUseCase(
       sensorId,
       TopicUseCase.SENSOR_CONFIGURATION,
     );
@@ -355,7 +355,7 @@ export class DeviceService {
       throw new NotFoundException(`Device not found`);
     }
 
-    const { topic } = await this.topicService.getDeviceTopicsByUseCase(
+    const { topic } = await this.topicService.getDeviceTopicByUseCase(
       deviceId,
       TopicUseCase.TELEMETRY,
     );

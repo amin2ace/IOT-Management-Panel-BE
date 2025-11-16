@@ -34,7 +34,7 @@ export class TopicController {
     description: "Returns list of device's topics",
   })
   async getDeviceTopicsByDeviceId(@Param('id') deviceId: string) {
-    return await this.topicService.getDeviceTopicsByDeviceId(deviceId);
+    return await this.topicService.getAllTopicsForOneDevice(deviceId);
   }
 
   @Get('subscribed')

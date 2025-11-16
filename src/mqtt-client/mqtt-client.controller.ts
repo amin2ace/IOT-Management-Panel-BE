@@ -284,8 +284,8 @@ export class MqttManagementController {
   async subscribe(@Body() subscribeDto: MqttSubscribeDto) {
     // Subscribe to each topic in the array
     const subscriptions = await Promise.all(
-      subscribeDto.topics.map((topic) =>
-        this.mqttClientService.subscribe(topic),
+      subscribeDto.topics.map(
+        async (topic) => await this.mqttClientService.subscribe(topic),
       ),
     );
 

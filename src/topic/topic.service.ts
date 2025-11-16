@@ -11,9 +11,10 @@ import { TopicUseCase } from './enum/topic-usecase.enum';
 import { ConfigService } from '@nestjs/config';
 import { UpdateTopicDto } from './dto/update-topic.dto';
 import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
+import { ITopicService } from './interface/topic-service.interface';
 
 @Injectable()
-export class TopicService {
+export class TopicService implements ITopicService {
   constructor(
     @InjectRepository(Topic)
     private readonly topicRepo: Repository<Topic>,
@@ -31,7 +32,7 @@ export class TopicService {
 
     const deviceTopic = `${Base_Topic}/${deviceId}/${useCase}`;
 
-    const isTopicExist = await this.topicRepo.findOne({
+    const storedTopic = await this.topicRepo.findOne({
       where: {
         brokerUrl,
         topic: deviceTopic,
@@ -39,21 +40,22 @@ export class TopicService {
       },
     });
 
-    if (!isTopicExist) {
+    if (!storedTopic) {
       return await this.storeTopic(deviceId, deviceTopic, useCase);
     }
-    return isTopicExist;
+    return storedTopic;
   }
 
-  async createAllTopics(deviceId: string) {
-    const Base_Topic = this.configService.getOrThrow<string>('BASE_TOPIC');
-
+  async createAllTopicsForDevice(deviceId: string): Promise<Topic[]> {
+    const topics: Topic[] = [];
+    const baseTopic = await this.createDeviceBaseTopic(deviceId);
+    topics.push(baseTopic);
     for (const useCase of Object.values(TopicUseCase)) {
-      let topic = `${Base_Topic}/${deviceId}/${useCase}`;
-      await this.storeTopic(deviceId, topic, useCase);
+      const topic = await this.createTopic(deviceId, useCase);
+      topics.push(topic);
     }
 
-    return `All topics for device ${deviceId} was created`;
+    return topics;
   }
 
   async createDeviceBaseTopic(deviceId: string): Promise<Topic> {
@@ -61,11 +63,13 @@ export class TopicService {
 
     const deviceTopic = `${Base_Topic}/${deviceId}`;
 
-    return await this.storeTopic(
+    const topic = await this.storeTopic(
       deviceId,
       deviceTopic,
       TopicUseCase.DEVICE_BASE,
     );
+
+    return topic;
   }
 
   async storeTopic(
@@ -90,16 +94,15 @@ export class TopicService {
         deviceId,
         topic,
         useCase,
+        isSubscribed: true,
       });
 
       await this.topicRepo.save(record);
-      return record;
     }
-    this.logger.debug('Topic already exists in database');
-    return isTopicExist;
+    return await this.getTopicByName(topic);
   }
 
-  async getBroadcastTopic(): Promise<string> {
+  async getBroadcastTopic(): Promise<Topic> {
     const broadcastTopic = await this.topicRepo.findOne({
       where: {
         useCase: TopicUseCase.BROADCAST,
@@ -109,16 +112,13 @@ export class TopicService {
     });
 
     if (!broadcastTopic) {
-      this.logger.error(
-        `Topics:::${broadcastTopic}:::MqttBroker:::retrieve:::failed`,
-      );
       throw new NotFoundException('Broadcast topic not found');
     }
-    this.MQTT_BROADCAST_DISCOVERY = broadcastTopic?.topic;
-    return broadcastTopic.topic;
+    // this.MQTT_BROADCAST_DISCOVERY = broadcastTopic?.topic;
+    return broadcastTopic;
   }
 
-  async getDeviceTopicsByUseCase(
+  async getDeviceTopicByUseCase(
     deviceId: string,
     useCase: TopicUseCase,
   ): Promise<Topic> {
@@ -130,26 +130,23 @@ export class TopicService {
     });
 
     if (!topic) {
-      this.logger.error(
-        `Topics:::${useCase}:::${deviceId}:::retrieve:::failed`,
-      );
       throw new NotFoundException('Topic not found');
     }
     return topic;
   }
 
-  async getDeviceTopicsByDeviceId(deviceId: string): Promise<Topic[]> {
-    const topic = await this.topicRepo.find({
+  async getAllTopicsForOneDevice(deviceId: string): Promise<Topic[]> {
+    const topics = await this.topicRepo.find({
       where: {
         deviceId,
       },
     });
 
-    if (!topic || !topic.length) {
+    if (!topics || !topics.length) {
       throw new NotFoundException('No Topic found for device');
     }
 
-    return topic;
+    return topics;
   }
 
   async getTopicByName(topic: string): Promise<Topic> {
@@ -180,10 +177,18 @@ export class TopicService {
     return topics;
   }
 
-  async updateTopic(topic, updateData: UpdateTopicDto): Promise<string> {
+  async updateTopic(topic: string, updateData: UpdateTopicDto): Promise<Topic> {
     try {
       await this.topicRepo.update({ topic }, { ...updateData });
-      return 'Topic Updated';
+      const updatedTopic = await this.topicRepo.findOne({
+        where: {
+          topic,
+        },
+      });
+      if (!updatedTopic) {
+        throw new ForbiddenException('Update topic failed');
+      }
+      return updatedTopic;
     } catch (error) {
       throw new ForbiddenException('Update topic failed', error);
     }

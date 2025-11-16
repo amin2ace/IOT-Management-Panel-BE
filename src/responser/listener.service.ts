@@ -49,7 +49,9 @@ export class ListenerService {
     // 2: Check Redis cache for pending request
     const cached = await this.redisCache.get(`pending:${requestId}`);
     if (cached === null) {
-      throw new BadRequestException('Invalid request id in payload');
+      throw new BadRequestException('Invalid request id in payload', {
+        cause: 'sdfg',
+      });
     }
 
     // 3: Check requested id validation
@@ -63,6 +65,7 @@ export class ListenerService {
       throw new BadRequestException('Invalid id in response payload');
     }
     this.logger.debug('Response validated with cache');
+    console.log(dtoInstance);
     return dtoInstance;
   }
 
