@@ -2,7 +2,6 @@ import { Injectable, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { IHashService } from './interface/hash-service.interface';
-import { SignupInputDto } from './dto/signup-input.dto';
 import { HashDto } from './dto/hash-data.dto';
 
 @Injectable()
@@ -14,8 +13,8 @@ export class HashService implements IHashService {
     this.salt = bcrypt.genSaltSync(rounds);
   }
 
-  async hash(dataToHash: Partial<HashDto>): Promise<Partial<HashDto>> {
-    const result: Partial<HashDto> = {};
+  async hash(dataToHash: HashDto): Promise<HashDto> {
+    const result: HashDto = {};
 
     try {
       const { email, password, userName } = dataToHash;

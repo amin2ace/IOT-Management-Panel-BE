@@ -1,23 +1,15 @@
-import {
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  Global,
-  RequestMethod,
-} from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from '../users/users.module';
 import { Token } from './repository/token.entity';
 import { Blacklist } from './repository/blacklist.entity';
-import { HashService } from './hash.service';
 import { CookieService } from './cookie.service';
 import { TokenService } from './token.service';
 import { SessionService } from './session.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RedisModule } from '@/redis/redis.module';
-import { SessionMiddleware } from './middleware/session.middleware';
-import { RouteInfo } from '@nestjs/common/interfaces';
+import { HashModule } from '@/hash/hash.module';
 
 /**
  * AuthModule - Provides authentication services
@@ -43,22 +35,11 @@ import { RouteInfo } from '@nestjs/common/interfaces';
     TypeOrmModule.forFeature([Token, Blacklist]),
     UsersModule,
     RedisModule,
+    HashModule,
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    HashService,
-    CookieService,
-    TokenService,
-    SessionService,
-  ],
-  exports: [
-    AuthService,
-    SessionService,
-    HashService,
-    TokenService,
-    CookieService,
-  ],
+  providers: [AuthService, CookieService, TokenService, SessionService],
+  exports: [AuthService, SessionService, TokenService, CookieService],
 })
 export class AuthModule {
   // private readonly routes: RouteInfo[] = [

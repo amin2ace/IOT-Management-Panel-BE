@@ -12,7 +12,6 @@ import { loginInputDto } from './dto/login-input.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { HashService } from './hash.service';
 import { SessionService } from './session.service';
 import { UsersService } from 'src/users/users.service';
 import { Role } from 'src/config/types/roles.types';
@@ -20,6 +19,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { RedisService } from '@/redis/redis.service';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { SignupResponseDto } from './dto/signup-response.dto';
+import { HashService } from '@/hash/hash.service';
 
 /**
  * AuthService - Hybrid authentication service

@@ -26,17 +26,17 @@ import { RedisService } from '@/redis/redis.service';
 @Injectable()
 export class SessionService implements ISessionService {
   private readonly logger = new Logger(SessionService.name);
-  private readonly sessionTimeout: number; // milliseconds
-  private readonly refreshInterval: number; // milliseconds
+  private readonly sessionTimeout: number; // seconds
+  private readonly refreshInterval: number; // seconds
   private readonly ttl: number; // seconds
 
   constructor(
     private configService: ConfigService,
     private readonly redis: RedisService,
   ) {
-    // Session timeout from config (default 24 hours)
+    // Session timeout from config (default 24 hours) in seconds
     this.sessionTimeout =
-      this.configService.getOrThrow<number>('SESSION_TIMEOUT');
+      this.configService.getOrThrow<number>('SESSION_TIMEOUT') / 1000;
     // Refresh interval for lastActivity (default 5 minutes)
     this.refreshInterval = this.configService.getOrThrow<number>(
       'SESSION_REFRESH_INTERVAL',
@@ -70,7 +70,7 @@ export class SessionService implements ISessionService {
       };
 
       // Store session in Redis with TTL
-      const ttlSeconds = this.ttl;
+      const ttlSeconds = this.sessionTimeout;
       await this.redis.setex(
         `session:${sessionId}`,
         JSON.stringify(sessionData),

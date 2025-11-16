@@ -1,4 +1,4 @@
-import { SignupInputDto as HashDto } from '../dto/signup-input.dto';
+import { SignupInputDto as HashDto } from '../../auth/dto/signup-input.dto';
 
 export interface IHashService {
   salt: string;

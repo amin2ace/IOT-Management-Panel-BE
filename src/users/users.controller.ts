@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Res,
 } from '@nestjs/common';
 import {
   ApiCookieAuth,
@@ -20,12 +21,15 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AssignRolesDto } from './dto/assign-roles.dto';
-import { UserResponseDto, UserAuthResponseDto } from './dto/user-response.dto';
+import { UserResponseDto } from './dto/user-response.dto';
 import { RolesGuard } from '@/common/guard/roles.guard';
 import { Roles } from '@/config/decorator/roles.decorator';
 import { Role } from '@/config/types/roles.types';
 import { SessionAuthGuard } from '@/common/guard/session-auth.guard';
 import { Serialize } from '@/common/decorator/serialize.decorator';
+import type { Response } from 'express';
+import { RolesResponseDto } from './dto/roles-response.dto';
+import { plainToInstance } from 'class-transformer';
 
 @ApiTags('Users')
 @Controller('/users')
@@ -45,19 +49,20 @@ export class UsersController {
     type: UserResponseDto,
   })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.createUser(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto) {
+    return await this.usersService.createUser(createUserDto);
   }
 
   @Get()
+  @Serialize(UserResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get all users (Admin only)' })
   @ApiCookieAuth()
   @ApiResponse({ status: 200, description: 'List of users' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  findAll() {
-    return this.usersService.findAllUsers();
+  async findAll() {
+    return await this.usersService.findAllUsers();
   }
 
   @Get(':id')
@@ -72,8 +77,8 @@ export class UsersController {
     type: UserResponseDto,
   })
   @ApiResponse({ status: 404, description: 'User not found' })
-  findById(@Param('id') id: string) {
-    return this.usersService.findUserById(id);
+  async findById(@Param('id') id: string) {
+    return await this.usersService.findUserById(id);
   }
 
   @Patch(':id')
@@ -88,24 +93,23 @@ export class UsersController {
     type: UserResponseDto,
   })
   @ApiResponse({ status: 404, description: 'User not found' })
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.updateUser(id, updateUserDto);
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return await this.usersService.updateUser(id, updateUserDto);
   }
 
   @Delete(':id')
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
-  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete user (SuperAdmin only)' })
   @ApiCookieAuth()
-  @ApiResponse({ status: 204, description: 'User deleted successfully' })
+  @ApiResponse({ status: 200, description: 'User deleted successfully' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  remove(@Param('id') id: string) {
-    return this.usersService.deleteUser(id);
+  async remove(@Param('id') id: string) {
+    return await this.usersService.deleteUser(id);
   }
 
   @Patch(':id/roles')
-  @Serialize(UserResponseDto)
+  @Serialize(RolesResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
   @ApiOperation({
@@ -117,15 +121,19 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'User roles updated successfully',
-    type: UserResponseDto,
+    type: RolesResponseDto,
   })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  assignRoles(
+  async assignRoles(
     @Param('id') userId: string,
     @Body() assignRolesDto: AssignRolesDto,
   ) {
-    return this.usersService.assignRoles(userId, assignRolesDto);
+    const user = await this.usersService.assignRoles(userId, assignRolesDto);
+
+    return plainToInstance(RolesResponseDto, user, {
+      excludeExtraneousValues: true,
+    });
   }
 
   /**
@@ -133,6 +141,7 @@ export class UsersController {
    * Returns the list of roles assigned to a specific user
    */
   @Get(':id/roles')
+  @Serialize(RolesResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({
@@ -149,11 +158,15 @@ export class UsersController {
         roles: ['viewer', 'engineer'],
       },
     },
+    type: RolesResponseDto,
   })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  getUserRoles(@Param('id') userId: string) {
-    return this.usersService.getUserRoles(userId);
+  async getUserRoles(@Param('id') userId: string) {
+    const result = await this.usersService.getUserRoles(userId);
+    return plainToInstance(RolesResponseDto, result, {
+      excludeExtraneousValues: true,
+    });
   }
 
   /**
@@ -161,7 +174,7 @@ export class UsersController {
    * Appends new roles to the user's existing roles without removing others
    */
   @Post(':id/roles/add')
-  @Serialize(UserResponseDto)
+  @Serialize(RolesResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
   @ApiOperation({
@@ -173,15 +186,21 @@ export class UsersController {
   @ApiResponse({
     status: 201,
     description: 'Roles added successfully',
-    type: UserResponseDto,
+    type: RolesResponseDto,
   })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  addRoles(
+  async addRoles(
     @Param('id') userId: string,
     @Body() assignRolesDto: AssignRolesDto,
   ) {
-    return this.usersService.addRoles(userId, assignRolesDto.roles);
+    const result = await this.usersService.addRoles(
+      userId,
+      assignRolesDto.roles,
+    );
+    return plainToInstance(RolesResponseDto, result, {
+      excludeExtraneousValues: true,
+    });
   }
 
   /**
@@ -189,7 +208,7 @@ export class UsersController {
    * Removes specified roles from the user, ensuring at least one role remains
    */
   @Post(':id/roles/remove')
-  @Serialize(UserResponseDto)
+  @Serialize(RolesResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
   @ApiOperation({
@@ -201,7 +220,7 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'Roles removed successfully',
-    type: UserResponseDto,
+    type: RolesResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -209,10 +228,16 @@ export class UsersController {
   })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  removeRoles(
+  async removeRoles(
     @Param('id') userId: string,
     @Body() assignRolesDto: AssignRolesDto,
   ) {
-    return this.usersService.removeRoles(userId, assignRolesDto.roles);
+    const result = await this.usersService.removeRoles(
+      userId,
+      assignRolesDto.roles,
+    );
+    return plainToInstance(RolesResponseDto, result, {
+      excludeExtraneousValues: true,
+    });
   }
 }
