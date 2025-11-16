@@ -32,6 +32,7 @@ import { HardwareStatus } from '@/device/repository/hardware-status.entity';
 import { Telemetry } from '@/device/repository/sensor-telemetry.entity';
 import { DeviceService } from '@/device/device.service';
 import { ResponseMessageCode } from '@/common';
+import { GatewayService } from '@/gateway/gateway.service';
 
 @Injectable()
 export class ResponserService {
@@ -48,6 +49,7 @@ export class ResponserService {
     private readonly redisCache: RedisService,
     private readonly topic: TopicService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly gatewayService: GatewayService,
   ) {}
 
   private readonly logger = new Logger(ResponserService.name, {
@@ -65,9 +67,7 @@ export class ResponserService {
     }
 
     await this.redisCache.del(`pending:${requestId}`);
-    this.logger.debug('Cache deleted successfully', {
-      context: 'Cache Delete',
-    });
+    this.logger.debug('Cache deleted successfully');
   }
 
   public async handleDiscoveryResponse(payload: DiscoveryResponseDto) {
@@ -98,6 +98,8 @@ export class ResponserService {
       });
       await this.sensorRepo.save(deviceRecord);
 
+      this.logger.debug(`Device ${deviceId} added to database`);
+
       // Create and subscribe to all device's topics
       for (const useCase of Object.values(TopicUseCase)) {
         const { topic } = await this.topic.createTopic(deviceId, useCase);
@@ -105,12 +107,12 @@ export class ResponserService {
       }
       // Subscribe to device base topic
       await this.mqttClient.subscribe(topic);
-      // ✨ ADD THIS: Emit event for WebSocket broadcast
-      this.eventEmitter.emit('/ws/message/discovery', payload);
     }
+    // ---> Web Socket gateway
+    this.gatewayService.emitDiscoveryBroadcastMessage(payload);
 
+    // Delete cached request appropriate to this response
     await this.deleteCache(payload);
-    this.logger.debug(`Device ${deviceId} added to database`);
   }
 
   async handleAssignResponse(payload: SensorFunctionalityResponseDto) {

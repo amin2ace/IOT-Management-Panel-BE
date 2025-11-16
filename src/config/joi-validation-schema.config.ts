@@ -56,6 +56,7 @@ const configValidationSchema: joi.ObjectSchema = joi.object({
   REDIS_PORT: joi.number().required(),
   REDIS_PASSWORD: joi.string().required(),
   REDIS_DB: joi.number().required(),
+  REDIS_TTL: joi.number().required(),
 
   // Session / Authentication
   AUTH_MODE: joi.string().valid('local', 'jwt').default('local'), // 'local' for offline (session), 'jwt' for online

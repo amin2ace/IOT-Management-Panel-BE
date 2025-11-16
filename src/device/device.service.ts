@@ -28,19 +28,22 @@ import { RedisService } from 'src/redis/redis.service';
 import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
 import { HardwareStatusRequestDto } from './messages/publish/hardware-status.request';
-import { LogContext } from 'src/log-handler/enum/log-context.enum';
-import { LogAction } from 'src/log-handler/enum/log-action.enum';
 import { GetAllDevicesResponseDto } from './dto/get-all-devices.response.dto';
 import { SensorResponseDto } from './dto/sensor-response.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class DeviceService {
+  private readonly ttl: number;
   constructor(
     @InjectRepository(Sensor) private readonly sensorRepo: Repository<Sensor>,
     private readonly mqttService: MqttClientService,
     private readonly topicService: TopicService,
     private readonly redisCache: RedisService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.ttl = this.configService.getOrThrow<number>('REDIS_TTL');
+  }
 
   private readonly logger = new Logger(DeviceService.name, { timestamp: true });
   async getSensors(query: QueryDeviceDto): Promise<GetAllDevicesResponseDto> {
@@ -80,12 +83,14 @@ export class DeviceService {
   private async setCache(dto: any) {
     const { deviceId, requestId, requestCode, userId } = dto;
 
-    this.redisCache.set(`pending:${requestId}`, {
+    const key = `pending:${requestId}`;
+    const Value = JSON.stringify({
       requestCode,
       userId,
       requestId,
-      deviceId,
     });
+
+    this.redisCache.setex(key, Value, this.ttl);
   }
 
   async discoverDevicesBroadcast(

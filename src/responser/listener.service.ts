@@ -15,6 +15,7 @@ import {
   SensorFunctionalityResponseDto,
   TelemetryResponseDto,
 } from './dto';
+import { RequestCacheDto } from '@/redis/dto/request.cache.to';
 
 @Injectable()
 export class ListenerService {
@@ -32,7 +33,7 @@ export class ListenerService {
     const dtoInstance = plainToInstance(dtoClass, payload);
 
     const errors = await validate(dtoInstance as object);
-    const { requestId, deviceId } = dtoInstance as any;
+    const { requestId, userId } = dtoInstance as any;
 
     if (errors.length > 0) {
       const errorString = errors
@@ -46,28 +47,25 @@ export class ListenerService {
 
     // 2: Check Redis cache for pending request
     const cached = await this.redisCache.get(`pending:${requestId}`);
-    if (!cached) {
-      this.logger.log(`No pending request found for requestId=${requestId}`);
+    if (cached === null) {
       throw new BadRequestException('Invalid request id in payload');
     }
 
     // 3: Check requested id validation
     const {
+      requestCode,
       requestId: cachedRequestId,
-      deviceId: cachedDeviceId,
-      userId,
+      userId: cachedUserId,
     } = cached;
-    if (cachedRequestId !== requestId) {
-      this.logger.log('Invalid request id in response payload');
-    }
 
-    if (cachedDeviceId !== deviceId) {
-      this.logger.log('Invalid device id in response payload');
+    if (cachedRequestId !== requestId || cachedUserId !== userId) {
+      throw new BadRequestException('Invalid request id in response payload');
     }
+    // this.logger.debug("Response validated with cache")
     return dtoInstance;
   }
 
-  // Listen for MQTT discovery topic like: "sensors/+/discovery"
+  // MQTT Broker ---> Web Socket Gateway: Via WebSocket Gateway
   @OnEvent('mqtt/message/discovery')
   async handleDiscoveryEvent(topic: string, payload: any) {
     if (!topic.endsWith('/discovery') && !payload?.responseId) return;
