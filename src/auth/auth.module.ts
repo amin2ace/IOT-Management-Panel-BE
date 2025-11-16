@@ -5,11 +5,11 @@ import { Token } from './repository/token.entity';
 import { Blacklist } from './repository/blacklist.entity';
 import { CookieService } from './cookie.service';
 import { TokenService } from './token.service';
-import { SessionService } from './session.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RedisModule } from '@/redis/redis.module';
 import { HashModule } from '@/hash/hash.module';
+import { SessionModule } from '@/session/session.module';
 
 /**
  * AuthModule - Provides authentication services
@@ -36,10 +36,11 @@ import { HashModule } from '@/hash/hash.module';
     UsersModule,
     RedisModule,
     HashModule,
+    SessionModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, CookieService, TokenService, SessionService],
-  exports: [AuthService, SessionService, TokenService, CookieService],
+  providers: [AuthService, CookieService, TokenService],
+  exports: [AuthService, TokenService, CookieService],
 })
 export class AuthModule {
   // private readonly routes: RouteInfo[] = [

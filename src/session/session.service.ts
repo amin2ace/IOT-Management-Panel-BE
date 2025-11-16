@@ -1,4 +1,4 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable, Logger, Inject, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   ISessionService,
@@ -8,6 +8,9 @@ import { Role } from 'src/config/types/roles.types';
 import { v4 as uuidv4 } from 'uuid';
 import { Redis } from 'ioredis';
 import { RedisService } from '@/redis/redis.service';
+import { plainToInstance } from 'class-transformer';
+import { SessionCache } from '@/redis/dto/session.cache.dto';
+import { CreateSessionDto } from './dto/create-session.dto';
 
 /**
  * SessionService - Manages user sessions in Redis for offline/local authentication
@@ -31,7 +34,7 @@ export class SessionService implements ISessionService {
   private readonly ttl: number; // seconds
 
   constructor(
-    private configService: ConfigService,
+    private readonly configService: ConfigService,
     private readonly redis: RedisService,
   ) {
     // Session timeout from config (default 24 hours) in seconds
@@ -48,27 +51,16 @@ export class SessionService implements ISessionService {
   /**
    * Create a new session for authenticated user
    */
-  async createSession(
-    userId: string,
-    userName: string,
-    roles: Role[],
-    ipAddress: string,
-    userAgent: string,
-  ): Promise<string> {
+  async createSession(data: CreateSessionDto): Promise<string> {
     try {
       const sessionId = uuidv4();
       const now = new Date();
 
       const sessionData: ISessionData = {
-        userId,
-        userName,
-        roles,
+        ...data,
         loginTime: now,
         lastActivity: now,
-        ipAddress,
-        userAgent,
       };
-
       // Store session in Redis with TTL
       const ttlSeconds = this.sessionTimeout;
       await this.redis.setex(
@@ -79,13 +71,13 @@ export class SessionService implements ISessionService {
 
       // Track session ID under user for invalidation purposes
       await this.redis.setex(
-        `user:sessions:${userId}:${sessionId}`,
+        `user:sessions:${sessionData.userId}:${sessionId}`,
         'true',
         ttlSeconds,
       );
 
       this.logger.log(
-        `Session created: ${sessionId} for user: ${userId} with roles: ${roles.join(', ')}`,
+        `Session created: ${sessionId} for user: ${sessionData.userId} with roles: ${sessionData.roles.join(', ')}`,
       );
 
       return sessionId;
@@ -93,6 +85,23 @@ export class SessionService implements ISessionService {
       this.logger.error(`Failed to create session: ${error.message}`);
       throw error;
     }
+  }
+
+  async getTrackSession(
+    sessionId: string,
+    userId: string,
+  ): Promise<ISessionData> {
+    const data = await this.redis.get(`user:sessions:${userId}:${sessionId}`);
+
+    if (!data) {
+      this.logger.warn(`Session for user ${userId} not found`);
+      throw new NotFoundException(`Session for user ${userId} not found`);
+    }
+    const sessinoData = plainToInstance(SessionCache, data, {
+      excludeExtraneousValues: true,
+    });
+
+    return sessinoData;
   }
 
   /**
@@ -160,32 +169,32 @@ export class SessionService implements ISessionService {
    */
   async extendSession(sessionId: string): Promise<ISessionData | null> {
     try {
-      const session = await this.getSession(sessionId);
+      const sessionData = await this.getSession(sessionId);
 
-      if (!session) {
+      if (!sessionData) {
         return null;
       }
 
       // Update lastActivity
-      session.lastActivity = new Date();
+      sessionData.lastActivity = new Date();
 
       // Re-set with extended TTL
-      const ttlSeconds = this.ttl;
+      const ttlSeconds = this.sessionTimeout;
       await this.redis.setex(
         `session:${sessionId}`,
-        JSON.stringify(session),
+        JSON.stringify(sessionData),
         ttlSeconds,
       );
 
       // Also extend tracking key
       await this.redis.setex(
-        `user:sessions:${session.userId}:${sessionId}`,
+        `user:sessions:${sessionData.userId}:${sessionId}`,
         'true',
         ttlSeconds,
       );
 
       this.logger.debug(`Session extended: ${sessionId}`);
-      return session;
+      return sessionData;
     } catch (error) {
       this.logger.error(`Failed to extend session: ${error.message}`);
       return null;

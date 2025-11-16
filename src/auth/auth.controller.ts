@@ -15,10 +15,6 @@ import {
   ApiCookieAuth,
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
-import { SessionAuthGuard } from '../common/guard/session-auth.guard';
-import { RolesGuard } from '../common/guard/roles.guard';
-import { Roles } from 'src/config/decorator/roles.decorator';
-import { Role } from 'src/config/types/roles.types';
 import { loginInputDto } from './dto/login-input.dto';
 import { SignupInputDto } from './dto/signup-input.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -29,6 +25,7 @@ import { Serialize } from '@/common';
 import { UserResponseDto } from '@/users/dto/user-response.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { SignupResponseDto } from './dto/signup-response.dto';
+import { SessionAuthGuard } from '@/common/guard/session-auth.guard';
 
 /**
  * AuthController - Handles all authentication-related endpoints

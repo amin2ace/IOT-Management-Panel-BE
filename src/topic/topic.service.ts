@@ -17,16 +17,17 @@ export class TopicService {
   constructor(
     @InjectRepository(Topic)
     private readonly topicRepo: Repository<Topic>,
-    private readonly config: ConfigService,
+    private readonly configService: ConfigService,
   ) {}
 
   private readonly logger = new Logger(TopicService.name, { timestamp: true });
   public MQTT_BROADCAST_DISCOVERY = '';
 
   async createTopic(deviceId: string, useCase: TopicUseCase): Promise<Topic> {
-    const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
+    const Base_Topic = this.configService.getOrThrow<string>('BASE_TOPIC');
 
-    const brokerUrl = await this.config.getOrThrow<string>('MQTT_BROKER_URL');
+    const brokerUrl =
+      await this.configService.getOrThrow<string>('MQTT_BROKER_URL');
 
     const deviceTopic = `${Base_Topic}/${deviceId}/${useCase}`;
 
@@ -45,7 +46,7 @@ export class TopicService {
   }
 
   async createAllTopics(deviceId: string) {
-    const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
+    const Base_Topic = this.configService.getOrThrow<string>('BASE_TOPIC');
 
     for (const useCase of Object.values(TopicUseCase)) {
       let topic = `${Base_Topic}/${deviceId}/${useCase}`;
@@ -56,7 +57,7 @@ export class TopicService {
   }
 
   async createDeviceBaseTopic(deviceId: string): Promise<Topic> {
-    const Base_Topic = this.config.getOrThrow<string>('BASE_TOPIC');
+    const Base_Topic = this.configService.getOrThrow<string>('BASE_TOPIC');
 
     const deviceTopic = `${Base_Topic}/${deviceId}`;
 
@@ -72,7 +73,8 @@ export class TopicService {
     topic: string,
     useCase: TopicUseCase,
   ): Promise<Topic> {
-    const brokerUrl = await this.config.getOrThrow<string>('MQTT_BROKER_URL');
+    const brokerUrl =
+      await this.configService.getOrThrow<string>('MQTT_BROKER_URL');
 
     const isTopicExist = await this.topicRepo.findOne({
       where: {

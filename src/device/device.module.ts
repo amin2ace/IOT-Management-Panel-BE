@@ -8,6 +8,7 @@ import { Telemetry } from './repository/sensor-telemetry.entity';
 import { HardwareStatus } from './repository/hardware-status.entity';
 import { TopicModule } from 'src/topic/topic.module';
 import { LogHandlerModule } from 'src/log-handler/log-handler.module';
+import { SessionModule } from '@/session/session.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { LogHandlerModule } from 'src/log-handler/log-handler.module';
     MqttClientModule,
     TopicModule,
     LogHandlerModule,
+    SessionModule,
   ],
   controllers: [DeviceController],
   providers: [DeviceService],

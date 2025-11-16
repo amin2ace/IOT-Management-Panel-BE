@@ -1,10 +1,10 @@
+import { SessionService } from '@/session/session.service';
 import {
   Injectable,
   NestMiddleware,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { SessionService } from '../session.service';
 
 @Injectable()
 export class SessionMiddleware implements NestMiddleware {
@@ -26,7 +26,7 @@ export class SessionMiddleware implements NestMiddleware {
 
     (req as any).user = {
       userId: data.userId,
-      username: data.userName,
+      username: data.username,
       userAgent: data.userAgent,
       userIp: data.ipAddress,
       userLoginTime: data.loginTime,

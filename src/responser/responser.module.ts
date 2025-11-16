@@ -12,6 +12,7 @@ import { Sensor } from '@/device/repository/sensor.entity';
 import { Telemetry } from '@/device/repository/sensor-telemetry.entity';
 import { HardwareStatus } from '@/device/repository/hardware-status.entity';
 import { GatewayModule } from '@/gateway/gateway.module';
+import { SessionModule } from '@/session/session.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { GatewayModule } from '@/gateway/gateway.module';
     MqttClientModule,
     TopicModule,
     GatewayModule,
+    SessionModule,
   ],
   controllers: [ResponserController],
   providers: [ResponserService, ListenerService],

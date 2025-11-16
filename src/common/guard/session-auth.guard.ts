@@ -1,3 +1,4 @@
+import { SessionService } from '@/session/session.service';
 import {
   Injectable,
   CanActivate,
@@ -5,7 +6,6 @@ import {
   UnauthorizedException,
   Logger,
 } from '@nestjs/common';
-import { SessionService } from '../../auth/session.service';
 import { Request, Response } from 'express';
 
 /**
@@ -61,6 +61,8 @@ export class SessionAuthGuard implements CanActivate {
       sessionData = await this.sessionService.extendSession(sessionId);
 
       if (!sessionData) {
+        this.logger.warn(`Invalid session data: ${sessionId}`);
+
         throw new UnauthorizedException(
           'Failed to extend session. Please login again.',
         );
@@ -69,7 +71,7 @@ export class SessionAuthGuard implements CanActivate {
       // Attach user data to request for use in controllers
       (request as any).user = {
         userId: sessionData.userId,
-        userName: sessionData.userName,
+        userName: sessionData.username,
         roles: sessionData.roles,
         loginTime: sessionData.loginTime,
         lastActivity: sessionData.lastActivity,
@@ -80,11 +82,6 @@ export class SessionAuthGuard implements CanActivate {
 
       // Attach sessionId for logout operations
       (request as any).sessionId = sessionId;
-
-      console.log('SessionAuthGuard attaching to request:', {
-        userId: sessionData.userId,
-        roles: sessionData.roles,
-      });
 
       this.logger.debug(
         `Session validated for user: ${sessionData.userId} with roles: ${sessionData.roles.join(', ')}`,

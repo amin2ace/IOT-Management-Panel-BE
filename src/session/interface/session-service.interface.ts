@@ -1,4 +1,5 @@
 import { Role } from 'src/config/types/roles.types';
+import { CreateSessionDto } from '../dto/create-session.dto';
 
 /**
  * Session Data stored in Redis
@@ -6,7 +7,7 @@ import { Role } from 'src/config/types/roles.types';
  */
 export interface ISessionData {
   userId: string;
-  userName: string;
+  username: string;
   roles: Role[];
   loginTime: Date;
   lastActivity: Date;
@@ -29,13 +30,7 @@ export interface ISessionService {
    * @param userAgent - Client user agent
    * @returns Session ID
    */
-  createSession(
-    userId: string,
-    userName: string,
-    roles: Role[],
-    ipAddress: string,
-    userAgent: string,
-  ): Promise<string>;
+  createSession(sessionData: CreateSessionDto): Promise<string>;
 
   /**
    * Get session data from Redis
@@ -43,6 +38,8 @@ export interface ISessionService {
    * @returns Session data or null if not found
    */
   getSession(sessionId: string): Promise<ISessionData | null>;
+
+  getTrackSession(sessionId: string, userId: string): Promise<ISessionData>;
 
   /**
    * Validate session exists and is not expired
