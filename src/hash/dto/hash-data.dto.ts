@@ -4,13 +4,13 @@ import { IsString } from 'class-validator';
 export class HashDto {
   @ApiProperty({ default: 'John Wick' })
   @IsString()
-  userName: string;
+  userName?: string;
 
   @ApiProperty({ default: 'john@wick.com' })
   @IsString()
-  email: string;
+  email?: string;
 
   @ApiProperty({ default: '123456789' })
   @IsString()
-  password: string;
+  password?: string;
 }

@@ -26,12 +26,9 @@ export class CreateUserDto {
 
   @ApiProperty({
     description: 'User role for RBAC',
-    enum: Role,
-    enumName: 'Role',
     isArray: true,
-    example: [Role.VIEWER],
+    example: [Role.VIEWER, Role.ADMIN],
   })
-  @IsEnum(Role)
   @IsArray()
   @IsNotEmpty()
   roles: Role[];

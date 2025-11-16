@@ -12,14 +12,14 @@ import { loginInputDto } from './dto/login-input.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { HashService } from './hash.service';
-import { SessionService } from './session.service';
+import { SessionService } from '../session/session.service';
 import { UsersService } from 'src/users/users.service';
 import { Role } from 'src/config/types/roles.types';
 import { v4 as uuidv4 } from 'uuid';
-import { RedisService } from '@/redis/redis.service';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { SignupResponseDto } from './dto/signup-response.dto';
+import { HashService } from '@/hash/hash.service';
+import { CreateSessionDto } from '@/session/dto/create-session.dto';
 
 /**
  * AuthService - Hybrid authentication service
@@ -101,16 +101,15 @@ export class AuthService {
       roles: defaultRoles,
     });
 
-    // Assign default role (VIEWER)
-
-    // Create session
-    const sessionId = await this.sessionService.createSession(
-      createdUser.userId,
+    const sessionData: CreateSessionDto = {
+      userId: createdUser.userId,
       username,
-      defaultRoles,
-      this.getClientIp(req),
-      this.getClientUserAgent(req),
-    );
+      roles: defaultRoles,
+      ipAddress: this.getClientIp(req),
+      userAgent: this.getClientUserAgent(req),
+    };
+    // Create session
+    const sessionId = await this.sessionService.createSession(sessionData);
 
     // Set secure httpOnly cookie
     this.setSessionCookie(res, sessionId);
@@ -161,14 +160,16 @@ export class AuthService {
         throw new UnauthorizedException('Invalid email or password');
       }
 
+      const sessionData: CreateSessionDto = {
+        userId: user.userId,
+        username: user.username,
+        roles: user.roles,
+        ipAddress: this.getClientIp(req),
+        userAgent: this.getClientUserAgent(req),
+      };
+
       // Create session
-      const sessionId = await this.sessionService.createSession(
-        user.userId,
-        user.username,
-        user.roles,
-        this.getClientIp(req),
-        this.getClientUserAgent(req),
-      );
+      const sessionId = await this.sessionService.createSession(sessionData);
 
       // Set secure httpOnly cookie
       this.setSessionCookie(res, sessionId);
@@ -181,7 +182,7 @@ export class AuthService {
         roles: user.roles,
       };
     } catch (error) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(error);
     }
   }
 

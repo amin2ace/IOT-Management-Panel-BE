@@ -11,16 +11,14 @@ import { GatewayModule } from './gateway/gateway.module';
 import jwtModuleOptions from './config/jwt-module.config';
 import typeOrmModuleConfig from './config/typeorm-module-config';
 import configModuleOptions from './config/config-module.config';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { RolesGuard } from './common/guard/roles.guard';
 import { DeviceModule } from './device/device.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TopicModule } from './topic/topic.module';
 import { RedisModule } from './redis/redis.module';
-import { ExceptionHandlerInterceptor } from './common';
 import { LogHandlerModule } from './log-handler/log-handler.module';
-import { SessionAuthGuard } from './common/guard/session-auth.guard';
 import { ResponserModule } from './responser/responser.module';
+import { HashModule } from './hash/hash.module';
+import { SessionModule } from './session/session.module';
 
 @Module({
   imports: [
@@ -52,6 +50,8 @@ import { ResponserModule } from './responser/responser.module';
     RedisModule,
     LogHandlerModule,
     ResponserModule,
+    HashModule,
+    SessionModule,
   ],
   controllers: [AppController],
   providers: [

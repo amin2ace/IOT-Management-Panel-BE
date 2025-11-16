@@ -4,5 +4,5 @@ export enum Role {
   TEST = 'test',
   ENGINEER = 'engineer',
   ADMIN = 'admin',
-  SUPER_ADMIN = 'super_admin',
+  SUPER_ADMIN = 'super-admin',
 }

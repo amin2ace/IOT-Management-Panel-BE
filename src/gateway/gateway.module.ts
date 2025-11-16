@@ -5,12 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import MessageIncoming from './repository/message-incoming.entity';
 import { DeviceModule } from '@/device/device.module';
 import { ResponserService } from '@/responser/responser.service';
+import { SessionModule } from '@/session/session.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([MessageIncoming]),
     MqttClientModule,
     DeviceModule,
+    SessionModule,
   ],
   providers: [GatewayService],
   exports: [GatewayService],

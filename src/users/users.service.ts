@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -11,12 +12,17 @@ import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { IUserService } from './interface/user-service.interface';
 import { Role } from '@/config/types/roles.types';
+import { HashService } from '@/hash/hash.service';
+import { RolesResponseDto } from './dto/roles-response.dto';
 
 @Injectable()
 export class UsersService implements IUserService {
-  constructor(@InjectRepository(User) private userRepo: Repository<User>) {}
+  constructor(
+    @InjectRepository(User) private userRepo: Repository<User>,
+    private readonly hashService: HashService,
+  ) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<{ userId: string }> {
+  async createUser(createUserDto: CreateUserDto): Promise<User> {
     const { ...userData } = createUserDto;
 
     const user = await this.findUserByEmail(userData.email);
@@ -24,8 +30,6 @@ export class UsersService implements IUserService {
     if (user) {
       throw new UnauthorizedException('Email in Use');
     }
-
-    // Create a new user record with the hashed data
     const userRecord = this.userRepo.create({
       ...userData,
       isActive: true,
@@ -34,25 +38,65 @@ export class UsersService implements IUserService {
     // Save the provided user record to the database
     await this.userRepo.save(userRecord);
 
-    // Return a success message
-    return { userId: userRecord.userId };
+    const created = await this.userRepo.findOne({
+      where: {
+        userId: userRecord.userId,
+      },
+    });
+
+    if (!created) {
+      throw new ForbiddenException('Create user failed');
+    }
+
+    return created;
+  }
+
+  async createUserManually(createUserDto: CreateUserDto): Promise<User> {
+    const { ...userData } = createUserDto;
+
+    const user = await this.findUserByEmail(userData.email);
+
+    if (user) {
+      throw new UnauthorizedException('Email in Use');
+    }
+
+    const { password } = await this.hashService.hash({
+      password: userData.password,
+    });
+    // Create a new user record with the hashed data
+    const userRecord = this.userRepo.create({
+      ...userData,
+      password,
+      isActive: true,
+    });
+
+    // Save the provided user record to the database
+    await this.userRepo.save(userRecord);
+
+    const created = await this.userRepo.findOne({
+      where: {
+        userId: userRecord.userId,
+      },
+    });
+
+    if (!created) {
+      throw new ForbiddenException('Create user failed');
+    }
+
+    return created;
   }
 
   async findAllUsers() {
     return await this.userRepo.find();
   }
 
-  async findUserById(userId: string): Promise<User> {
+  async findUserById(userId: string): Promise<User | null> {
     const user = await this.userRepo.findOne({
       where: {
         userId,
         isActive: true,
       },
     });
-
-    if (!user) {
-      throw new NotFoundException('User not Found');
-    }
 
     return user;
   }
@@ -65,7 +109,6 @@ export class UsersService implements IUserService {
         isActive: true,
       },
     });
-
     // Return the user if user exists
     return user;
   }
@@ -73,8 +116,8 @@ export class UsersService implements IUserService {
   async updateUser(
     userId: string,
     updateUserDto: UpdateUserDto,
-  ): Promise<string> {
-    const user = this.userRepo.findOne({
+  ): Promise<User> {
+    const user = await this.userRepo.findOne({
       where: {
         userId,
         isActive: true,
@@ -85,8 +128,34 @@ export class UsersService implements IUserService {
       throw new NotFoundException('User not Found');
     }
 
-    await this.userRepo.update({ userId }, updateUserDto);
-    return `User with id ${userId} successfully updated`;
+    // Remove null/undefined fields from dto
+    const filteredData: Partial<UpdateUserDto> = Object.fromEntries(
+      Object.entries(updateUserDto).filter(
+        ([_, value]) => value !== undefined && value !== null,
+      ),
+    );
+
+    // Hash password only if provided
+    if (filteredData.password) {
+      const { password } = await this.hashService.hash({
+        password: filteredData.password,
+      });
+      filteredData.password = password;
+    }
+
+    // Update only filtered fields
+    await this.userRepo.update({ userId }, filteredData);
+
+    const updated = await this.userRepo.findOne({
+      where: {
+        userId,
+      },
+    });
+
+    if (!updated) {
+      throw new ForbiddenException('Update user failed');
+    }
+    return updated;
   }
 
   async deleteUser(userId: string): Promise<string> {
@@ -118,7 +187,7 @@ export class UsersService implements IUserService {
   async assignRoles(
     userId: string,
     assignRolesDto: AssignRolesDto,
-  ): Promise<User | null> {
+  ): Promise<User> {
     const user = await this.userRepo.findOne({
       where: {
         userId,
@@ -139,19 +208,25 @@ export class UsersService implements IUserService {
     );
 
     // Return updated user
-    return await this.userRepo.findOne({
+    const updated = await this.userRepo.findOne({
       where: {
         userId,
         isActive: true,
       },
     });
+
+    if (!updated) {
+      throw new ForbiddenException('Role Assign Failed');
+    }
+
+    return updated;
   }
 
   /**
    * Add roles to user (without removing existing ones)
    * Appends new roles to the user's existing roles
    */
-  async addRoles(userId: string, rolesToAdd: Role[]): Promise<User | null> {
+  async addRoles(userId: string, rolesToAdd: Role[]): Promise<User> {
     const user = await this.userRepo.findOne({
       where: {
         userId,
@@ -173,21 +248,24 @@ export class UsersService implements IUserService {
       },
     );
 
-    return await this.userRepo.findOne({
+    const updated = await this.userRepo.findOne({
       where: {
         userId,
         isActive: true,
       },
     });
+
+    if (!updated) {
+      throw new ForbiddenException('Add role to user failed');
+    }
+
+    return updated;
   }
 
   /**
    * Remove specific roles from user
    */
-  async removeRoles(
-    userId: string,
-    rolesToRemove: Role[],
-  ): Promise<User | null> {
+  async removeRoles(userId: string, rolesToRemove: Role[]): Promise<User> {
     const user = await this.userRepo.findOne({
       where: {
         userId,
@@ -219,18 +297,24 @@ export class UsersService implements IUserService {
       },
     );
 
-    return await this.userRepo.findOne({
+    const updated = await this.userRepo.findOne({
       where: {
         userId,
         isActive: true,
       },
     });
+
+    if (!updated) {
+      throw new ForbiddenException('Remove user role failed');
+    }
+
+    return updated;
   }
 
   /**
    * Get user roles
    */
-  async getUserRoles(userId: string): Promise<Role[]> {
+  async getUserRoles(userId: string): Promise<User> {
     const user = await this.userRepo.findOne({
       where: {
         userId,
@@ -242,6 +326,6 @@ export class UsersService implements IUserService {
       throw new NotFoundException('User not found');
     }
 
-    return user.roles;
+    return user;
   }
 }

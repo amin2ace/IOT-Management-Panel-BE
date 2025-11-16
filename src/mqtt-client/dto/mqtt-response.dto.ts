@@ -16,7 +16,7 @@ export class SubscriptionResult {
   success: boolean;
 
   @ApiProperty({ description: 'MQTT topic path' })
-  topic: string;
+  topics: string | string[];
 
   @ApiProperty({ description: 'Operation description or error message' })
   description: string;
