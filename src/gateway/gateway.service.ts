@@ -115,7 +115,7 @@ export class GatewayService
   }
 
   // UI ---> Web Socket Gateway ---> MQTT Broker
-  @SubscribeMessage('react/message/discovery/broadcast/req')
+  @SubscribeMessage('react/message/discovery/broadcast/request')
   private async handleDiscoveryBroadcast(
     client: Socket,
     payload: DiscoveryBroadcastRequestDto,
@@ -123,7 +123,7 @@ export class GatewayService
     await this.deviceService.discoverDevicesBroadcast(payload);
   }
 
-  @SubscribeMessage('react/message/discovery/unicast/req')
+  @SubscribeMessage('react/message/discovery/unicast/req/request')
   private async handleDiscoveryUnicast(
     client: Socket,
     payload: DiscoveryUnicastRequestDto,

@@ -31,6 +31,7 @@ import { HardwareStatusRequestDto } from './messages/publish/hardware-status.req
 import { GetAllDevicesResponseDto } from './dto/get-all-devices.response.dto';
 import { SensorResponseDto } from './dto/sensor-response.dto';
 import { ConfigService } from '@nestjs/config';
+import { QuerySensorDto } from './dto/query-sensor.dto';
 
 @Injectable()
 export class DeviceService {
@@ -108,20 +109,25 @@ export class DeviceService {
       // cache the request id for validation with response id
       await this.setCache(discoverRequest);
 
-      const { topic } = await this.topicService.storeTopic(
+      const topic = await this.topicService.storeTopic(
         'Mqtt_Broker',
-        `${broadcastTopic}/${TopicUseCase.DISCOVERY}`,
+        `${broadcastTopic.topic}/${TopicUseCase.DISCOVERY}`,
         TopicUseCase.BROADCAST,
       );
+      console.log(topic);
 
       // Then publish message
       // this.logger.log({ broadcastTopic });
-      await this.mqttService.publish(topic, JSON.stringify(discoverRequest), {
-        qos: 0,
-        retain: false,
-      });
+      await this.mqttService.publish(
+        topic.topic,
+        JSON.stringify(discoverRequest),
+        {
+          qos: 0,
+          retain: false,
+        },
+      );
 
-      await this.mqttService.subscribe(topic);
+      await this.mqttService.subscribe(topic.topic);
       this.logger.debug(`Discovery broadcast sent successfully`);
     }
   }
@@ -152,7 +158,7 @@ export class DeviceService {
     this.logger.debug('Broadcast discovery request sent successfully');
   }
 
-  async getUnassignedSensor(): Promise<Sensor[]> {
+  async getUnassignedSensor(): Promise<QuerySensorDto[]> {
     const sensors = await this.sensorRepo.find({
       where: {
         provisionState: ProvisionState.DISCOVERED,
@@ -163,7 +169,9 @@ export class DeviceService {
       this.logger.debug('No unassigend device was found');
       throw new NotFoundException('No unassigned devices found');
     }
-    return sensors;
+
+    const results = sensors.map((s) => plainToInstance(QuerySensorDto, s));
+    return results;
   }
 
   async getHardwareStatus(statusRequest: HardwareStatusRequestDto) {

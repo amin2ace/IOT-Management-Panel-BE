@@ -287,7 +287,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
    */
   async publish(
     topic: string,
-    payload: string | Record<string, any>,
+    payload: string,
     options: Partial<IClientPublishOptions>,
   ): Promise<PublishResult> {
     if (!this.isConnectedState) {

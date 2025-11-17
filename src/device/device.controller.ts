@@ -35,6 +35,8 @@ import { Roles } from '@/config/decorator/roles.decorator';
 import { Role } from '@/config/types/roles.types';
 import { GetAllDevicesResponseDto } from './dto/get-all-devices.response.dto';
 import { SensorResponseDto } from './dto/sensor-response.dto';
+import { Serialize } from '@/common';
+import { QuerySensorDto } from './dto/query-sensor.dto';
 
 @ApiTags('Devices')
 @Controller('devices')
@@ -88,11 +90,12 @@ export class DeviceController {
   }
 
   @Get('unassigned')
+  @Serialize(QuerySensorDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get unassigned devices' })
   @ApiCookieAuth()
-  async getUnassignedSensor(): Promise<Sensor[]> {
+  async getUnassignedSensor(): Promise<QuerySensorDto[]> {
     return await this.deviceService.getUnassignedSensor();
   }
 

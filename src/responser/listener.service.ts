@@ -49,9 +49,12 @@ export class ListenerService {
     // 2: Check Redis cache for pending request
     const cached = await this.redisCache.get(`pending:${requestId}`);
     if (cached === null) {
-      throw new BadRequestException('Invalid request id in payload', {
-        cause: 'sdfg',
-      });
+      throw new BadRequestException(
+        'Invalid request id or user id in payload',
+        {
+          cause: 'sdfg',
+        },
+      );
     }
 
     // 3: Check requested id validation
@@ -72,14 +75,17 @@ export class ListenerService {
   // MQTT Broker ---> Web Socket Gateway: Via WebSocket Gateway
   @OnEvent('mqtt/message/discovery')
   async handleDiscoveryEvent(topic: string, payload: any) {
-    if (!topic.endsWith('/discovery') && !payload?.responseId) return;
+    // TODO: seprate response and request topics by adding /req or /res at topic's end
+    if (!topic.endsWith('/discovery') || !payload?.responseId) return;
 
     const validatedPayload = await this.transformAndValidate(
       DiscoveryResponseDto,
       payload,
     );
 
-    await this.responserService.handleDiscoveryResponse(validatedPayload);
+    if (validatedPayload.responseId) {
+      await this.responserService.handleDiscoveryResponse(validatedPayload);
+    }
   }
 
   @OnEvent('mqtt/message/assign')
