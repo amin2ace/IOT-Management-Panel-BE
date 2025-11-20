@@ -15,6 +15,8 @@ import {
   DiscoveryBroadcastRequestDto,
   DiscoveryResponseDto,
   DiscoveryUnicastRequestDto,
+  RequestMessageCode,
+  SensorFunctionalityRequestDto,
 } from '@/device/messages';
 import {
   OnGatewayConnection,
@@ -24,6 +26,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { SensorFunctionAssignDto } from '@/device/dto/sensor-assign-type.dto';
+import { QuerySensorDto } from '@/device/dto/query-sensor.dto';
 
 /**
  * MqttGatewayService
@@ -114,6 +118,7 @@ export class GatewayService
     this.logger.log(`Total clients: ${this.connectedClients.size}`);
   }
 
+  // Handle events published by UI
   // UI ---> Web Socket Gateway ---> MQTT Broker
   @SubscribeMessage('react/message/discovery/broadcast/request')
   private async handleDiscoveryBroadcast(
@@ -126,9 +131,39 @@ export class GatewayService
   @SubscribeMessage('react/message/discovery/unicast/req/request')
   private async handleDiscoveryUnicast(
     client: Socket,
-    payload: DiscoveryUnicastRequestDto,
+    payload: {
+      userId: string;
+      requestId: string;
+      requestCode: RequestMessageCode;
+      deviceId: string;
+      timestamp: number;
+    },
   ) {
-    await this.deviceService.discoverDeviceUnicast(payload);
+    const result = await this.deviceService.getUnassignedSensor();
+    return await this.emitQueryUnassignedDeviceMessage(result);
+  }
+
+  @SubscribeMessage('react/message/device/query/unassinged/request')
+  private async handleUnassigendDevicesQuery(
+    client: Socket,
+    payload: {
+      userId: string;
+      requestId: string;
+      requestCode: RequestMessageCode;
+      deviceId: string;
+      timestamp: number;
+    },
+  ) {
+    const result = await this.deviceService.getUnassignedSensor();
+    return await this.emitQueryUnassignedDeviceMessage(result);
+  }
+
+  @SubscribeMessage('react/message/device/assign/request')
+  private async handleSensorProvision(
+    client: Socket,
+    payload: SensorFunctionalityRequestDto,
+  ) {
+    await this.deviceService.AssignDeviceFunction(payload);
   }
 
   /**
@@ -221,6 +256,22 @@ export class GatewayService
 
       // Emit WebSocket event for discovery
       this.server.emit('ws/message/discovery/broadcast/response', payload);
+
+      this.logger.log(`Discovery message passed to react`);
+    } catch (error) {
+      this.logger.error(`Error handling discovery message: ${error.message}`);
+    }
+  }
+
+  /**
+   * Emits the unassigned devices
+   *
+   * @param result Array of unassigned devices
+   */
+  public async emitQueryUnassignedDeviceMessage(result: QuerySensorDto[]) {
+    try {
+      // Emit WebSocket event for discovery
+      this.server.emit('ws/message/unassinged/query/response', result);
 
       this.logger.log(`Discovery message passed to react`);
     } catch (error) {

@@ -3,7 +3,6 @@ import { AppModule } from './app.module';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import cookieParser = require('cookie-parser');
 import helmet from 'helmet';
 
 async function bootstrap() {
@@ -21,27 +20,29 @@ async function bootstrap() {
 
   // Security middleware
   app.use(helmet());
+
+  const cookieParser = require('cookie-parser');
   // Pass cookie secret if available (for signed cookies)
   app.use(cookieParser(configService.get<string>('COOKIE_SECRET')));
 
   // CORS setup
   app.enableCors({
     origin:
-      configService.get<string>('FRONTEND_URL') || 'http://localhost:3001',
+      configService.get<string>('FRONTEND_URL') || 'http://localhost:30001',
     credentials: true, // Allow credentials (cookies)
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
   // Global prefix
-  const apiPrefix = configService.get<string>('API_PREFIX') || 'api';
+  const apiPrefix = configService.getOrThrow<string>('API_PREFIX') || 'api';
   app.setGlobalPrefix(apiPrefix);
 
   // Swagger docs
   initSwagger(app, apiPrefix);
 
   // Start server
-  const port = configService.get<number>('PORT') || 3000;
+  const port = configService.getOrThrow<number>('PORT');
   await app.listen(port);
   // console.log(
   //   `Application is running on: http://localhost:${port}/${apiPrefix}`,

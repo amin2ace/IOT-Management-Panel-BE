@@ -1,14 +1,23 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CookieOptions, Request, Response } from 'express';
 import { ICookieService } from './interface/cookie-service.interface';
 import { TokenType } from 'src/config/enum/token-type.enum';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class CookieService implements ICookieService {
+  private readonly logger = new Logger(CookieService.name, { timestamp: true });
+  private readonly sessionCookieName: string;
+  private readonly EXPIRE_DATE = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1 day from now
+  constructor(private readonly configService: ConfigService) {
+    configService.getOrThrow<string>('SESSION_COOKIE_NAME');
+  }
+
   async setTokensCookie(
     res: Response,
     tokenType: TokenType,
@@ -53,11 +62,44 @@ export class CookieService implements ICookieService {
         // secure: true,
         sameSite: 'strict',
         maxAge: 0,
+        path: '/',
       });
 
       return `Cookie Cleared`;
     } catch (error) {
       throw new ForbiddenException('Clear Cookie Failed');
     }
+  }
+
+  // ============================================================================
+  // PRIVATE HELPER METHODS
+  // ============================================================================
+
+  /**
+   * Set secure session cookie
+   */
+  async setSessionCookie(res: Response, sessionId: string): Promise<void> {
+    res.cookie(this.sessionCookieName, sessionId, {
+      httpOnly: true, // Prevent XSS (JS cannot access)
+      secure:
+        this.configService.getOrThrow<string>('NODE_ENV') === 'production', // HTTPS only in production
+      sameSite: 'strict', // CSRF protection
+      // maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      expires: this.EXPIRE_DATE,
+      path: '/', // Available for all routes
+    });
+    this.logger.debug(`Session cookie set for session id: ${sessionId}`);
+  }
+
+  /**
+   * Clear session cookie
+   */
+  async clearSessionCookie(res: Response): Promise<void> {
+    res.clearCookie(this.sessionCookieName, {
+      httpOnly: true,
+      sameSite: 'strict',
+      path: '/',
+    });
+    this.logger.debug('Session cookie cleared');
   }
 }

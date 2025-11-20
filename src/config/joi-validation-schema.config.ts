@@ -62,6 +62,7 @@ const configValidationSchema: joi.ObjectSchema = joi.object({
   // Session / Authentication
   AUTH_MODE: joi.string().valid('local', 'jwt').default('local'), // 'local' for offline (session), 'jwt' for online
   SESSION_TIMEOUT: joi.number(), // 24 hours in milliseconds
+  SESSION_COOKIE_NAME: joi.string().required(),
   SESSION_REFRESH_INTERVAL: joi.number(), // 5 minutes in milliseconds
   SESSION_SECRET: joi.string().min(16),
 });
