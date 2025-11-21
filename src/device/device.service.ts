@@ -50,7 +50,7 @@ export class DeviceService {
   async getSensors(query: QueryDeviceDto): Promise<GetAllDevicesResponseDto> {
     const { deviceId, provisionState, functionality } = query;
 
-    // Build dynamic filter object Mongo db doesn't support query builder
+    // Build dynamic filter object: Mongo db doesn't support query builder
     const filter: any = {};
 
     if (deviceId) filter.deviceId = deviceId;
@@ -66,16 +66,16 @@ export class DeviceService {
     };
   }
 
-  async getSensor(sensorId: string): Promise<SensorResponseDto> {
+  async getSensor(deviceId: string): Promise<SensorResponseDto> {
     const device = await this.sensorRepo.findOne({
       where: {
-        sensorId,
+        deviceId,
         isDeleted: false,
       },
     });
 
     if (!device) {
-      throw new NotFoundException(`Device with ID ${sensorId} not found`);
+      throw new NotFoundException(`Device with ID ${deviceId} not found`);
     }
 
     return device;
@@ -183,7 +183,7 @@ export class DeviceService {
 
     const device = await this.sensorRepo.findOne({
       where: {
-        sensorId: deviceId,
+        deviceId: deviceId,
         isDeleted: false,
       },
     });
@@ -251,7 +251,7 @@ export class DeviceService {
   ) {
     const storedDevice = await this.sensorRepo.findOne({
       where: {
-        sensorId: deviceId,
+        deviceId: deviceId,
         isDeleted: false,
       },
     });
@@ -275,39 +275,39 @@ export class DeviceService {
     }
   }
 
-  async deleteSensor(sensorId: string) {
+  async deleteSensor(deviceId: string) {
     const device = await this.sensorRepo.findOne({
       where: {
-        sensorId,
+        deviceId: deviceId,
         isDeleted: false,
       },
     });
 
     if (!device) {
-      throw new NotFoundException(`Device with ID ${sensorId} not found`);
+      throw new NotFoundException(`Device with ID ${deviceId} not found`);
     }
 
-    await this.sensorRepo.update({ sensorId }, { isDeleted: true });
-    this.logger.log(`Sensor ${device.sensorId} deleted successfully`);
+    await this.sensorRepo.update({ deviceId }, { isDeleted: true });
+    this.logger.log(`Sensor ${device.deviceId} deleted successfully`);
   }
 
   async reconfigureDevice(configData: SensorConfigRequestDto) {
-    const { deviceId: sensorId, requestCode } = configData;
+    const { deviceId, requestCode } = configData;
     if (requestCode != RequestMessageCode.SENSOR_CONFIGURATION) return;
 
     const storedDevice = await this.sensorRepo.findOne({
       where: {
-        sensorId,
+        deviceId: deviceId,
         isDeleted: false,
       },
     });
 
     if (!storedDevice) {
-      throw new NotFoundException(`Device with id ${sensorId} not found`);
+      throw new NotFoundException(`Device with id ${deviceId} not found`);
     }
 
     const { topic } = await this.topicService.getDeviceTopicByUseCase(
-      sensorId,
+      deviceId,
       TopicUseCase.SENSOR_CONFIGURATION,
     );
 
@@ -325,18 +325,18 @@ export class DeviceService {
     return { message: 'Control command', id, data };
   }
 
-  async getDeviceStatus(sensorId: string) {
+  async getDeviceStatus(deviceId: string) {
     const sensor = await this.sensorRepo.findOne({
       where: {
-        sensorId,
+        deviceId,
       },
     });
     if (!sensor) {
-      throw new NotFoundException(`Device with ID ${sensorId} not found`);
+      throw new NotFoundException(`Device with ID ${deviceId} not found`);
     }
 
     return {
-      id: sensor.sensorId,
+      id: sensor.deviceId,
       state: sensor.provisionState,
       error: sensor.hasError,
       available: sensor.isDeleted ? false : true,
@@ -353,7 +353,7 @@ export class DeviceService {
 
     const storedDevice = await this.sensorRepo.findOne({
       where: {
-        sensorId: deviceId,
+        deviceId: deviceId,
         provisionState: ProvisionState.ASSIGNED,
         isDeleted: false,
       },

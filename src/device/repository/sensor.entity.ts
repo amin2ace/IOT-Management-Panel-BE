@@ -19,7 +19,7 @@ export class Sensor {
 
   @Column()
   @Index({ unique: true })
-  sensorId: string; // ESP unique ID (MAC or custom ID)
+  deviceId: string; // ESP unique ID (MAC or custom ID)
 
   @Column({ type: 'enum', enum: DeviceCapabilities, array: true })
   capabilities: DeviceCapabilities[]; // e.g. ["temperature", "humidity"]
@@ -36,7 +36,7 @@ export class Sensor {
   assignedFunctionality: DeviceCapabilities[]; // selected from capabilities
 
   @Column({ nullable: true })
-  deviceBaseTopic: string; // like "<mqttPrefix>/<sensorId>/temperature"
+  deviceBaseTopic: string; // like "<mqttPrefix>/<deviceId>/temperature"
 
   @Column()
   location: object; // like { room: 'Greenhouse', floor: 1, unit: 'tomato-section' }

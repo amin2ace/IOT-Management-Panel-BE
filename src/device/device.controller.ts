@@ -62,9 +62,9 @@ export class DeviceController {
   @ApiCookieAuth()
   @ApiResponse({ status: 200, description: "List device's information" })
   async getSingleSensor(
-    @Param('id') sensorId: string,
+    @Param('id') deviceId: string,
   ): Promise<SensorResponseDto> {
-    return await this.deviceService.getSensor(sensorId);
+    return await this.deviceService.getSensor(deviceId);
   }
 
   @Post('discover-broadcast')

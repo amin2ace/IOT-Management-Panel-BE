@@ -164,7 +164,7 @@ export class SensorConfigRequestDto {
       "userId": "user-001",
       "requestId": "req-sc-86",
       "requestCode": 102,
-      "sensorId": "sensor-67890",
+      "deviceId": "sensor-67890",
       "timestamp": 1762379573804,
       "baseTopic": "greenHouse_jolfa/tomato-section/sensor/temperature",
       "network": {

@@ -25,7 +25,7 @@ export class SensorDataDto {
   })
   @IsString()
   @IsNotEmpty()
-  sensorId!: string;
+  deviceId!: string;
 
   @ApiProperty({
     description: 'Type of sensor measurement',

@@ -25,7 +25,7 @@ export class SensorResponseDto {
   })
   @IsString()
   @IsNotEmpty()
-  sensorId: string;
+  deviceId: string;
 
   @ApiProperty({
     description: 'Device capabilities/supported functionalities',

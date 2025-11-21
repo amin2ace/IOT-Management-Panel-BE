@@ -143,10 +143,10 @@
 //   @SubscribeMessage('subscribe-sensor')
 //   async handleSubscribeSensor(
 //     client: Socket,
-//     payload: { sensorId: string; topics: string[] },
+//     payload: { deviceId: string; topics: string[] },
 //   ) {
 //     try {
-//       const { sensorId, topics } = payload;
+//       const { deviceId, topics } = payload;
 
 //       // Validate input
 //       if (!topics || topics.length === 0) {
@@ -154,7 +154,7 @@
 //       }
 
 //       // Forward subscription to MQTT broker
-//       await this.mqttGatewayService.subscribeToTopics(topics, sensorId);
+//       await this.mqttGatewayService.subscribeToTopics(topics, deviceId);
 
 //       // Track client subscription
 //       const subscriptions = this.clientSubscriptions.get(client.id);
@@ -164,13 +164,13 @@
 
 //       // Acknowledge subscription
 //       client.emit('subscription-confirmed', {
-//         sensorId,
+//         deviceId,
 //         topics,
 //         timestamp: new Date(),
 //       });
 
 //       this.logger.log(
-//         `Client ${client.id} subscribed to sensor ${sensorId}, topics: ${topics.join(', ')}`,
+//         `Client ${client.id} subscribed to sensor ${deviceId}, topics: ${topics.join(', ')}`,
 //       );
 //     } catch (error) {
 //       this.logger.error(`Subscription error: ${error.message}`);
@@ -542,7 +542,7 @@
 //   public broadcastAlert(alert: {
 //     type: 'warning' | 'error' | 'info';
 //     message: string;
-//     sensorId?: string;
+//     deviceId?: string;
 //     severity: 'low' | 'medium' | 'high';
 //   }) {
 //     this.server.emit('system-alert', {

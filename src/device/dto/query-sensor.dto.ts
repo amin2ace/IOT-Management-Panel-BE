@@ -44,7 +44,7 @@ export class QuerySensorDto {
 
   @Expose()
   @IsString()
-  sensorId: string;
+  deviceId: string;
 
   @Expose()
   @IsArray()
@@ -105,6 +105,10 @@ export class QuerySensorDto {
   @Expose()
   @IsNumber()
   lowSetPoint: number;
+
+  @Expose()
+  @IsNumber()
+  interval: number;
 
   @Expose()
   @IsBoolean()

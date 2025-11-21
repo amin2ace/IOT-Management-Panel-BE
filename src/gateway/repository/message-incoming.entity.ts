@@ -97,7 +97,7 @@ export class MessageIncoming {
 
 // Interface for parsed payload structure
 export interface ParsedMessagePayload {
-  sensorId: string;
+  deviceId: string;
   sensorType: string;
   value: number | string;
   unit: string;
