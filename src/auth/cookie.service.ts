@@ -15,7 +15,9 @@ export class CookieService implements ICookieService {
   private readonly sessionCookieName: string;
   private readonly EXPIRE_DATE = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1 day from now
   constructor(private readonly configService: ConfigService) {
-    configService.getOrThrow<string>('SESSION_COOKIE_NAME');
+    this.sessionCookieName = configService.getOrThrow<string>(
+      'SESSION_COOKIE_NAME',
+    );
   }
 
   async setTokensCookie(

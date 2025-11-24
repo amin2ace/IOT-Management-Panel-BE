@@ -68,7 +68,6 @@ export class ListenerService {
       throw new BadRequestException('Invalid id in response payload');
     }
     this.logger.debug('Response validated with cache');
-    console.log(dtoInstance);
     return dtoInstance;
   }
 

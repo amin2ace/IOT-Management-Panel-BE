@@ -110,7 +110,7 @@ export class SessionService implements ISessionService {
   async getSession(sessionId: string): Promise<ISessionData | null> {
     try {
       const data = await this.redis.get(`session:${sessionId}`);
-      console.log('Session data from Redis:', data);
+      // console.log('Session data from Redis:', data);
 
       if (!data) {
         this.logger.warn(`Session not found: ${sessionId}`);
@@ -119,7 +119,7 @@ export class SessionService implements ISessionService {
 
       // Handle both object and string formats
       const sessionData = typeof data === 'string' ? JSON.parse(data) : data;
-      console.log('Parsed session data:', sessionData);
+      // console.log('Parsed session data:', sessionData);
       return sessionData as ISessionData;
     } catch (error) {
       this.logger.error(`Failed to get session: ${error.message}`);

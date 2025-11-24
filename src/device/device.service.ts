@@ -114,7 +114,7 @@ export class DeviceService {
         `${broadcastTopic.topic}/${TopicUseCase.DISCOVERY}`,
         TopicUseCase.BROADCAST,
       );
-      console.log(topic);
+      // console.log(topic);
 
       // Then publish message
       // this.logger.log({ broadcastTopic });
