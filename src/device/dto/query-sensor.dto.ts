@@ -1,47 +1,23 @@
-import { Expose, Type } from 'class-transformer';
+// src/devices/dto/sensor-response.dto.ts
+import { Expose, Transform, Type } from 'class-transformer';
 import {
-  IsBoolean,
-  IsDate,
-  IsEnum,
-  IsNumber,
-  IsObject,
-  IsOptional,
   IsString,
   IsArray,
+  IsEnum,
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsDate,
+  IsObject,
+  ValidateNested,
 } from 'class-validator';
 import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
 import { Protocol } from 'src/config/enum/protocol.enum';
+import { DeviceLocationDto } from './device-location.dto';
 
-/**
- * Nested DTO for device location
- */
-export class LocationResponseDto {
-  @Expose()
-  @IsOptional()
-  @IsString()
-  room?: string;
-
-  @Expose()
-  @IsOptional()
-  @IsNumber()
-  floor?: number;
-
-  @Expose()
-  @IsOptional()
-  @IsString()
-  unit?: string;
-}
-
-/**
- * Main Sensor Serialization DTO
- */
 export class QuerySensorDto {
-  @Expose()
-  @IsString()
-  id: string; // mapped from _id.toString()
-
   @Expose()
   @IsString()
   deviceId: string;
@@ -67,9 +43,10 @@ export class QuerySensorDto {
   deviceBaseTopic?: string;
 
   @Expose()
+  @Type(() => DeviceLocationDto)
+  @ValidateNested()
   @IsObject()
-  @Type(() => LocationResponseDto)
-  location: LocationResponseDto;
+  location: DeviceLocationDto;
 
   @Expose()
   @IsEnum(ProvisionState)
@@ -136,6 +113,11 @@ export class QuerySensorDto {
   @Expose()
   @IsString()
   broker: string;
+
+  @Expose()
+  @IsBoolean()
+  @Transform(({ value }) => value ?? false)
+  isDeleted: boolean;
 
   @Expose()
   @IsOptional()

@@ -64,6 +64,9 @@ export class Sensor {
   isActuator: boolean; // distinguish sensor vs controller
 
   @Column()
+  interval: number;
+
+  @Column()
   highSetPoint: number;
 
   @Column()

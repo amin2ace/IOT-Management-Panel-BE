@@ -128,19 +128,13 @@ export class GatewayService
     await this.deviceService.discoverDevicesBroadcast(payload);
   }
 
-  @SubscribeMessage('react/message/discovery/unicast/req/request')
+  @SubscribeMessage('react/message/discovery/unicast/request')
   private async handleDiscoveryUnicast(
     client: Socket,
-    payload: {
-      userId: string;
-      requestId: string;
-      requestCode: RequestMessageCode;
-      deviceId: string;
-      timestamp: number;
-    },
+    payload: DiscoveryUnicastRequestDto,
   ) {
-    const result = await this.deviceService.getUnassignedSensor();
-    return await this.emitQueryUnassignedDeviceMessage(result);
+    this.logger.log(payload);
+    await this.deviceService.discoverDeviceUnicast(payload);
   }
 
   @SubscribeMessage('react/message/device/query/unassinged/request')
@@ -255,7 +249,7 @@ export class GatewayService
       // this.storeRecentData(incomeMessage);
 
       // Emit WebSocket event for discovery
-      this.server.emit('ws/message/discovery/broadcast/response', payload);
+      this.server.emit('ws/message/discovery/unicast/response', payload);
 
       this.logger.log(`Discovery message passed to react`);
     } catch (error) {

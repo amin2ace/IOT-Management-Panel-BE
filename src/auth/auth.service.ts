@@ -197,6 +197,7 @@ export class AuthService {
   async logout(req: Request, res: Response): Promise<{ message: string }> {
     const sessionId = (req as any).sessionId;
     const userId = (req as any).user?.userId;
+    console.log(sessionId, userId);
 
     if (!sessionId) {
       throw new UnauthorizedException('Session not found');
@@ -206,7 +207,7 @@ export class AuthService {
     await this.sessionService.destroySession(sessionId);
 
     // Clear cookie
-    this.cookieService.clearSessionCookie(res);
+    await this.cookieService.clearSessionCookie(res);
 
     this.logger.log(`User logged out: ${userId}`);
 

@@ -31,7 +31,7 @@ async function bootstrap() {
       configService.get<string>('FRONTEND_URL') || 'http://localhost:30001',
     credentials: true, // Allow credentials (cookies)
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
   });
 
   // Global prefix

@@ -65,7 +65,7 @@ export class ResponserService {
     }
 
     await this.redisCache.del(`pending:${requestId}`);
-    this.logger.debug('Cache deleted successfully');
+    this.logger.debug('Cached request id deleted successfully');
   }
 
   public async handleDiscoveryResponse(payload: DiscoveryResponseDto) {
@@ -113,8 +113,10 @@ export class ResponserService {
     // ---> Web Socket gateway
     this.gatewayService.emitDiscoveryBroadcastMessage(payload);
 
-    // Delete cached request appropriate to this response
-    await this.deleteCache(payload);
+    // Delete cached request appropriate to this response if its unicast
+    if (!payload.isBroadcast) {
+      await this.deleteCache(payload);
+    }
   }
 
   async handleAssignResponse(payload: SensorFunctionalityResponseDto) {

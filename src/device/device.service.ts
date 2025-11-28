@@ -170,8 +170,7 @@ export class DeviceService {
       throw new NotFoundException('No unassigned devices found');
     }
 
-    const results = sensors.map((s) => plainToInstance(QuerySensorDto, s));
-    return results;
+    return sensors;
   }
 
   async getHardwareStatus(statusRequest: HardwareStatusRequestDto) {
@@ -230,6 +229,14 @@ export class DeviceService {
     await this.validateSensorTypes(deviceId, functionality);
 
     await this.setCache(provisionData);
+
+    await this.sensorRepo.update(
+      { deviceId },
+      {
+        assignedFunctionality: functionality,
+        provisionState: ProvisionState.ASSIGNED,
+      },
+    );
 
     this.mqttService.publish(topic, JSON.stringify(provisionData), {
       qos: 1,
