@@ -13,11 +13,10 @@ import { SensorDataDto, DataQuality } from './dto/sensor-data.dto';
 import { DeviceService } from '@/device/device.service';
 import {
   DiscoveryBroadcastRequestDto,
-  DiscoveryResponseDto,
   DiscoveryUnicastRequestDto,
   RequestMessageCode,
   SensorFunctionalityRequestDto,
-} from '@/device/messages';
+} from '@/device/dto/messages';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -28,6 +27,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { SensorFunctionAssignDto } from '@/device/dto/sensor-assign-type.dto';
 import { QuerySensorDto } from '@/device/dto/query-sensor.dto';
+import { DiscoveryResponseDto } from '@/responser/dto';
 
 /**
  * MqttGatewayService

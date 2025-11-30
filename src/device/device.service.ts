@@ -12,22 +12,20 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Sensor } from './repository/sensor.entity';
 import { Repository } from 'typeorm';
 import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
-import { plainToInstance } from 'class-transformer';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import {
   DiscoveryBroadcastRequestDto,
-  DiscoveryResponseDto,
   DiscoveryUnicastRequestDto,
   RequestMessageCode,
   SensorConfigRequestDto,
   SensorFunctionalityRequestDto,
-} from './messages';
+} from './dto/messages';
 import { TopicService } from 'src/topic/topic.service';
 import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
 import { RedisService } from 'src/redis/redis.service';
 import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
-import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
-import { HardwareStatusRequestDto } from './messages/publish/hardware-status.request';
+import { TelemetryRequestDto } from './dto/messages/telemetry.request.dto';
+import { HardwareStatusRequestDto } from './dto/messages/hardware-status.request';
 import { GetAllDevicesResponseDto } from './dto/get-all-devices.response.dto';
 import { SensorResponseDto } from './dto/sensor-response.dto';
 import { ConfigService } from '@nestjs/config';

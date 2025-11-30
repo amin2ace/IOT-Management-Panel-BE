@@ -26,9 +26,9 @@ import {
   DiscoveryUnicastRequestDto,
   SensorConfigRequestDto,
   SensorFunctionalityRequestDto,
-} from './messages';
-import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
-import { HardwareStatusRequestDto } from './messages/publish/hardware-status.request';
+} from './dto/messages';
+import { TelemetryRequestDto } from './dto/messages/telemetry.request.dto';
+import { HardwareStatusRequestDto } from './dto/messages/hardware-status.request';
 import { SessionAuthGuard } from '@/common/guard/session-auth.guard';
 import { RolesGuard } from '@/common/guard/roles.guard';
 import { Roles } from '@/config/decorator/roles.decorator';
