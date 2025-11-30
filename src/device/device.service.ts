@@ -12,25 +12,24 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Sensor } from './repository/sensor.entity';
 import { Repository } from 'typeorm';
 import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
-import { plainToInstance } from 'class-transformer';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import {
   DiscoveryBroadcastRequestDto,
-  DiscoveryResponseDto,
   DiscoveryUnicastRequestDto,
   RequestMessageCode,
   SensorConfigRequestDto,
   SensorFunctionalityRequestDto,
-} from './messages';
+} from './dto/messages';
 import { TopicService } from 'src/topic/topic.service';
 import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
 import { RedisService } from 'src/redis/redis.service';
 import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
-import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
-import { HardwareStatusRequestDto } from './messages/publish/hardware-status.request';
+import { TelemetryRequestDto } from './dto/messages/telemetry.request.dto';
+import { HardwareStatusRequestDto } from './dto/messages/hardware-status.request';
 import { GetAllDevicesResponseDto } from './dto/get-all-devices.response.dto';
 import { SensorResponseDto } from './dto/sensor-response.dto';
 import { ConfigService } from '@nestjs/config';
+import { QuerySensorDto } from './dto/query-sensor.dto';
 
 @Injectable()
 export class DeviceService {
@@ -49,7 +48,7 @@ export class DeviceService {
   async getSensors(query: QueryDeviceDto): Promise<GetAllDevicesResponseDto> {
     const { deviceId, provisionState, functionality } = query;
 
-    // Build dynamic filter object Mongo db doesn't support query builder
+    // Build dynamic filter object: Mongo db doesn't support query builder
     const filter: any = {};
 
     if (deviceId) filter.deviceId = deviceId;
@@ -65,16 +64,16 @@ export class DeviceService {
     };
   }
 
-  async getSensor(sensorId: string): Promise<SensorResponseDto> {
+  async getSensor(deviceId: string): Promise<SensorResponseDto> {
     const device = await this.sensorRepo.findOne({
       where: {
-        sensorId,
+        deviceId,
         isDeleted: false,
       },
     });
 
     if (!device) {
-      throw new NotFoundException(`Device with ID ${sensorId} not found`);
+      throw new NotFoundException(`Device with ID ${deviceId} not found`);
     }
 
     return device;
@@ -108,20 +107,25 @@ export class DeviceService {
       // cache the request id for validation with response id
       await this.setCache(discoverRequest);
 
-      const { topic } = await this.topicService.storeTopic(
+      const topic = await this.topicService.storeTopic(
         'Mqtt_Broker',
-        `${broadcastTopic}/${TopicUseCase.DISCOVERY}`,
+        `${broadcastTopic.topic}/${TopicUseCase.DISCOVERY}`,
         TopicUseCase.BROADCAST,
       );
+      // console.log(topic);
 
       // Then publish message
       // this.logger.log({ broadcastTopic });
-      await this.mqttService.publish(topic, JSON.stringify(discoverRequest), {
-        qos: 0,
-        retain: false,
-      });
+      await this.mqttService.publish(
+        topic.topic,
+        JSON.stringify(discoverRequest),
+        {
+          qos: 0,
+          retain: false,
+        },
+      );
 
-      await this.mqttService.subscribe(topic);
+      await this.mqttService.subscribe(topic.topic);
       this.logger.debug(`Discovery broadcast sent successfully`);
     }
   }
@@ -152,7 +156,7 @@ export class DeviceService {
     this.logger.debug('Broadcast discovery request sent successfully');
   }
 
-  async getUnassignedSensor(): Promise<Sensor[]> {
+  async getUnassignedSensor(): Promise<QuerySensorDto[]> {
     const sensors = await this.sensorRepo.find({
       where: {
         provisionState: ProvisionState.DISCOVERED,
@@ -163,6 +167,7 @@ export class DeviceService {
       this.logger.debug('No unassigend device was found');
       throw new NotFoundException('No unassigned devices found');
     }
+
     return sensors;
   }
 
@@ -175,7 +180,7 @@ export class DeviceService {
 
     const device = await this.sensorRepo.findOne({
       where: {
-        sensorId: deviceId,
+        deviceId: deviceId,
         isDeleted: false,
       },
     });
@@ -223,6 +228,14 @@ export class DeviceService {
 
     await this.setCache(provisionData);
 
+    await this.sensorRepo.update(
+      { deviceId },
+      {
+        assignedFunctionality: functionality,
+        provisionState: ProvisionState.ASSIGNED,
+      },
+    );
+
     this.mqttService.publish(topic, JSON.stringify(provisionData), {
       qos: 1,
       retain: false,
@@ -243,7 +256,7 @@ export class DeviceService {
   ) {
     const storedDevice = await this.sensorRepo.findOne({
       where: {
-        sensorId: deviceId,
+        deviceId: deviceId,
         isDeleted: false,
       },
     });
@@ -267,39 +280,39 @@ export class DeviceService {
     }
   }
 
-  async deleteSensor(sensorId: string) {
+  async deleteSensor(deviceId: string) {
     const device = await this.sensorRepo.findOne({
       where: {
-        sensorId,
+        deviceId: deviceId,
         isDeleted: false,
       },
     });
 
     if (!device) {
-      throw new NotFoundException(`Device with ID ${sensorId} not found`);
+      throw new NotFoundException(`Device with ID ${deviceId} not found`);
     }
 
-    await this.sensorRepo.update({ sensorId }, { isDeleted: true });
-    this.logger.log(`Sensor ${device.sensorId} deleted successfully`);
+    await this.sensorRepo.update({ deviceId }, { isDeleted: true });
+    this.logger.log(`Sensor ${device.deviceId} deleted successfully`);
   }
 
   async reconfigureDevice(configData: SensorConfigRequestDto) {
-    const { deviceId: sensorId, requestCode } = configData;
+    const { deviceId, requestCode } = configData;
     if (requestCode != RequestMessageCode.SENSOR_CONFIGURATION) return;
 
     const storedDevice = await this.sensorRepo.findOne({
       where: {
-        sensorId,
+        deviceId: deviceId,
         isDeleted: false,
       },
     });
 
     if (!storedDevice) {
-      throw new NotFoundException(`Device with id ${sensorId} not found`);
+      throw new NotFoundException(`Device with id ${deviceId} not found`);
     }
 
     const { topic } = await this.topicService.getDeviceTopicByUseCase(
-      sensorId,
+      deviceId,
       TopicUseCase.SENSOR_CONFIGURATION,
     );
 
@@ -317,18 +330,18 @@ export class DeviceService {
     return { message: 'Control command', id, data };
   }
 
-  async getDeviceStatus(sensorId: string) {
+  async getDeviceStatus(deviceId: string) {
     const sensor = await this.sensorRepo.findOne({
       where: {
-        sensorId,
+        deviceId,
       },
     });
     if (!sensor) {
-      throw new NotFoundException(`Device with ID ${sensorId} not found`);
+      throw new NotFoundException(`Device with ID ${deviceId} not found`);
     }
 
     return {
-      id: sensor.sensorId,
+      id: sensor.deviceId,
       state: sensor.provisionState,
       error: sensor.hasError,
       available: sensor.isDeleted ? false : true,
@@ -345,7 +358,7 @@ export class DeviceService {
 
     const storedDevice = await this.sensorRepo.findOne({
       where: {
-        sensorId: deviceId,
+        deviceId: deviceId,
         provisionState: ProvisionState.ASSIGNED,
         isDeleted: false,
       },

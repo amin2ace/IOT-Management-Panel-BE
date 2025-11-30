@@ -13,9 +13,10 @@ import { SensorDataDto, DataQuality } from './dto/sensor-data.dto';
 import { DeviceService } from '@/device/device.service';
 import {
   DiscoveryBroadcastRequestDto,
-  DiscoveryResponseDto,
   DiscoveryUnicastRequestDto,
-} from '@/device/messages';
+  RequestMessageCode,
+  SensorFunctionalityRequestDto,
+} from '@/device/dto/messages';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -24,6 +25,9 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { SensorFunctionAssignDto } from '@/device/dto/sensor-assign-type.dto';
+import { QuerySensorDto } from '@/device/dto/query-sensor.dto';
+import { DiscoveryResponseDto } from '@/responser/dto';
 
 /**
  * MqttGatewayService
@@ -114,8 +118,9 @@ export class GatewayService
     this.logger.log(`Total clients: ${this.connectedClients.size}`);
   }
 
+  // Handle events published by UI
   // UI ---> Web Socket Gateway ---> MQTT Broker
-  @SubscribeMessage('react/message/discovery/broadcast/req')
+  @SubscribeMessage('react/message/discovery/broadcast/request')
   private async handleDiscoveryBroadcast(
     client: Socket,
     payload: DiscoveryBroadcastRequestDto,
@@ -123,12 +128,36 @@ export class GatewayService
     await this.deviceService.discoverDevicesBroadcast(payload);
   }
 
-  @SubscribeMessage('react/message/discovery/unicast/req')
+  @SubscribeMessage('react/message/discovery/unicast/request')
   private async handleDiscoveryUnicast(
     client: Socket,
     payload: DiscoveryUnicastRequestDto,
   ) {
+    this.logger.log(payload);
     await this.deviceService.discoverDeviceUnicast(payload);
+  }
+
+  @SubscribeMessage('react/message/device/query/unassinged/request')
+  private async handleUnassigendDevicesQuery(
+    client: Socket,
+    payload: {
+      userId: string;
+      requestId: string;
+      requestCode: RequestMessageCode;
+      deviceId: string;
+      timestamp: number;
+    },
+  ) {
+    const result = await this.deviceService.getUnassignedSensor();
+    return await this.emitQueryUnassignedDeviceMessage(result);
+  }
+
+  @SubscribeMessage('react/message/device/function/assign/request')
+  private async handleSensorProvision(
+    client: Socket,
+    payload: SensorFunctionalityRequestDto,
+  ) {
+    await this.deviceService.AssignDeviceFunction(payload);
   }
 
   /**
@@ -220,7 +249,23 @@ export class GatewayService
       // this.storeRecentData(incomeMessage);
 
       // Emit WebSocket event for discovery
-      this.server.emit('ws/message/discovery/broadcast/response', payload);
+      this.server.emit('ws/message/discovery/unicast/response', payload);
+
+      this.logger.log(`Discovery message passed to react`);
+    } catch (error) {
+      this.logger.error(`Error handling discovery message: ${error.message}`);
+    }
+  }
+
+  /**
+   * Emits the unassigned devices
+   *
+   * @param result Array of unassigned devices
+   */
+  public async emitQueryUnassignedDeviceMessage(result: QuerySensorDto[]) {
+    try {
+      // Emit WebSocket event for discovery
+      this.server.emit('ws/message/unassinged/query/response', result);
 
       this.logger.log(`Discovery message passed to react`);
     } catch (error) {
@@ -475,13 +520,13 @@ export class GatewayService
     payload: any,
   ): Promise<SensorDataDto> {
     const topicParts = topic.split('/');
-    const sensorId =
-      topicParts.length > 2 ? topicParts[2] : payload.sensorId || 'unknown';
+    const deviceId =
+      topicParts.length > 2 ? topicParts[2] : payload.deviceId || 'unknown';
     const sensorType = topicParts[1] || payload.sensorType || 'unknown';
 
     // Enhanced parsing with fallbacks
     return {
-      sensorId,
+      deviceId,
       sensorType,
       value: payload.value ?? payload.data ?? payload.measurement ?? 'unknown',
       unit: payload.unit ?? this.inferUnit(sensorType),
@@ -527,7 +572,7 @@ export class GatewayService
       'value',
       'unit',
       'quality',
-      'sensorId',
+      'deviceId',
       'sensorType',
       'location',
       'battery',
@@ -660,7 +705,7 @@ export class GatewayService
     processingTime: number,
   ) {
     const parsedPayload: ParsedMessagePayload = {
-      sensorId: incomeMessage.parsedData.sensorId,
+      deviceId: incomeMessage.parsedData.deviceId,
       sensorType: incomeMessage.parsedData.sensorType,
       value: incomeMessage.parsedData.value,
       unit: incomeMessage.parsedData.unit,
@@ -673,7 +718,7 @@ export class GatewayService
     };
 
     const messageEntity = new MessageIncoming({
-      deviceId: incomeMessage.parsedData.sensorId,
+      deviceId: incomeMessage.parsedData.deviceId,
       topic: incomeMessage.topic,
       payload: incomeMessage.rawData,
       parsedPayload,

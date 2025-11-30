@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
   Res,
+  Req,
 } from '@nestjs/common';
 import {
   ApiCookieAuth,
@@ -27,7 +28,7 @@ import { Roles } from '@/config/decorator/roles.decorator';
 import { Role } from '@/config/types/roles.types';
 import { SessionAuthGuard } from '@/common/guard/session-auth.guard';
 import { Serialize } from '@/common/decorator/serialize.decorator';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { RolesResponseDto } from './dto/roles-response.dto';
 import { plainToInstance } from 'class-transformer';
 
@@ -79,6 +80,43 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found' })
   async findById(@Param('id') id: string) {
     return await this.usersService.findUserById(id);
+  }
+
+  @Get('profile')
+  @Serialize(UserResponseDto)
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.ENGINEER, Role.TEST, Role.VIEWER)
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiCookieAuth()
+  @ApiResponse({
+    status: 200,
+    description: 'User profile',
+    type: UserResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getUserProfile(@Req() req: Request) {
+    const userId = (req as any).user.userId;
+    return await this.usersService.findUserById(userId);
+  }
+
+  @Patch('profile')
+  @Serialize(UserResponseDto)
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.ENGINEER, Role.TEST, Role.VIEWER)
+  @ApiOperation({ summary: 'Update current user profile' })
+  @ApiCookieAuth()
+  @ApiResponse({
+    status: 200,
+    description: 'User profile updated',
+    type: UserResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async updateUserProfile(
+    @Body() userData: UpdateUserDto,
+    @Req() req: Request,
+  ) {
+    const userId = (req as any).user.userId;
+    return await this.usersService.updateUser(userId, userData);
   }
 
   @Patch(':id')

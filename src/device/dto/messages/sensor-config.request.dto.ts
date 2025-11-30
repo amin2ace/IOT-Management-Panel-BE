@@ -10,12 +10,12 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { DeviceLocationDto } from '../../dto/device-location.dto';
+import { DeviceLocationDto } from '../device-location.dto';
 import { Protocol } from 'src/config/enum/protocol.enum';
 import { Type } from 'class-transformer';
-import { NetworkConfigDto } from '../../dto/network-config.dto';
-import { LoggingConfigDto } from '../../dto/logging-config.dto';
-import { OtaConfigDto } from '../../dto/ota-config.dto';
+import { NetworkConfigDto } from '../network-config.dto';
+import { LoggingConfigDto } from '../logging-config.dto';
+import { OtaConfigDto } from '../ota-config.dto';
 import { RequestMessageCode } from '../../../common/enum/request-message-code.enum';
 
 export class SensorConfigRequestDto {
@@ -164,7 +164,7 @@ export class SensorConfigRequestDto {
       "userId": "user-001",
       "requestId": "req-sc-86",
       "requestCode": 102,
-      "sensorId": "sensor-67890",
+      "deviceId": "sensor-67890",
       "timestamp": 1762379573804,
       "baseTopic": "greenHouse_jolfa/tomato-section/sensor/temperature",
       "network": {

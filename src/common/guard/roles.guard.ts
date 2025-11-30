@@ -60,7 +60,7 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const userRoles = (request as any).roles as Role[] | undefined;
     const userId = (request as any).user?.userId;
-    console.log('RolesGuard - request:', userRoles, userId);
+    // console.log('RolesGuard - request:', userRoles, userId);
 
     // If no user in request, deny access
     // (This should normally be caught by authentication guard first)

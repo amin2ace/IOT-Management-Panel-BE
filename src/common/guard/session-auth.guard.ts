@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 
 /**
@@ -30,9 +31,16 @@ export class SessionAuthGuard implements CanActivate {
   private readonly logger = new Logger(SessionAuthGuard.name, {
     timestamp: true,
   });
-  private readonly SESSION_COOKIE_NAME = 'sessionId';
+  private readonly SESSION_COOKIE_NAME: string;
 
-  constructor(private readonly sessionService: SessionService) {}
+  constructor(
+    private readonly sessionService: SessionService,
+    private readonly configService: ConfigService,
+  ) {
+    this.SESSION_COOKIE_NAME = configService.getOrThrow<string>(
+      'SESSION_COOKIE_NAME',
+    );
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();

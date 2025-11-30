@@ -6,6 +6,7 @@ import {
   IsObject,
   IsNotEmpty,
   IsNumber,
+  IsBoolean,
 } from 'class-validator';
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
 import { Protocol } from 'src/config/enum/protocol.enum';
@@ -68,6 +69,11 @@ export class DiscoveryResponseDto {
   @IsString()
   @IsNotEmpty()
   deviceId: string;
+
+  @ApiProperty()
+  @IsBoolean()
+  @IsNotEmpty()
+  isBroadcast: boolean;
 
   @ApiProperty({
     description: 'Time of diagnostic completion in epoch milliseconds',
@@ -135,6 +141,7 @@ export class DiscoveryResponseDto {
         "responseCode": 200,
         "requestId": "req-d-79",
         "deviceId": "sensor-67890",
+        "isBroadcast": true,
         "timestamp": 1762379573804,
         "capabilities": ["temperature", "humidity", "pressure"],
         "deviceHardware": "ESP32-DevKitC",

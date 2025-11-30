@@ -97,9 +97,9 @@ export class TopicService implements ITopicService {
         isSubscribed: true,
       });
 
-      await this.topicRepo.save(record);
+      return await this.topicRepo.save(record);
     }
-    return await this.getTopicByName(topic);
+    return isTopicExist;
   }
 
   async getBroadcastTopic(): Promise<Topic> {

@@ -29,7 +29,7 @@ export class IncomeMessageDto {
 
   @ApiProperty({
     description: 'Raw message data as string',
-    example: '{"value": 25.5, "unit": "°C", "sensorId": "temp1"}',
+    example: '{"value": 25.5, "unit": "°C", "deviceId": "temp1"}',
   })
   @IsString()
   @IsNotEmpty()

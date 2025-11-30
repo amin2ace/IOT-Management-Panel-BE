@@ -139,6 +139,12 @@ export class ConfigurationResult {
   @ApiProperty({ description: 'Auto-reconnect enabled' })
   autoReconnect: boolean;
 
+  @ApiProperty({ description: 'Number of connection attemps' })
+  connectAtempts: number;
+
+  @ApiProperty({ description: 'Maximum number of attemts to connect' })
+  maxConnectionAttempts: number;
+
   @ApiProperty({ description: 'Current connection status' })
   connected: boolean;
 
@@ -179,7 +185,7 @@ export class ConnectionTestResult {
     required: false,
   })
   brokerInfo?: {
-    clientId: string;
+    clientId: string | null;
     protocol: string;
     host: string;
     port: number;

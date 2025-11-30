@@ -20,6 +20,7 @@ import { LoginResponseDto } from './dto/login-response.dto';
 import { SignupResponseDto } from './dto/signup-response.dto';
 import { HashService } from '@/hash/hash.service';
 import { CreateSessionDto } from '@/session/dto/create-session.dto';
+import { CookieService } from './cookie.service';
 
 /**
  * AuthService - Hybrid authentication service
@@ -40,12 +41,11 @@ import { CreateSessionDto } from '@/session/dto/create-session.dto';
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private readonly cookieName = 'sessionId';
-
   constructor(
     private readonly usersService: UsersService,
     private readonly hashService: HashService,
     private readonly sessionService: SessionService,
+    private readonly cookieService: CookieService,
     private readonly config: ConfigService,
   ) {}
 
@@ -112,7 +112,7 @@ export class AuthService {
     const sessionId = await this.sessionService.createSession(sessionData);
 
     // Set secure httpOnly cookie
-    this.setSessionCookie(res, sessionId);
+    await this.cookieService.setSessionCookie(res, sessionId);
 
     this.logger.log(`User signed up: ${email} (${createdUser.userId})`);
 
@@ -172,7 +172,7 @@ export class AuthService {
       const sessionId = await this.sessionService.createSession(sessionData);
 
       // Set secure httpOnly cookie
-      this.setSessionCookie(res, sessionId);
+      await this.cookieService.setSessionCookie(res, sessionId);
 
       this.logger.log(`User logged in: ${email} (${user.userId})`);
 
@@ -197,6 +197,7 @@ export class AuthService {
   async logout(req: Request, res: Response): Promise<{ message: string }> {
     const sessionId = (req as any).sessionId;
     const userId = (req as any).user?.userId;
+    console.log(sessionId, userId);
 
     if (!sessionId) {
       throw new UnauthorizedException('Session not found');
@@ -206,7 +207,7 @@ export class AuthService {
     await this.sessionService.destroySession(sessionId);
 
     // Clear cookie
-    this.clearSessionCookie(res);
+    await this.cookieService.clearSessionCookie(res);
 
     this.logger.log(`User logged out: ${userId}`);
 
@@ -387,34 +388,6 @@ export class AuthService {
       message:
         'Password reset successfully. Please login with your new password.',
     };
-  }
-
-  // ============================================================================
-  // PRIVATE HELPER METHODS
-  // ============================================================================
-
-  /**
-   * Set secure session cookie
-   */
-  private setSessionCookie(res: Response, sessionId: string): void {
-    res.cookie(this.cookieName, sessionId, {
-      httpOnly: true, // Prevent XSS (JS cannot access)
-      secure: this.config.get<string>('NODE_ENV') === 'production', // HTTPS only in production
-      sameSite: 'strict', // CSRF protection
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      path: '/', // Available for all routes
-    });
-  }
-
-  /**
-   * Clear session cookie
-   */
-  private clearSessionCookie(res: Response): void {
-    res.clearCookie(this.cookieName, {
-      httpOnly: true,
-      sameSite: 'strict',
-      path: '/',
-    });
   }
 
   /**

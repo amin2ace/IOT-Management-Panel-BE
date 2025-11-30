@@ -177,6 +177,13 @@ export class MqttClientAdapter implements IMqttClient {
   }
 
   /**
+   * Gets current Client id
+   */
+  getClientId(): string | null {
+    return this.client?.options.clientId ?? null;
+  }
+
+  /**
    * Returns the broker URL
    */
   getBrokerUrl(): string {

@@ -64,7 +64,7 @@ export class SensorFunctionalityRequestDto {
 
   @ApiProperty({
     description: 'MQTT topic to publish sensor data to',
-    example: 'sensors/sensorId/assign',
+    example: 'sensors/deviceId/assign',
   })
   @IsString()
   @IsNotEmpty()

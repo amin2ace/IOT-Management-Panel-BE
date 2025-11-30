@@ -26,15 +26,17 @@ import {
   DiscoveryUnicastRequestDto,
   SensorConfigRequestDto,
   SensorFunctionalityRequestDto,
-} from './messages';
-import { TelemetryRequestDto } from './messages/publish/telemetry.request.dto';
-import { HardwareStatusRequestDto } from './messages/publish/hardware-status.request';
+} from './dto/messages';
+import { TelemetryRequestDto } from './dto/messages/telemetry.request.dto';
+import { HardwareStatusRequestDto } from './dto/messages/hardware-status.request';
 import { SessionAuthGuard } from '@/common/guard/session-auth.guard';
 import { RolesGuard } from '@/common/guard/roles.guard';
 import { Roles } from '@/config/decorator/roles.decorator';
 import { Role } from '@/config/types/roles.types';
 import { GetAllDevicesResponseDto } from './dto/get-all-devices.response.dto';
 import { SensorResponseDto } from './dto/sensor-response.dto';
+import { Serialize } from '@/common';
+import { QuerySensorDto } from './dto/query-sensor.dto';
 
 @ApiTags('Devices')
 @Controller('devices')
@@ -60,9 +62,9 @@ export class DeviceController {
   @ApiCookieAuth()
   @ApiResponse({ status: 200, description: "List device's information" })
   async getSingleSensor(
-    @Param('id') sensorId: string,
+    @Param('id') deviceId: string,
   ): Promise<SensorResponseDto> {
-    return await this.deviceService.getSensor(sensorId);
+    return await this.deviceService.getSensor(deviceId);
   }
 
   @Post('discover-broadcast')
@@ -88,11 +90,12 @@ export class DeviceController {
   }
 
   @Get('unassigned')
+  @Serialize(QuerySensorDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get unassigned devices' })
   @ApiCookieAuth()
-  async getUnassignedSensor(): Promise<Sensor[]> {
+  async getUnassignedSensor(): Promise<QuerySensorDto[]> {
     return await this.deviceService.getUnassignedSensor();
   }
 

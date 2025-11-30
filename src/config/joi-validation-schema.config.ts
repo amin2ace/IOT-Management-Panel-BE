@@ -50,6 +50,7 @@ const configValidationSchema: joi.ObjectSchema = joi.object({
   MQTT_PASSWORD: joi.string().required(),
   MQTT_BROKER_URL: joi.string().required(),
   BASE_TOPIC: joi.string().required(),
+  MAX_RECONNECTION_ATTEMPTS: joi.number().required(),
 
   // caching
   REDIS_HOST: joi.string().required(),
@@ -60,9 +61,10 @@ const configValidationSchema: joi.ObjectSchema = joi.object({
 
   // Session / Authentication
   AUTH_MODE: joi.string().valid('local', 'jwt').default('local'), // 'local' for offline (session), 'jwt' for online
-  SESSION_TIMEOUT: joi.number().default(24 * 60 * 60 * 1000), // 24 hours in milliseconds
-  SESSION_REFRESH_INTERVAL: joi.number().default(5 * 60 * 1000), // 5 minutes in milliseconds
-  SESSION_SECRET: joi.string().min(16).default('session-secret-change-me'),
+  SESSION_TIMEOUT: joi.number(), // 24 hours in milliseconds
+  SESSION_COOKIE_NAME: joi.string().required(),
+  SESSION_REFRESH_INTERVAL: joi.number(), // 5 minutes in milliseconds
+  SESSION_SECRET: joi.string().min(16),
 });
 
 export default configValidationSchema;

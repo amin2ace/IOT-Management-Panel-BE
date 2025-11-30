@@ -65,20 +65,20 @@ export class ResponserService {
     }
 
     await this.redisCache.del(`pending:${requestId}`);
-    this.logger.debug('Cache deleted successfully');
+    this.logger.debug('Cached request id deleted successfully');
   }
 
   public async handleDiscoveryResponse(payload: DiscoveryResponseDto) {
     const { deviceId, ...discoveredData } = payload;
 
     const storedDevice = await this.sensorRepo.findOne({
-      where: { sensorId: deviceId },
+      where: { deviceId: deviceId },
     });
 
     // try {
     if (storedDevice?.isDeleted) {
       await this.sensorRepo.update(
-        { sensorId: deviceId },
+        { deviceId: deviceId },
         { isDeleted: false },
       );
     }
@@ -88,7 +88,7 @@ export class ResponserService {
       try {
         const deviceRecord = this.sensorRepo.create({
           ...discoveredData,
-          sensorId: deviceId,
+          deviceId: deviceId,
           provisionState: ProvisionState.DISCOVERED,
           deviceBaseTopic: topic,
           isActuator: false,
@@ -113,8 +113,10 @@ export class ResponserService {
     // ---> Web Socket gateway
     this.gatewayService.emitDiscoveryBroadcastMessage(payload);
 
-    // Delete cached request appropriate to this response
-    await this.deleteCache(payload);
+    // Delete cached request appropriate to this response if its unicast
+    if (!payload.isBroadcast) {
+      await this.deleteCache(payload);
+    }
   }
 
   async handleAssignResponse(payload: SensorFunctionalityResponseDto) {
@@ -135,7 +137,7 @@ export class ResponserService {
 
     await this.sensorRepo.update(
       {
-        sensorId: deviceId,
+        deviceId: deviceId,
       },
       {
         assignedFunctionality: functionality,
@@ -161,7 +163,7 @@ export class ResponserService {
     if (status === UpgradeStatus.SUCCESS) {
       await this.sensorRepo.update(
         {
-          sensorId: deviceId,
+          deviceId: deviceId,
         },
         {
           lastUpgrade: new Date(timestamp),
@@ -183,7 +185,7 @@ export class ResponserService {
 
     const sensor = await this.sensorRepo.findOne({
       where: {
-        sensorId: deviceId,
+        deviceId: deviceId,
       },
     });
 
@@ -192,7 +194,7 @@ export class ResponserService {
     }
 
     await this.sensorRepo.update(
-      { sensorId: deviceId },
+      { deviceId: deviceId },
       {
         connectionState,
       },
@@ -213,7 +215,7 @@ export class ResponserService {
     }
 
     await this.sensorRepo.update(
-      { sensorId: deviceId },
+      { deviceId: deviceId },
       {
         lastReboot: new Date(timestamp),
       },
@@ -253,7 +255,7 @@ export class ResponserService {
 
     const record = await this.sensorRepo.findOne({
       where: {
-        sensorId: statusData.deviceId,
+        deviceId: statusData.deviceId,
         isDeleted: false,
       },
     });

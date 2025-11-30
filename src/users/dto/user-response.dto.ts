@@ -15,7 +15,7 @@ export class UserResponseDto {
   })
   userId: string;
 
-  @Exclude()
+  @Expose()
   @ApiProperty({
     description: 'User email address',
     example: 'john@example.com',
@@ -29,7 +29,31 @@ export class UserResponseDto {
   })
   username: string;
 
-  @Exclude()
+  @Expose()
+  @ApiProperty({
+    description: 'User first name',
+    example: 'John',
+    required: false,
+  })
+  firstName?: string;
+
+  @Expose()
+  @ApiProperty({
+    description: 'User last name',
+    example: 'Doe',
+    required: false,
+  })
+  lastName?: string;
+
+  @Expose()
+  @ApiProperty({
+    description: 'Profile photo URL',
+    example: 'https://example.com/photos/john.jpg',
+    required: false,
+  })
+  photoUrl?: string;
+
+  @Expose()
   @ApiProperty({
     description: 'User active status',
     example: true,
@@ -44,6 +68,20 @@ export class UserResponseDto {
     example: [Role.VIEWER],
   })
   roles: Role[];
+
+  @Expose()
+  @ApiProperty({
+    description: 'User registration date',
+    example: '2023-01-15T10:30:00.000Z',
+  })
+  createdAt: Date;
+
+  @Expose()
+  @ApiProperty({
+    description: 'Last profile update date',
+    example: '2023-12-01T14:22:00.000Z',
+  })
+  updatedAt: Date;
 
   @Exclude()
   password?: string;

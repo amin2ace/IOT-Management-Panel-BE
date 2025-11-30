@@ -5,6 +5,7 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
 } from 'class-validator';
 
@@ -32,4 +33,24 @@ export class CreateUserDto {
   @IsArray()
   @IsNotEmpty()
   roles: Role[];
+
+  @ApiProperty({
+    description: 'User first name',
+    required: false,
+    example: 'John',
+  })
+  @IsString()
+  @IsOptional()
+  firstName?: string;
+
+  @ApiProperty({
+    description: 'User last name',
+    required: false,
+    example: 'Wick',
+  })
+  @IsString()
+  @IsOptional()
+  lastName?: string;
 }
+
+// Use this in your controller with @UseInterceptors(FileInterceptor('photo'))
