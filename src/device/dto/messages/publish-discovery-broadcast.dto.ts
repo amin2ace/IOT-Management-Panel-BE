@@ -26,7 +26,7 @@ export class DiscoverFilterDto {
   hardware?: string[];
 }
 
-export class DiscoveryBroadcastRequestDto {
+export class PublishDiscoveryBroadcastDto {
   @ApiProperty({
     description: 'Unique identifier of the user who initiated the request',
     example: 'user-001',

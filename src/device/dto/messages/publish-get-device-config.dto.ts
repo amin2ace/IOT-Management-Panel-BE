@@ -1,10 +1,9 @@
-// src/device/dto/device-reboot-request.dto.ts
+import { RequestMessageCode } from '@/common';
+import { IsValidTimestampMillis } from '@/config/decorator/timestamp-validation.decorator';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
-import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { RequestMessageCode } from '../../../common/enum/request-message-code.enum';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
-export class DeviceRebootRequestDto {
+export default class PublishGetDeviceConfigDto {
   @ApiProperty({
     description: 'Unique identifier of the user who initiated the request',
     example: 'user-001',
@@ -15,7 +14,7 @@ export class DeviceRebootRequestDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'req-r-61',
+    example: 'req-sc-86',
   })
   @IsString()
   @IsNotEmpty()
@@ -23,7 +22,7 @@ export class DeviceRebootRequestDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: RequestMessageCode.REBOOT_COMMAND,
+    example: RequestMessageCode.SET_SENSOR_CONFIGURATION,
   })
   @IsNumber()
   @IsNotEmpty()
@@ -44,27 +43,4 @@ export class DeviceRebootRequestDto {
   @IsValidTimestampMillis() // 5min behind, 30sec ahead
   @IsNotEmpty()
   timestamp: number;
-
-  @ApiProperty({
-    description: 'Reason for requesting the reboot',
-    required: false,
-    example: 'Firmware update required',
-  })
-  @IsOptional()
-  @IsString()
-  reason?: string;
 }
-
-/**
-  Example:
-    {
-      "userId": "user-001",
-      "requestId": "req-r-61",
-      "requestCode": 105,
-      "deviceId": "sensor-67890",
-      "timestamp": 1762379573804,
-      "reason": "Firmware update required"
-    }
-
-
- */

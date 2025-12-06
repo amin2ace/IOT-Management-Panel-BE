@@ -11,7 +11,7 @@ import {
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { RequestMessageCode } from '../../../common/enum/request-message-code.enum';
 
-export class FwUpgradeRequestDto {
+export class PublishFwUpgradeDto {
   @ApiProperty({
     description: 'Unique identifier of the user who initiated the request',
     example: 'user-001',

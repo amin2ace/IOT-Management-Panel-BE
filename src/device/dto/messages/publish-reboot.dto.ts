@@ -1,18 +1,10 @@
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  ValidateNested,
-  IsBoolean,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+// src/device/dto/device-reboot-request.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { RequestMessageCode } from '@/common';
-import { DiscoverFilterDto } from './discovery-broadcast.request.dto';
+import { RequestMessageCode } from '../../../common/enum/request-message-code.enum';
 
-export class DiscoveryUnicastRequestDto {
+export class PublishDeviceRebootDto {
   @ApiProperty({
     description: 'Unique identifier of the user who initiated the request',
     example: 'user-001',
@@ -23,7 +15,7 @@ export class DiscoveryUnicastRequestDto {
 
   @ApiProperty({
     description: 'Unique identifier for the request',
-    example: 'req-d-79',
+    example: 'req-r-61',
   })
   @IsString()
   @IsNotEmpty()
@@ -31,7 +23,7 @@ export class DiscoveryUnicastRequestDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: RequestMessageCode.DISCOVERY,
+    example: RequestMessageCode.REBOOT_COMMAND,
   })
   @IsNumber()
   @IsNotEmpty()
@@ -53,37 +45,26 @@ export class DiscoveryUnicastRequestDto {
   @IsNotEmpty()
   timestamp: number;
 
-  @ApiProperty()
-  @IsBoolean()
-  @IsNotEmpty()
-  isBroadcast: boolean;
-
   @ApiProperty({
-    description: 'Time of the request in epoch milli second',
-    example: {
-      subnet: '192.168.1.0/24',
-      hardware: ['ESP32', 'ESP8266'],
-    },
+    description: 'Reason for requesting the reboot',
+    required: false,
+    example: 'Firmware update required',
   })
-  @ApiProperty()
   @IsOptional()
-  @ValidateNested()
-  @Type(() => DiscoverFilterDto)
-  filters?: DiscoverFilterDto;
+  @IsString()
+  reason?: string;
 }
 
-/*
+/**
   Example:
     {
       "userId": "user-001",
-      "requestId": "req-d-79",
-      "requestCode": 100,
-      "deviceId": "sensor-12345",
+      "requestId": "req-r-61",
+      "requestCode": 105,
+      "deviceId": "sensor-67890",
       "timestamp": 1762379573804,
-      "isBroadcast": false,
-      "filters": {
-        "subnet": "192.168.1.0/24",
-        "hardware": ["ESP32", "ESP8266"]
-      }
+      "reason": "Firmware update required"
     }
+
+
  */

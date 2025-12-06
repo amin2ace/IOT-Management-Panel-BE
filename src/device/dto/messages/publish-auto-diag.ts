@@ -12,7 +12,7 @@ import { DiagnosticComponent } from 'src/config/enum/diagnostic-component.enum';
 import { DiagnosticLevel } from 'src/config/enum/diagnostic-Level.enum';
 import { RequestMessageCode } from '../../../common/enum/request-message-code.enum';
 
-export class AutoDiagnosticRequestDto {
+export class PublishAutoDiagDto {
   @ApiProperty({
     description: 'Unique identifier of the user who initiated the request',
     example: 'user-001',

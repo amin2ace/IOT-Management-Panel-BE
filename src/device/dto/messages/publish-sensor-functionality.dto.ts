@@ -11,7 +11,7 @@ import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validatio
 import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 import { RequestMessageCode } from '../../../common/enum/request-message-code.enum';
 
-export class SensorFunctionalityRequestDto {
+export class PublishSensorFunctionalityDto {
   @ApiProperty({
     description: 'Unique identifier of the user who initiated the request',
     example: 'user-001',

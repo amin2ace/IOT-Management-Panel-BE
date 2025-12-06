@@ -107,6 +107,36 @@ export class AssignmentMessageHandler extends BaseMqttMessageHandler {
 }
 
 /**
+ * Get Device Configuration
+ * Handles device configuration fetch messages
+ */
+export class ConfigurationGetMessageHandler extends BaseMqttMessageHandler {
+  protected topicSuffix = '/config/get';
+  protected priority = 10;
+
+  handle(topic: string, payload: any): string {
+    this.validatePayload(payload);
+    this.logProcessing(topic, 'mqtt/message/config/get');
+    return 'mqtt/message/config/get';
+  }
+}
+
+/**
+ * Get Device Configuration
+ * Handles device configuration fetch messages
+ */
+export class ConfigurationSetMessageHandler extends BaseMqttMessageHandler {
+  protected topicSuffix = '/config/set';
+  protected priority = 10;
+
+  handle(topic: string, payload: any): string {
+    this.validatePayload(payload);
+    this.logProcessing(topic, 'mqtt/message/config/set');
+    return 'mqtt/message/config/set';
+  }
+}
+
+/**
  * Acknowledgment Message Handler
  * Handles device acknowledgment messages
  */

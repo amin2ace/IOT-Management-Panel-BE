@@ -36,6 +36,8 @@ import {
   TelemetryMessageHandler,
   HardwareStatusMessageHandler,
   AlertMessageHandler,
+  ConfigurationGetMessageHandler,
+  ConfigurationSetMessageHandler,
 } from '@/mqtt-client/handler/mqtt-message.handler';
 @Injectable()
 export class MqttClientService implements OnModuleInit, OnModuleDestroy {
@@ -81,6 +83,8 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
     this.messageRouter = new MqttMessageRouter();
     this.messageRouter.register(new DiscoveryMessageHandler());
     this.messageRouter.register(new AssignmentMessageHandler());
+    this.messageRouter.register(new ConfigurationGetMessageHandler());
+    this.messageRouter.register(new ConfigurationSetMessageHandler());
     this.messageRouter.register(new AcknowledgeMessageHandler());
     this.messageRouter.register(new FirmwareUpgradeMessageHandler());
     this.messageRouter.register(new HeartbeatMessageHandler());

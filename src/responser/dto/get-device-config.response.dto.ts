@@ -1,4 +1,11 @@
+import { RequestMessageCode } from '@/common';
+import { Protocol } from '@/config/enum/protocol.enum';
+import { DeviceLocationDto } from '@/device/dto/device-location.dto';
+import { LoggingConfigDto } from '@/device/dto/logging-config.dto';
+import { NetworkConfigDto } from '@/device/dto/network-config.dto';
+import { OtaConfigDto } from '@/device/dto/ota-config.dto';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsNotEmpty,
@@ -10,15 +17,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { DeviceLocationDto } from '../device-location.dto';
-import { Protocol } from 'src/config/enum/protocol.enum';
-import { Type } from 'class-transformer';
-import { NetworkConfigDto } from '../network-config.dto';
-import { LoggingConfigDto } from '../logging-config.dto';
-import { OtaConfigDto } from '../ota-config.dto';
-import { RequestMessageCode } from '../../../common/enum/request-message-code.enum';
 
-export class SensorConfigRequestDto {
+export class GetDeviceConfigDto {
   @ApiProperty({
     description: 'Unique identifier of the user who initiated the request',
     example: 'user-001',
@@ -37,7 +37,7 @@ export class SensorConfigRequestDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: RequestMessageCode.SENSOR_CONFIGURATION,
+    example: RequestMessageCode.SET_SENSOR_CONFIGURATION,
   })
   @IsNumber()
   @IsNotEmpty()

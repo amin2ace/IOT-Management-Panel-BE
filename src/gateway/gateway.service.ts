@@ -12,10 +12,10 @@ import { IncomeMessageDto, MessageFormat } from './dto/message-income.dto';
 import { SensorDataDto, DataQuality } from './dto/sensor-data.dto';
 import { DeviceService } from '@/device/device.service';
 import {
-  DiscoveryBroadcastRequestDto,
-  DiscoveryUnicastRequestDto,
+  PublishDiscoveryBroadcastDto,
+  PublishDiscoveryUnicastDto,
   RequestMessageCode,
-  SensorFunctionalityRequestDto,
+  PublishSensorFunctionalityDto,
 } from '@/device/dto/messages';
 import {
   OnGatewayConnection,
@@ -28,6 +28,7 @@ import { Server, Socket } from 'socket.io';
 import { SensorFunctionAssignDto } from '@/device/dto/sensor-assign-type.dto';
 import { QuerySensorDto } from '@/device/dto/query-sensor.dto';
 import { DiscoveryResponseDto } from '@/responser/dto';
+import { GetAllDevicesResponseDto } from '@/device/dto/get-all-devices.response.dto';
 
 /**
  * MqttGatewayService
@@ -123,7 +124,7 @@ export class GatewayService
   @SubscribeMessage('react/message/discovery/broadcast/request')
   private async handleDiscoveryBroadcast(
     client: Socket,
-    payload: DiscoveryBroadcastRequestDto,
+    payload: PublishDiscoveryBroadcastDto,
   ) {
     await this.deviceService.discoverDevicesBroadcast(payload);
   }
@@ -131,7 +132,7 @@ export class GatewayService
   @SubscribeMessage('react/message/discovery/unicast/request')
   private async handleDiscoveryUnicast(
     client: Socket,
-    payload: DiscoveryUnicastRequestDto,
+    payload: PublishDiscoveryUnicastDto,
   ) {
     this.logger.log(payload);
     await this.deviceService.discoverDeviceUnicast(payload);
@@ -155,9 +156,18 @@ export class GatewayService
   @SubscribeMessage('react/message/device/function/assign/request')
   private async handleSensorProvision(
     client: Socket,
-    payload: SensorFunctionalityRequestDto,
+    payload: PublishSensorFunctionalityDto,
   ) {
     await this.deviceService.AssignDeviceFunction(payload);
+  }
+
+  @SubscribeMessage('react/message/query/devices/all/request')
+  private async handleGetSensorsConfiguration(
+    client: Socket,
+    payload: PublishSensorFunctionalityDto,
+  ) {
+    const query = await this.deviceService.getAllSensors({});
+    await this.emitGetAllSensorsMessage(query);
   }
 
   /**
@@ -167,56 +177,46 @@ export class GatewayService
   private setupMqttEventListeners(): void {
     // Listen for all message types from MQTT client service
     // Events are emitted by message handlers via EventEmitter2
-
     // Discovery messages
-    this.eventEmitter.on('mqtt/message/discovery', async (topic, payload) => {
-      await this.emitDiscoveryBroadcastMessage(payload);
-    });
-
-    // Assignment messages
-    this.eventEmitter.on('mqtt/message/assign', async (topic, payload) => {
-      await this.handleAssignmentMessage(topic, payload);
-    });
-
-    // Acknowledgment messages
-    this.eventEmitter.on('mqtt/message/ack', async (topic, payload) => {
-      await this.handleAckMessage(topic, payload);
-    });
-
-    // Firmware upgrade messages
-    this.eventEmitter.on('mqtt/message/upgrade', async (topic, payload) => {
-      await this.handleFirmwareUpgradeMessage(topic, payload);
-    });
-
-    // Heartbeat messages
-    this.eventEmitter.on('mqtt/message/heartbeat', async (topic, payload) => {
-      await this.handleHeartbeatMessage(topic, payload);
-    });
-
-    // Reboot messages
-    this.eventEmitter.on('mqtt/message/reboot', async (topic, payload) => {
-      await this.handleRebootMessage(topic, payload);
-    });
-
-    // Telemetry messages
-    this.eventEmitter.on('mqtt/message/telemetry', async (topic, payload) => {
-      await this.handleTelemetryMessage(topic, payload);
-    });
-
-    // Hardware status messages
-    this.eventEmitter.on(
-      'mqtt/message/hardware-status',
-      async (topic, payload) => {
-        await this.handleHardwareStatusMessage(topic, payload);
-      },
-    );
-
-    // Alert messages
-    this.eventEmitter.on('mqtt/message/alert', async (topic, payload) => {
-      await this.handleAlertMessage(topic, payload);
-    });
-
-    this.logger.log('MQTT event listeners configured for 9 message types');
+    // this.eventEmitter.on('mqtt/message/discovery', async (topic, payload) => {
+    //   await this.emitDiscoveryBroadcastMessage(payload);
+    // });
+    // // Assignment messages
+    // this.eventEmitter.on('mqtt/message/assign', async (topic, payload) => {
+    //   await this.handleAssignmentMessage(topic, payload);
+    // });
+    // // Acknowledgment messages
+    // this.eventEmitter.on('mqtt/message/ack', async (topic, payload) => {
+    //   await this.handleAckMessage(topic, payload);
+    // });
+    // // Firmware upgrade messages
+    // this.eventEmitter.on('mqtt/message/upgrade', async (topic, payload) => {
+    //   await this.handleFirmwareUpgradeMessage(topic, payload);
+    // });
+    // // Heartbeat messages
+    // this.eventEmitter.on('mqtt/message/heartbeat', async (topic, payload) => {
+    //   await this.handleHeartbeatMessage(topic, payload);
+    // });
+    // // Reboot messages
+    // this.eventEmitter.on('mqtt/message/reboot', async (topic, payload) => {
+    //   await this.handleRebootMessage(topic, payload);
+    // });
+    // // Telemetry messages
+    // this.eventEmitter.on('mqtt/message/telemetry', async (topic, payload) => {
+    //   await this.handleTelemetryMessage(topic, payload);
+    // });
+    // // Hardware status messages
+    // this.eventEmitter.on(
+    //   'mqtt/message/hardware-status',
+    //   async (topic, payload) => {
+    //     await this.handleHardwareStatusMessage(topic, payload);
+    //   },
+    // );
+    // // Alert messages
+    // this.eventEmitter.on('mqtt/message/alert', async (topic, payload) => {
+    //   await this.handleAlertMessage(topic, payload);
+    // });
+    // this.logger.log('MQTT event listeners configured for 9 message types');
   }
 
   // ============================================================================
@@ -270,6 +270,24 @@ export class GatewayService
       this.logger.log(`Discovery message passed to react`);
     } catch (error) {
       this.logger.error(`Error handling discovery message: ${error.message}`);
+    }
+  }
+
+  /**
+   * Emits the unassigned devices
+   *
+   * @param result Array of unassigned devices
+   */
+  public async emitGetAllSensorsMessage(result: GetAllDevicesResponseDto) {
+    try {
+      // Emit WebSocket event for discovery
+      this.server.emit('ws/message/query/devices/all/response', result);
+
+      this.logger.log(`Devices query message passed to react`);
+    } catch (error) {
+      this.logger.error(
+        `Error handling query devices message: ${error.message}`,
+      );
     }
   }
 

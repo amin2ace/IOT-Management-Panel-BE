@@ -91,6 +91,8 @@ export class UsersService implements IUserService {
   }
 
   async findUserById(userId: string): Promise<User | null> {
+    console.log({ userId });
+
     const user = await this.userRepo.findOne({
       where: {
         userId,

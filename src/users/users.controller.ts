@@ -83,19 +83,19 @@ export class UsersController {
   }
 
   @Get('profile')
-  @Serialize(UserResponseDto)
-  @UseGuards(SessionAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.ENGINEER, Role.TEST, Role.VIEWER)
+  // @Serialize(UserResponseDto)
+  @UseGuards(SessionAuthGuard)
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiCookieAuth()
   @ApiResponse({
     status: 200,
     description: 'User profile',
-    type: UserResponseDto,
+    // type: UserResponseDto,
   })
   @ApiResponse({ status: 404, description: 'User not found' })
   async getUserProfile(@Req() req: Request) {
-    const userId = (req as any).user.userId;
+    const userId = req['user'];
+    console.log({ req });
     return await this.usersService.findUserById(userId);
   }
 

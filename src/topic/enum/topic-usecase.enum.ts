@@ -1,7 +1,8 @@
 export enum TopicUseCase {
   ASSIGN_DEVICE_FUNCTION = 'assign',
   NETWORK_CONFIGURATION = 'netconfig',
-  SENSOR_CONFIGURATION = 'config',
+  SET_SENSOR_CONFIGURATION = 'config/set',
+  GET_SENSOR_CONFIGURATION = 'config/get',
   HARDWARE_STATUS = 'hardware-status',
   FIRMWARE_STATUS = 'firmware/status',
   FIRMWARE_UPDATE = 'firmware/upgrade',

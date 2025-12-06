@@ -1,23 +1,24 @@
+import { RequestMessageCode } from '@/common';
+import { Protocol } from '@/config/enum/protocol.enum';
+import { DeviceLocationDto } from '@/device/dto/device-location.dto';
+import { LoggingConfigDto } from '@/device/dto/logging-config.dto';
+import { NetworkConfigDto } from '@/device/dto/network-config.dto';
+import { OtaConfigDto } from '@/device/dto/ota-config.dto';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
+  IsStrongPassword,
+  IsTimeZone,
   ValidateNested,
 } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { AckStatus } from 'src/config/enum/ack-status.enum';
-import { ResponseMessageCode } from '../../common/enum/response-message-code.enum';
-import { Type } from 'class-transformer';
-import { DeviceLocationDto } from '../../device/dto/device-location.dto';
-import { Protocol } from 'src/config/enum/protocol.enum';
-import { NetworkConfigDto } from '../../device/dto/network-config.dto';
-import { LoggingConfigDto } from '../../device/dto/logging-config.dto';
-import { OtaConfigDto } from '../../device/dto/ota-config.dto';
 
-export class SensorConfigResponseDto {
+export class PublishSetDeviceConfigDto {
   @ApiProperty({
     description: 'Unique identifier of the user who initiated the request',
     example: 'user-001',
@@ -27,23 +28,7 @@ export class SensorConfigResponseDto {
   userId: string;
 
   @ApiProperty({
-    description: 'Unique identifier for the response',
-    example: 'res-sc-86',
-  })
-  @IsString()
-  @IsNotEmpty()
-  responseId: string;
-
-  @ApiProperty({
-    description: 'Numeric code representing the response type',
-    example: ResponseMessageCode.SENSOR_CONFIGURATION_ACKNOWLEDGEMENT,
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  responseCode: number; // Response Message Code
-
-  @ApiProperty({
-    description: 'Unique identifier for the original request',
+    description: 'Unique identifier for the request',
     example: 'req-sc-86',
   })
   @IsString()
@@ -51,28 +36,26 @@ export class SensorConfigResponseDto {
   requestId: string;
 
   @ApiProperty({
+    description: 'Numeric code representing the request type',
+    example: RequestMessageCode.SET_SENSOR_CONFIGURATION,
+  })
+  @IsNumber()
+  @IsNotEmpty()
+  requestCode: number; // Request Message Code
+
+  @ApiProperty({
     description: 'Unique identifier of the device',
     example: 'sensor-67890',
   })
   @IsString()
   @IsNotEmpty()
-  deviceId: string;
+  deviceId: string; // Request from specific device
 
   @ApiProperty({
-    description: 'The acknowledgement state of the configuration request',
-    enum: AckStatus,
-    enumName: 'AckStatus',
-    example: AckStatus.ACCEPTED,
-  })
-  @IsEnum(AckStatus)
-  @IsNotEmpty()
-  ackStatus: AckStatus;
-
-  @ApiProperty({
-    description: 'Time of the response in epoch milli second',
+    description: 'Time of the request in epoch milli second',
     example: '1762379573804',
   })
-  @IsValidTimestampMillis()
+  @IsValidTimestampMillis() // 5min behind, 30sec ahead
   @IsNotEmpty()
   timestamp: number;
 
@@ -82,13 +65,9 @@ export class SensorConfigResponseDto {
   })
   @IsString()
   @IsOptional()
-  baseTopic?: string;
+  baseTopic?: string; // like "greenHouse_jolfa/tomato-section/sensor/temperature"
 
-  @ApiProperty({
-    description: 'Network configuration',
-    type: NetworkConfigDto,
-    required: false,
-  })
+  @ApiProperty({ description: 'Network configuration', type: NetworkConfigDto })
   @IsOptional()
   @ValidateNested()
   @Type(() => NetworkConfigDto)
@@ -96,17 +75,17 @@ export class SensorConfigResponseDto {
 
   @ApiProperty({
     description: 'Device timezone',
-    example: 'Asia/Tehran',
     required: false,
+    example: 'Asia/Tehran',
   })
-  @IsString()
   @IsOptional()
+  @IsTimeZone()
   timezone?: string;
 
   @ApiProperty({
     description: 'Logging configuration',
-    type: LoggingConfigDto,
     required: false,
+    type: LoggingConfigDto,
   })
   @IsOptional()
   @ValidateNested()
@@ -115,8 +94,8 @@ export class SensorConfigResponseDto {
 
   @ApiProperty({
     description: 'OTA configuration',
-    type: OtaConfigDto,
     required: false,
+    type: OtaConfigDto,
   })
   @IsOptional()
   @ValidateNested()
@@ -126,16 +105,15 @@ export class SensorConfigResponseDto {
   @ApiProperty({
     description: 'Data publishing interval in milliseconds',
     example: 5000,
-    required: false,
   })
   @IsOptional()
   @IsNumber()
-  interval?: number;
+  interval?: number; // e.g. 5000 for 5 seconds
 
   @ApiProperty({
     description: 'Device location',
-    type: DeviceLocationDto,
     required: false,
+    type: DeviceLocationDto,
   })
   @IsOptional()
   @ValidateNested()
@@ -143,53 +121,50 @@ export class SensorConfigResponseDto {
   location?: DeviceLocationDto;
 
   @ApiProperty({
-    description: 'Protocol name in use',
+    description: 'Protocol name to use',
+    required: false,
     enum: Protocol,
     enumName: 'Protocol',
     example: Protocol.MQTT,
-    required: false,
   })
   @IsOptional()
   @IsEnum(Protocol)
   protocol?: Protocol;
 
-  @ApiProperty({
-    description: 'Access point SSID',
-    example: 'SensorAP-001',
-    required: false,
-  })
+  @ApiProperty()
   @IsOptional()
   @IsString()
   apSsid?: string;
 
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  @IsStrongPassword({
+    minLength: 8,
+    minLowercase: 0,
+    minNumbers: 0,
+    minSymbols: 0,
+    minUppercase: 0,
+  })
+  apPassword?: string; // TODO: Access point password policy
+
   @ApiProperty({
-    description: 'Configuration version for tracking updates',
-    example: 1,
+    description: 'Configuration version for update tracking',
     required: false,
+    example: 1,
   })
   @IsOptional()
   @IsNumber()
   configVersion?: number;
-
-  @ApiProperty({
-    description: 'Response message with configuration status details',
-    example:
-      'Sensor configuration accepted and applied successfully. All settings have been updated.',
-  })
-  @IsString()
-  @IsNotEmpty()
-  details: string;
 }
 
 /**
-  Example Response:
+  Example:
     {
       "userId": "user-001",
-      "responseId": "res-sc-86",
-      "responseCode": 102,
       "requestId": "req-sc-86",
+      "requestCode": 102,
       "deviceId": "sensor-67890",
-      "ackStatus": "ACCEPTED",
       "timestamp": 1762379573804,
       "baseTopic": "greenHouse_jolfa/tomato-section/sensor/temperature",
       "network": {
@@ -218,7 +193,7 @@ export class SensorConfigResponseDto {
       },
       "protocol": "MQTT",
       "apSsid": "SensorAP-001",
-      "configVersion": 1,
-      "details": "Sensor configuration accepted and applied successfully. All settings have been updated."
+      "apPassword": "strongpassword",
+      "configVersion": 1
     }
  */
