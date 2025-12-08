@@ -8,4 +8,3 @@ export * from './reboot.response.dto';
 export * from './telemetry.response.dto';
 export * from './discovery.response.dto';
 export * from './heartbeat.response';
-export * from './get-device-config.response.dto';

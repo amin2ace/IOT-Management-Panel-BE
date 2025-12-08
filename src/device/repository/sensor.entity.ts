@@ -1,6 +1,5 @@
-import { ConnectionState } from 'src/config/enum/connection-state.enum';
-import { ProvisionState } from 'src/config/enum/provision-state.enum';
-import { Protocol } from 'src/config/enum/protocol.enum';
+import { LogLevel } from '@/config/enum/log-level.enum';
+import { Protocol } from '@/config/enum/protocol.enum';
 import {
   Entity,
   ObjectIdColumn,
@@ -10,98 +9,158 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
+import { MeasurementUnit } from '@/config/enum/measurement-unit.enum';
 
-@Entity('devices')
+// Embedded classes
+export class NetworkConfigEntity {
+  @Column({ nullable: true })
+  wifiSsid?: string;
+
+  @Column({ nullable: true })
+  wifiPassword?: string;
+
+  @Column({ default: true })
+  dhcp: boolean = true;
+
+  @Column({ nullable: true })
+  ip?: string;
+
+  @Column({ nullable: true })
+  subnetMask?: string;
+
+  @Column({ nullable: true })
+  gateway?: string;
+
+  @Column({ nullable: true })
+  dnsServer1?: string;
+
+  @Column({ nullable: true })
+  dnsServer2?: string;
+
+  @Column({ nullable: true })
+  accessPointSsid?: string;
+
+  @Column({ nullable: true })
+  accessPointPassword?: string;
+}
+
+export class LoggingConfigEntity {
+  @Column({
+    type: 'enum',
+    enum: LogLevel,
+    default: LogLevel.INFO,
+  })
+  level: LogLevel = LogLevel.INFO;
+
+  @Column({ default: false })
+  enableSerial: boolean = false;
+
+  @Column({ type: 'int', nullable: true })
+  baudrate?: number;
+
+  @Column({ nullable: true })
+  externalServer?: string;
+}
+
+export class OtaConfigEntity {
+  @Column({ default: false })
+  enabled: boolean = false;
+
+  @Column({ nullable: true })
+  url?: string;
+
+  @Column({ type: 'int', nullable: true })
+  checkInterval?: number;
+}
+
+export class DeviceLocationEntity {
+  @Column({ nullable: true })
+  site?: string;
+
+  @Column({ type: 'int', nullable: true })
+  floor?: number;
+
+  @Column({ nullable: true })
+  unit?: string;
+}
+
+export class ThresholdEntity {
+  @Column({ type: 'float' })
+  high: number;
+
+  @Column({ type: 'float' })
+  low: number;
+
+  @Column({
+    nullable: true,
+    type: 'enum',
+    enum: MeasurementUnit,
+    default: MeasurementUnit.CELSIUS,
+  })
+  unit?: MeasurementUnit;
+}
+
+// Main SensorConfig entity (embedded)
+@Entity('sensor_configs')
 export class Sensor {
   @ObjectIdColumn()
   _id: ObjectId;
 
   @Column()
-  @Index({ unique: true })
-  deviceId: string; // ESP unique ID (MAC or custom ID)
+  @Index()
+  deviceId: string;
 
-  @Column({ type: 'enum', enum: DeviceCapabilities, array: true })
-  capabilities: DeviceCapabilities[]; // e.g. ["temperature", "humidity"]
+  @Column({ nullable: true })
+  @Index()
+  controllerId?: string;
 
-  @Column()
-  deviceHardware: string; // device model or hardware ID
+  @Column({ type: 'bigint' })
+  @Index()
+  timestamp: number;
+
+  @Column({ nullable: true })
+  baseTopic?: string;
+
+  @Column(() => NetworkConfigEntity)
+  network?: NetworkConfigEntity;
+
+  @Column({ nullable: true })
+  timezone?: string;
+
+  @Column(() => LoggingConfigEntity)
+  logging?: LoggingConfigEntity;
+
+  @Column(() => OtaConfigEntity)
+  ota?: OtaConfigEntity;
+
+  @Column({ type: 'int', nullable: true })
+  interval?: number;
+
+  @Column(() => DeviceLocationEntity)
+  location?: DeviceLocationEntity;
+
+  @Column(() => ThresholdEntity)
+  threshold?: ThresholdEntity;
 
   @Column({
     type: 'enum',
-    enum: DeviceCapabilities,
-    array: true,
-    nullable: true,
+    enum: Protocol,
+    default: Protocol.MQTT,
   })
-  assignedFunctionality: DeviceCapabilities[]; // selected from capabilities
+  protocol: Protocol = Protocol.MQTT;
 
-  @Column({ nullable: true })
-  deviceBaseTopic: string; // like "<mqttPrefix>/<deviceId>/temperature"
+  @Column({ type: 'int', default: 1 })
+  configVersion: number = 1;
 
-  @Column()
-  location: object; // like { room: 'Greenhouse', floor: 1, unit: 'tomato-section' }
-
-  @Column({
-    type: 'enum',
-    enum: ProvisionState,
-    default: ProvisionState.DISCOVERED,
-  })
-  provisionState: ProvisionState;
-
-  @Column({ nullable: true })
-  clientId: string; // multi-tenant support
-
-  @Column()
-  lastValue: number; // useful for HMI snapshot
-
-  @Column({ nullable: true })
-  lastValueAt: number; // timestamp of latest MQTT update
-
-  @Column({ type: 'enum', enum: ConnectionState, nullable: true })
-  connectionState: ConnectionState; // ONLINE / OFFLINE / ERROR msg
-
-  @Column({ default: false })
-  isActuator: boolean; // distinguish sensor vs controller
-
-  @Column()
-  interval: number;
-
-  @Column()
-  highSetPoint: number;
-
-  @Column()
-  lowSetPoint: number;
-
-  @Column({ default: false })
-  hasError: boolean;
-
-  @Column({ nullable: true })
-  firmware: string;
-
-  @Column({ nullable: true })
-  mac: string;
-
-  @Column({ nullable: true })
-  ip: string;
-
-  @Column({ type: 'enum', enum: Protocol })
-  protocol: Protocol;
-
-  @Column()
-  broker: string;
-
-  @Column({ default: false })
-  isDeleted: boolean;
-
-  @Column({ nullable: true, default: null })
-  lastReboot: Date;
-
-  @Column({ nullable: true, default: null })
-  lastUpgrade: Date;
+  @Column({ type: 'json', nullable: true })
+  customSettings?: Record<string, any>;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ default: true })
+  isActive: boolean = true;
 }

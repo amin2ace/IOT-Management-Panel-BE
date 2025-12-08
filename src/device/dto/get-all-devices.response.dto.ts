@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, IsOptional, IsNumber } from 'class-validator';
-import { SensorResponseDto } from './sensor-response.dto';
+import { SensorDto } from './sensor.dto';
 
 /**
  * Get All Devices Response DTO
@@ -10,11 +10,11 @@ import { SensorResponseDto } from './sensor-response.dto';
 export class GetAllDevicesResponseDto {
   @ApiProperty({
     description: 'Array of device/sensor records',
-    type: [SensorResponseDto],
+    type: [SensorDto],
   })
   @IsArray()
   @IsNotEmpty()
-  data: SensorResponseDto[];
+  data: SensorDto[];
 
   @ApiProperty({
     description: 'Total number of devices in the system',

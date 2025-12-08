@@ -1,8 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class OtaConfigDto {
-  @ApiProperty({ description: 'Enable OTA updates', example: true })
+  @ApiProperty({
+    description: 'Enable OTA updates',
+    example: true,
+    required: false,
+  })
   @IsBoolean()
   @IsOptional()
   enabled?: boolean;
@@ -11,4 +21,9 @@ export class OtaConfigDto {
   @IsOptional()
   @IsString()
   url?: string;
+
+  @ApiProperty({ description: 'Ota Check intervals', required: false })
+  @IsOptional()
+  @IsNumber()
+  checkInterval?: number;
 }

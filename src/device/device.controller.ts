@@ -33,12 +33,12 @@ import { RolesGuard } from '@/common/guard/roles.guard';
 import { Roles } from '@/config/decorator/roles.decorator';
 import { Role } from '@/config/types/roles.types';
 import { GetAllDevicesResponseDto } from './dto/get-all-devices.response.dto';
-import { SensorResponseDto } from './dto/sensor-response.dto';
+import { SensorDto } from './dto/sensor.dto';
 import { Serialize } from '@/common';
 import { QuerySensorDto } from './dto/query-sensor.dto';
 import PublishGetDeviceConfigDto from './dto/messages/publish-get-device-config.dto';
 import { PublishSetDeviceConfigDto } from './dto/messages/publish-set-device-config.dto';
-import { GetDeviceConfigDto } from '@/responser/dto';
+import { SensorConfigDto } from '@/responser/dto';
 
 @ApiTags('Devices')
 @Controller('devices')
@@ -63,9 +63,7 @@ export class DeviceController {
   @ApiOperation({ summary: 'Get single device' })
   @ApiCookieAuth()
   @ApiResponse({ status: 200, description: "List device's information" })
-  async getSingleSensor(
-    @Param('id') deviceId: string,
-  ): Promise<SensorResponseDto> {
+  async getSingleSensor(@Param('id') deviceId: string): Promise<SensorDto> {
     return await this.deviceService.getSensor(deviceId);
   }
 
@@ -132,7 +130,7 @@ export class DeviceController {
   }
 
   @Get('config/:id')
-  @Serialize(GetDeviceConfigDto)
+  @Serialize(SensorConfigDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get device configuration' })

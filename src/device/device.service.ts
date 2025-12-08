@@ -26,7 +26,7 @@ import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 import { PublishTelemetryDto } from './dto/messages/Publish-telemetry.dto';
 import { publishHardwareStatusDto } from './dto/messages/publish-hardware-status';
 import { GetAllDevicesResponseDto } from './dto/get-all-devices.response.dto';
-import { SensorResponseDto } from './dto/sensor-response.dto';
+import { SensorDto } from './dto/sensor.dto';
 import { ConfigService } from '@nestjs/config';
 import { QuerySensorDto } from './dto/query-sensor.dto';
 import PublishGetDeviceConfigDto from './dto/messages/publish-get-device-config.dto';
@@ -67,7 +67,7 @@ export class DeviceService {
     };
   }
 
-  async getSensor(deviceId: string): Promise<SensorResponseDto> {
+  async getSensor(deviceId: string): Promise<SensorDto> {
     const device = await this.sensorRepo.findOne({
       where: {
         deviceId,
@@ -102,7 +102,7 @@ export class DeviceService {
 
     const { isBroadcast, requestCode } = discoverRequest;
 
-    if (requestCode !== RequestMessageCode.DISCOVERY) {
+    if (requestCode !== RequestMessageCode.REQUEST_DISCOVERY) {
       throw new BadRequestException('Invalid request');
     }
 
@@ -137,7 +137,7 @@ export class DeviceService {
     const { isBroadcast, deviceId, requestCode } = discoverRequest;
     const broadcastTopic = await this.topicService.getBroadcastTopic();
 
-    if (requestCode !== RequestMessageCode.DISCOVERY) {
+    if (requestCode !== RequestMessageCode.REQUEST_DISCOVERY) {
       throw new BadRequestException('Invalid request');
     }
 
@@ -177,7 +177,7 @@ export class DeviceService {
   async getHardwareStatus(statusRequest: publishHardwareStatusDto) {
     const { deviceId, requestCode } = statusRequest;
 
-    if (requestCode !== RequestMessageCode.HARDWARE_METRICS) {
+    if (requestCode !== RequestMessageCode.REQUEST_HARDWARE_METRICS) {
       throw new BadRequestException('Invalid Request');
     }
 
@@ -217,7 +217,7 @@ export class DeviceService {
   ): Promise<string> {
     const { deviceId, functionality, requestCode } = provisionData;
 
-    if (requestCode !== RequestMessageCode.ASSIGN_DEVICE_FUNCTION) {
+    if (requestCode !== RequestMessageCode.REQUEST_ASSIGN_DEVICE_FUNCTION) {
       throw new BadRequestException('Invalid Request');
     }
 
@@ -314,7 +314,7 @@ export class DeviceService {
 
     const data: PublishGetDeviceConfigDto = {
       deviceId,
-      requestCode: RequestMessageCode.GET_SENSOR_CONFIGURATION,
+      requestCode: RequestMessageCode.REQUEST_GET_SENSOR_CONFIG,
       timestamp: Date.now(),
       userId: 'dfvdfv',
       requestId: 'sdfgdf',
@@ -328,7 +328,7 @@ export class DeviceService {
 
   async setDeviceConfiguration(configData: PublishSetDeviceConfigDto) {
     const { deviceId, requestCode } = configData;
-    if (requestCode != RequestMessageCode.SET_SENSOR_CONFIGURATION) return;
+    if (requestCode != RequestMessageCode.REQUEST_SET_SENSOR_CONFIG) return;
 
     const storedDevice = await this.sensorRepo.findOne({
       where: {
@@ -382,7 +382,7 @@ export class DeviceService {
   async getDeviceTelemetry(telemetry: PublishTelemetryDto) {
     const { deviceId, requestCode } = telemetry;
 
-    if (requestCode !== RequestMessageCode.TELEMETRY_DATA) {
+    if (requestCode !== RequestMessageCode.REQUEST_TELEMETRY_DATA) {
       throw new BadRequestException('Invalid request');
     }
 

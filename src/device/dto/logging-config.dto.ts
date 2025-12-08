@@ -16,20 +16,25 @@ export class LoggingConfigDto {
     example: LogLevel.INFO,
     enum: LogLevel,
     enumName: 'LogLevel',
+    required: false,
   })
   @IsEnum(LogLevel)
   @IsOptional()
   level?: LogLevel;
 
-  @ApiProperty({ description: 'Enable serial debug output', example: true })
+  @ApiProperty({
+    description: 'Enable serial debug output',
+    example: true,
+    required: false,
+  })
   @IsBoolean()
   @IsOptional()
   enableSerial?: boolean;
 
   @ApiProperty({
     description: 'Enable serial debug output',
-    required: false,
     example: 96000,
+    required: false,
   })
   @IsNumber()
   @IsOptional()
@@ -37,8 +42,8 @@ export class LoggingConfigDto {
 
   @ApiProperty({
     description: 'EExternal log server address',
-    required: false,
     example: 'https://log.server.com:8888',
+    required: false,
   })
   @IsString()
   @IsOptional()

@@ -5,11 +5,21 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsStrongPassword,
 } from 'class-validator';
 import { IsSubnetMask } from 'src/config/decorator/subnetmask-validation.decrator';
 
 // Nested DTOs
 export class NetworkConfigDto {
+  @ApiProperty({
+    description: 'Device MAC address',
+    example: '5C:CF:7F:12:34:56',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  mac?: string;
+
   @ApiProperty({ description: 'WiFi SSID' })
   @IsString()
   @IsOptional()
@@ -73,4 +83,21 @@ export class NetworkConfigDto {
   @IsIP('4')
   @IsOptional()
   dnsServer2?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  accessPointSsid?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  // @IsStrongPassword({
+  //   minLength: 8,
+  //   minLowercase: 0,
+  //   minNumbers: 0,
+  //   minSymbols: 0,
+  //   minUppercase: 0,
+  // })
+  accessPointPassword?: string; // TODO: Access point password policy
 }
