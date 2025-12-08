@@ -33,7 +33,7 @@ export class TelemetryResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: ResponseMessageCode.TELEMETRY_DATA,
+    example: ResponseMessageCode.RESPONSE_TELEMETRY_DATA,
   })
   @IsNotEmpty()
   @IsNumber()

@@ -48,7 +48,7 @@ export class DiscoveryResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: ResponseMessageCode.DISCOVERY_ANNOUNCEMENT,
+    example: ResponseMessageCode.RESPONSE_DISCOVERY,
   })
   @IsNotEmpty()
   @IsNumber()

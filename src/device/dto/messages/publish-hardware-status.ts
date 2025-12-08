@@ -14,7 +14,7 @@ export class publishHardwareStatusDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: RequestMessageCode.HARDWARE_METRICS,
+    example: RequestMessageCode.REQUEST_HARDWARE_METRICS,
   })
   @IsNotEmpty()
   @IsNumber()

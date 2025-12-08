@@ -122,7 +122,7 @@ export class ResponserService {
   async handleAssignResponse(payload: SensorFunctionalityResponseDto) {
     const { responseCode, deviceId, functionality, status } = payload;
 
-    if (responseCode !== ResponseMessageCode.DEVICE_FUNCTION_ASSIGNED) {
+    if (responseCode !== ResponseMessageCode.RESPONSE_ASSIGN_DEVICE_FUNCTION) {
       throw new ForbiddenException('Invalid Response');
     }
 
@@ -153,7 +153,8 @@ export class ResponserService {
   async handleUpgradeResponse(payload: FwUpgradeResponseDto) {
     const { deviceId, progress, responseCode, status, timestamp } = payload;
 
-    if (responseCode !== ResponseMessageCode.FIRMWARE_UPDATE_STATUS) return;
+    if (responseCode !== ResponseMessageCode.RESPONSE_FIRMWARE_UPDATE_STATUS)
+      return;
 
     if (status === UpgradeStatus.PROCESSING) {
       this.logger.debug(`Sensor ${deviceId} firmware upgrade processing...`);
@@ -181,7 +182,7 @@ export class ResponserService {
   async handleDeviceHeartbeat(payload: HeartbeatDto) {
     const { connectionState, deviceId, responseCode } = payload;
 
-    if (responseCode != ResponseMessageCode.HEARTBEAT) return;
+    if (responseCode != ResponseMessageCode.RESPONSE_HEARTBEAT) return;
 
     const sensor = await this.sensorRepo.findOne({
       where: {
@@ -208,7 +209,8 @@ export class ResponserService {
   async handleRebootResponse(payload: DeviceRebootResponseDto) {
     const { deviceId, responseCode, status, message, timestamp } = payload;
 
-    if (responseCode !== ResponseMessageCode.REBOOT_CONFIRMATION) return;
+    if (responseCode !== ResponseMessageCode.RESPONSE_REBOOT_CONFIRMATION)
+      return;
 
     if (status !== RebootStatus.SUCCESS) {
       this.logger.error(`Sensor ${deviceId} reboot failed`);
@@ -227,7 +229,7 @@ export class ResponserService {
   async handleTelemetryResponse(payload: TelemetryResponseDto) {
     const { responseCode, deviceId, metric, value, meta } = payload;
 
-    if (responseCode !== ResponseMessageCode.TELEMETRY_DATA) {
+    if (responseCode !== ResponseMessageCode.RESPONSE_TELEMETRY_DATA) {
       throw new BadRequestException(`Invalid response`);
     }
 
@@ -249,7 +251,7 @@ export class ResponserService {
   async handleHardwareStatus(payload: HardwareStatusResponseDto) {
     const { responseCode, requestId, ...statusData } = payload;
 
-    if (responseCode !== ResponseMessageCode.HARDWARE_METRICS) {
+    if (responseCode !== ResponseMessageCode.RESPONSE_HARDWARE_METRICS) {
       throw new UnauthorizedException('Invalid response');
     }
 

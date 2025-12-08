@@ -23,7 +23,7 @@ export class PublishDeviceRebootDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: RequestMessageCode.REBOOT_COMMAND,
+    example: RequestMessageCode.REQUEST_REBOOT,
   })
   @IsNumber()
   @IsNotEmpty()

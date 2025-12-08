@@ -31,7 +31,7 @@ export class PublishAutoDiagDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: RequestMessageCode.AUTO_DIAGNOSTIC,
+    example: RequestMessageCode.REQUEST_AUTO_DIAGNOSTIC,
   })
   @IsNumber()
   @IsNotEmpty()

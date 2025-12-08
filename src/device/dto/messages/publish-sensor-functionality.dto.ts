@@ -30,7 +30,7 @@ export class PublishSensorFunctionalityDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: RequestMessageCode.ASSIGN_DEVICE_FUNCTION,
+    example: RequestMessageCode.REQUEST_ASSIGN_DEVICE_FUNCTION,
   })
   @IsNumber()
   @IsNotEmpty()

@@ -24,7 +24,7 @@ export class HeartbeatDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: ResponseMessageCode.HEARTBEAT,
+    example: ResponseMessageCode.RESPONSE_HEARTBEAT,
   })
   @IsNotEmpty()
   @IsNumber()

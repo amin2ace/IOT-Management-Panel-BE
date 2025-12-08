@@ -45,7 +45,7 @@ export class PublishDiscoveryBroadcastDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: RequestMessageCode.DISCOVERY,
+    example: RequestMessageCode.REQUEST_DISCOVERY,
   })
   @IsNumber()
   @IsNotEmpty()

@@ -14,7 +14,7 @@ export class PublishTelemetryDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: RequestMessageCode.TELEMETRY_DATA,
+    example: RequestMessageCode.REQUEST_TELEMETRY_DATA,
   })
   @IsNotEmpty()
   @IsNumber()

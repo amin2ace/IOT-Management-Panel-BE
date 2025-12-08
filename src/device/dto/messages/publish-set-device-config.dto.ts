@@ -37,7 +37,7 @@ export class PublishSetDeviceConfigDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: RequestMessageCode.SET_SENSOR_CONFIGURATION,
+    example: RequestMessageCode.REQUEST_SET_SENSOR_CONFIG,
   })
   @IsNumber()
   @IsNotEmpty()

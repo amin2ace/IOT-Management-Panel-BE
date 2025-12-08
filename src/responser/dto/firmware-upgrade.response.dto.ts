@@ -23,7 +23,7 @@ export class FwUpgradeResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: ResponseMessageCode.FIRMWARE_UPDATE_STATUS,
+    example: ResponseMessageCode.RESPONSE_FIRMWARE_UPDATE_STATUS,
   })
   @IsNotEmpty()
   @IsNumber()

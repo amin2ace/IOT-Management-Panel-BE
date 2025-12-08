@@ -30,7 +30,7 @@ export class SensorFunctionalityResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: ResponseMessageCode.DEVICE_FUNCTION_ASSIGNED,
+    example: ResponseMessageCode.RESPONSE_ASSIGN_DEVICE_FUNCTION,
   })
   @IsNotEmpty()
   @IsNumber()

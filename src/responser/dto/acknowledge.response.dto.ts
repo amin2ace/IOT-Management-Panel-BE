@@ -29,7 +29,7 @@ export class AckResponseDto {
 
   @ApiProperty({
     description: 'Numeric code representing the response type',
-    example: ResponseMessageCode.SENSOR_CONFIGURATION_ACKNOWLEDGEMENT,
+    example: ResponseMessageCode.RESPONSE_SET_SENSOR_CONFIG,
   })
   @IsNumber()
   @IsNotEmpty()

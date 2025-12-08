@@ -29,7 +29,7 @@ export class DeviceRebootResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: ResponseMessageCode.REBOOT_CONFIRMATION,
+    example: ResponseMessageCode.RESPONSE_REBOOT_CONFIRMATION,
   })
   @IsNotEmpty()
   @IsNumber()

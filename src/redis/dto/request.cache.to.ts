@@ -21,7 +21,7 @@ export class RequestCacheDto {
 
   @ApiProperty({
     description: 'Numeric code representing the request type',
-    example: RequestMessageCode.FIRMWARE_UPDATE,
+    example: RequestMessageCode.REQUEST_FIRMWARE_UPDATE,
   })
   @IsNumber()
   @IsNotEmpty()

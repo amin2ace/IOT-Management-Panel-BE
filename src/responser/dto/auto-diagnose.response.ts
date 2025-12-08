@@ -61,7 +61,7 @@ export class AutoDiagnosticResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: ResponseMessageCode.DIAGNOSTIC,
+    example: ResponseMessageCode.RESPONSE_AUTO_DIAGNOSTIC,
   })
   @IsNotEmpty()
   @IsNumber()

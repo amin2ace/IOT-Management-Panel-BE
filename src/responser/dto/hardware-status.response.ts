@@ -23,7 +23,7 @@ export class HardwareStatusResponseDto {
 
   @ApiProperty({
     description: 'Response code from the device or system',
-    example: ResponseMessageCode.HARDWARE_METRICS,
+    example: ResponseMessageCode.RESPONSE_HARDWARE_METRICS,
   })
   @IsNotEmpty()
   @IsNumber()
