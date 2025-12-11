@@ -30,6 +30,8 @@ import { QuerySensorDto } from '@/device/dto/query-sensor.dto';
 import { DiscoveryResponseDto } from '@/responser/dto';
 import { GetAllDevicesDto } from '@/device/dto/get-all-devices.dto';
 import { SensorDto } from '@/device/dto/sensor.dto';
+import { User } from '@/users/entities/user.entity';
+import { CurrentUser } from '@/config/decorator/current-user.decorator';
 
 /**
  * MqttGatewayService
@@ -124,19 +126,21 @@ export class GatewayService
   // UI ---> Web Socket Gateway ---> MQTT Broker
   @SubscribeMessage('react/message/discovery/broadcast/request')
   private async handleDiscoveryBroadcast(
+    @CurrentUser() user: User,
     client: Socket,
     payload: PublishDiscoveryBroadcastDto,
   ) {
-    await this.deviceService.discoverDevicesBroadcast(payload);
+    await this.deviceService.discoverDevicesBroadcast(user);
   }
 
   @SubscribeMessage('react/message/discovery/unicast/request')
   private async handleDiscoveryUnicast(
+    @CurrentUser() currentUser: User,
     client: Socket,
-    payload: PublishDiscoveryUnicastDto,
+    deviceId: string,
   ) {
-    this.logger.log(payload);
-    await this.deviceService.discoverDeviceUnicast(payload);
+    this.logger.log(deviceId);
+    await this.deviceService.discoverDeviceUnicast(currentUser, deviceId);
   }
 
   @SubscribeMessage('react/message/device/query/unassinged/request')
@@ -156,10 +160,11 @@ export class GatewayService
 
   @SubscribeMessage('react/message/device/function/assign/request')
   private async handleSensorProvision(
+    @CurrentUser() currentUser: User,
     client: Socket,
     payload: PublishSensorFunctionalityDto,
   ) {
-    await this.deviceService.AssignDeviceFunction(payload);
+    await this.deviceService.AssignDeviceFunction(currentUser, payload);
   }
 
   @SubscribeMessage('react/message/query/devices/all/request')
@@ -167,7 +172,7 @@ export class GatewayService
     client: Socket,
     payload: PublishSensorFunctionalityDto,
   ) {
-    const query = await this.deviceService.getAllSensors({});
+    const query = await this.deviceService.querySensors({});
     await this.emitGetAllSensorsMessage(query);
   }
 

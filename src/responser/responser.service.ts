@@ -69,7 +69,8 @@ export class ResponserService {
   }
 
   public async handleDiscoveryResponse(payload: DiscoveryResponseDto) {
-    const { deviceId, sensorData } = payload;
+    const { sensorData } = payload;
+    const { deviceId } = sensorData;
 
     const storedDevice = await this.sensorRepo.findOne({
       where: { deviceId },
@@ -85,7 +86,6 @@ export class ResponserService {
       try {
         const deviceRecord = this.sensorRepo.create({
           ...sensorData,
-          deviceId,
           provisionState: ProvisionState.DISCOVERED,
           isActuator: false,
           isDeleted: false,

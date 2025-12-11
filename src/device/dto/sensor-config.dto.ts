@@ -1,5 +1,5 @@
 import { DeviceLocationDto } from '@/device/dto/config-device-location.dto';
-import { LoggingConfigDto } from '@/device/dto/config-logging-config.dto';
+import { LoggingConfigDto } from '@/device/dto/config-logging.dto';
 import { NetworkConfigDto } from '@/device/dto/config-network.dto';
 import { OtaConfigDto } from '@/device/dto/config-ota.dto';
 import { ApiProperty } from '@nestjs/swagger';

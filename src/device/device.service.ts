@@ -30,6 +30,7 @@ import { Sensor } from './repository/sensor.entity';
 import { SensorConfig } from './repository/sensor-config.entity';
 import { SensorConfigDto } from './dto/sensor-config.dto';
 import { v4 as uuid } from 'uuid';
+import { User } from '@/users/entities/user.entity';
 @Injectable()
 export class DeviceService {
   private readonly ttl: number;
@@ -45,7 +46,19 @@ export class DeviceService {
   }
 
   private readonly logger = new Logger(DeviceService.name, { timestamp: true });
-  async getAllSensors(query: QueryDeviceDto): Promise<GetAllDevicesDto> {
+
+  async getAllSensors(): Promise<GetAllDevicesDto> {
+    const devices = await this.sensorRepo.find();
+
+    const result: GetAllDevicesDto = {
+      data: devices,
+      total: devices.length,
+    };
+
+    return result;
+  }
+
+  async querySensors(query: QueryDeviceDto): Promise<GetAllDevicesDto> {
     const { deviceId, provisionState, functionality } = query;
 
     // Build dynamic filter object: Mongo db doesn't support query builder
@@ -65,7 +78,7 @@ export class DeviceService {
     };
   }
 
-  async getSensor(deviceId: string): Promise<SensorDto> {
+  async getSingleSensor(deviceId: string): Promise<SensorDto> {
     const device = await this.sensorRepo.findOne({
       where: {
         deviceId,
@@ -93,65 +106,61 @@ export class DeviceService {
     this.redisCache.setex(key, Value, this.ttl);
   }
 
-  async discoverDevicesBroadcast(
-    discoverRequest: PublishDiscoveryBroadcastDto,
-  ) {
+  async discoverDevicesBroadcast(currentUser: User): Promise<void> {
     const broadcastTopic = await this.topicService.getBroadcastTopic();
 
-    const { isBroadcast, requestCode } = discoverRequest;
+    const payload: PublishDiscoveryBroadcastDto = {
+      isBroadcast: true,
+      userId: currentUser.userId,
+      requestId: uuid(),
+      requestCode: RequestMessageCode.REQUEST_DISCOVERY,
+      timestamp: Date.now(),
+    };
+    // cache the request id for validation with response id
+    await this.setCache(payload);
 
-    if (requestCode !== RequestMessageCode.REQUEST_DISCOVERY) {
-      throw new BadRequestException('Invalid request');
-    }
+    const topic = await this.topicService.storeTopic(
+      'Mqtt_Broker',
+      `${broadcastTopic.topic}/${TopicUseCase.DISCOVERY}`,
+      TopicUseCase.BROADCAST,
+    );
 
-    if (isBroadcast) {
-      const payload: PublishDiscoveryBroadcastDto = {
-        ...discoverRequest,
-        requestId: uuid(),
-      };
-      // cache the request id for validation with response id
-      await this.setCache(payload);
+    // Then publish message
+    await this.mqttService.publish(topic.topic, JSON.stringify(payload), {
+      qos: 0,
+      retain: false,
+    });
 
-      const topic = await this.topicService.storeTopic(
-        'Mqtt_Broker',
-        `${broadcastTopic.topic}/${TopicUseCase.DISCOVERY}`,
-        TopicUseCase.BROADCAST,
-      );
-
-      // Then publish message
-      await this.mqttService.publish(topic.topic, JSON.stringify(payload), {
-        qos: 0,
-        retain: false,
-      });
-
-      await this.mqttService.subscribe(topic.topic);
-      this.logger.debug(`Discovery broadcast sent successfully`);
-    }
+    await this.mqttService.subscribe(topic.topic);
+    this.logger.debug(`Discovery broadcast sent successfully`);
   }
 
-  async discoverDeviceUnicast(discoverRequest: PublishDiscoveryUnicastDto) {
-    const { isBroadcast, deviceId, requestCode } = discoverRequest;
+  async discoverDeviceUnicast(currentUser: User, deviceId: string) {
     const broadcastTopic = await this.topicService.getBroadcastTopic();
 
-    if (requestCode !== RequestMessageCode.REQUEST_DISCOVERY) {
-      throw new BadRequestException('Invalid request');
-    }
+    const payload: PublishDiscoveryUnicastDto = {
+      deviceId,
+      userId: currentUser.userId,
+      isBroadcast: false,
+      requestCode: RequestMessageCode.REQUEST_DISCOVERY,
+      requestId: uuid(),
+      timestamp: Date.now(),
+    };
 
-    if (deviceId && !isBroadcast) {
-      await this.setCache(discoverRequest);
+    await this.setCache(payload);
 
-      const { topic } = await this.topicService.storeTopic(
-        'Mqtt_Broker',
-        `${broadcastTopic}/${TopicUseCase.DISCOVERY}`,
-        TopicUseCase.BROADCAST,
-      );
+    const { topic } = await this.topicService.storeTopic(
+      'Mqtt_Broker',
+      `${broadcastTopic}/${TopicUseCase.DISCOVERY}`,
+      TopicUseCase.BROADCAST,
+    );
 
-      this.mqttService.publish(topic, JSON.stringify(discoverRequest), {
-        qos: 0,
-        retain: false,
-      });
-      await this.mqttService.subscribe(topic);
-    }
+    this.mqttService.publish(topic, JSON.stringify(payload), {
+      qos: 0,
+      retain: false,
+    });
+    await this.mqttService.subscribe(topic);
+
     this.logger.debug('Broadcast discovery request sent successfully');
   }
 
@@ -170,13 +179,7 @@ export class DeviceService {
     return sensors;
   }
 
-  async getHardwareStatus(statusRequest: publishHardwareStatusDto) {
-    const { deviceId, requestCode } = statusRequest;
-
-    if (requestCode !== RequestMessageCode.REQUEST_HARDWARE_METRICS) {
-      throw new BadRequestException('Invalid Request');
-    }
-
+  async getHardwareStatus(currentUser: User, deviceId: string) {
     const device = await this.sensorRepo.findOne({
       where: {
         deviceId: deviceId,
@@ -189,14 +192,22 @@ export class DeviceService {
     }
 
     try {
+      const payload: publishHardwareStatusDto = {
+        deviceId: device.deviceId,
+        userId: currentUser.userId,
+        requestId: uuid(),
+        requestCode: RequestMessageCode.REQUEST_HARDWARE_METRICS,
+        timestamp: Date.now(),
+      };
+
       const { topic } = await this.topicService.createTopic(
         deviceId,
         TopicUseCase.HARDWARE_STATUS,
       );
 
-      await this.setCache(statusRequest);
+      await this.setCache(payload);
 
-      await this.mqttService.publish(topic, JSON.stringify(statusRequest), {
+      await this.mqttService.publish(topic, JSON.stringify(payload), {
         qos: 1,
         retain: false,
       });
@@ -209,6 +220,7 @@ export class DeviceService {
   }
 
   async AssignDeviceFunction(
+    currentUser: User,
     provisionData: PublishSensorFunctionalityDto,
   ): Promise<string> {
     const { deviceId, functionality, requestCode } = provisionData;
@@ -222,10 +234,17 @@ export class DeviceService {
       TopicUseCase.ASSIGN_DEVICE_FUNCTION,
     );
 
-    // try {
     await this.validateSensorTypes(deviceId, functionality);
 
-    await this.setCache(provisionData);
+    const payload: PublishSensorFunctionalityDto = {
+      ...provisionData,
+      userId: currentUser.userId,
+      requestCode: RequestMessageCode.REQUEST_ASSIGN_DEVICE_FUNCTION,
+      requestId: uuid(),
+    };
+    // try {
+
+    await this.setCache(payload);
 
     await this.sensorRepo.update(
       { deviceId },
@@ -235,7 +254,7 @@ export class DeviceService {
       },
     );
 
-    this.mqttService.publish(topic, JSON.stringify(provisionData), {
+    this.mqttService.publish(topic, JSON.stringify(payload), {
       qos: 1,
       retain: false,
     });
@@ -324,6 +343,7 @@ export class DeviceService {
     if (!storedDevice) {
       throw new NotFoundException(`Device with id ${deviceId} not found`);
     }
+    // TODO: User validation using userid and add it to publish data
 
     const { topic } = await this.topicService.getDeviceTopicByUseCase(
       deviceId,

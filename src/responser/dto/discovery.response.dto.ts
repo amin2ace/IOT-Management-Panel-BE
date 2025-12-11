@@ -57,14 +57,6 @@ export class DiscoveryResponseDto {
   @IsString()
   requestId: string;
 
-  @ApiProperty({
-    description: 'Device ID that performed the diagnostic',
-    example: 'sensor-67890',
-  })
-  @IsString()
-  @IsNotEmpty()
-  deviceId: string;
-
   @ApiProperty()
   @IsBoolean()
   @IsNotEmpty()
@@ -99,7 +91,6 @@ export class DiscoveryResponseDto {
       "responseId": "discovery-resp-20241115-001",
       "responseCode": 200,
       "requestId": "req-discovery-79",
-      "deviceId": "esp32-sensor-67890",
       "isBroadcast": false,
       "timestamp": 1762379573804,
       "sensorData": {

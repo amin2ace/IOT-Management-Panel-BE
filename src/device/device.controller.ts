@@ -39,6 +39,8 @@ import { GetAllDevicesDto } from '@/device/dto/get-all-devices.dto';
 import { SensorConfigDto } from './dto/sensor-config.dto';
 import { SensorConfig } from './repository/sensor-config.entity';
 import { Sensor } from './repository/sensor.entity';
+import { CurrentUser } from '@/config/decorator/current-user.decorator';
+import { User } from '@/users/entities/user.entity';
 
 @ApiTags('Devices')
 @Controller('devices')
@@ -53,9 +55,9 @@ export class DeviceController {
   @ApiCookieAuth()
   @ApiResponse({ status: 200, description: 'List of devices' })
   async getAllSensors(
-    @Query() query: QueryDeviceDto,
+    @CurrentUser('userId') userId: string,
   ): Promise<GetAllDevicesDto> {
-    return await this.deviceService.getAllSensors(query);
+    return await this.deviceService.getAllSensors();
   }
 
   @Get(':id')
@@ -66,29 +68,54 @@ export class DeviceController {
   @ApiCookieAuth()
   @ApiResponse({ status: 200, description: "List device's information" })
   async getSingleSensor(@Param('id') deviceId: string): Promise<SensorDto> {
-    return await this.deviceService.getSensor(deviceId);
+    return await this.deviceService.getSingleSensor(deviceId);
+  }
+
+  @Get('query')
+  @Serialize(GetAllDevicesDto)
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Query devices' })
+  @ApiCookieAuth()
+  @ApiResponse({ status: 200, description: 'Query the list of devices' })
+  async querySensors(
+    @Query() query: QueryDeviceDto,
+  ): Promise<GetAllDevicesDto> {
+    return await this.deviceService.querySensors(query);
   }
 
   @Post('discover-broadcast')
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Discover devices via broadcast' })
+  @ApiResponse({
+    status: 201,
+    description: 'Discovery broadcast sent successfully',
+  })
   @ApiCookieAuth()
   async discoverDevicesBroadcast(
-    @Body() discoverRequest: PublishDiscoveryBroadcastDto,
+    @CurrentUser() currentUser: User,
   ): Promise<void> {
-    return await this.deviceService.discoverDevicesBroadcast(discoverRequest);
+    return await this.deviceService.discoverDevicesBroadcast(currentUser);
   }
 
-  @Post('discover-unicast')
+  @Post('discover-unicast/:id')
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Discover devices via unicast' })
+  @ApiResponse({
+    status: 201,
+    description: 'Discovery unicast sent successfully',
+  })
   @ApiCookieAuth()
   async discoverDeviceUnicast(
-    @Body() discoverRequest: PublishDiscoveryUnicastDto,
+    @CurrentUser() currentUser: User,
+    @Param('id') deviceId: string,
   ): Promise<void> {
-    return await this.deviceService.discoverDeviceUnicast(discoverRequest);
+    return await this.deviceService.discoverDeviceUnicast(
+      currentUser,
+      deviceId,
+    );
   }
 
   @Get('unassigned')
@@ -101,13 +128,16 @@ export class DeviceController {
     return await this.deviceService.getUnassignedSensor();
   }
 
-  @Post('hardware-status')
+  @Post('hardware-status/:id')
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get device hardware status' })
   @ApiCookieAuth()
-  async getHardwareStatus(@Body() statusRequest: publishHardwareStatusDto) {
-    return await this.deviceService.getHardwareStatus(statusRequest);
+  async getHardwareStatus(
+    @CurrentUser() currentUser: User,
+    @Param('id') deviceId: string,
+  ) {
+    return await this.deviceService.getHardwareStatus(currentUser, deviceId);
   }
 
   @Put('provision')
@@ -116,9 +146,10 @@ export class DeviceController {
   @ApiOperation({ summary: 'Provision device' })
   @ApiCookieAuth()
   async provisionDevice(
+    @CurrentUser() currentUser: User,
     @Body() body: PublishSensorFunctionalityDto,
   ): Promise<string> {
-    return await this.deviceService.AssignDeviceFunction(body);
+    return await this.deviceService.AssignDeviceFunction(currentUser, body);
   }
 
   @Delete(':id')
