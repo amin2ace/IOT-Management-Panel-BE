@@ -15,7 +15,7 @@ import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
 import { Protocol } from 'src/config/enum/protocol.enum';
-import { DeviceLocationDto } from './device-location.dto';
+import { DeviceLocationDto } from './config-device-location.dto';
 
 export class QuerySensorDto {
   @Expose()

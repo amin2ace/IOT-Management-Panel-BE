@@ -8,11 +8,11 @@ import { DeviceModule } from '@/device/device.module';
 import { MqttClientModule } from '@/mqtt-client/mqtt-client.module';
 import { TopicModule } from '@/topic/topic.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Sensor } from '@/device/repository/sensor.entity';
 import { Telemetry } from '@/device/repository/sensor-telemetry.entity';
 import { HardwareStatus } from '@/device/repository/hardware-status.entity';
 import { GatewayModule } from '@/gateway/gateway.module';
 import { SessionModule } from '@/session/session.module';
+import { Sensor } from '@/device/repository/sensor.entity';
 
 @Module({
   imports: [

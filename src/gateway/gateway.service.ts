@@ -25,10 +25,11 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { SensorFunctionAssignDto } from '@/device/dto/sensor-assign-type.dto';
+import { SensorFunctionAssignDto } from '@/device/dto/sensor-function-assign.dto';
 import { QuerySensorDto } from '@/device/dto/query-sensor.dto';
 import { DiscoveryResponseDto } from '@/responser/dto';
-import { GetAllDevicesResponseDto } from '@/device/dto/get-all-devices.response.dto';
+import { GetAllDevicesDto } from '@/device/dto/get-all-devices.dto';
+import { SensorDto } from '@/device/dto/sensor.dto';
 
 /**
  * MqttGatewayService
@@ -262,7 +263,7 @@ export class GatewayService
    *
    * @param result Array of unassigned devices
    */
-  public async emitQueryUnassignedDeviceMessage(result: QuerySensorDto[]) {
+  public async emitQueryUnassignedDeviceMessage(result: SensorDto[]) {
     try {
       // Emit WebSocket event for discovery
       this.server.emit('ws/message/unassinged/query/response', result);
@@ -278,7 +279,7 @@ export class GatewayService
    *
    * @param result Array of unassigned devices
    */
-  public async emitGetAllSensorsMessage(result: GetAllDevicesResponseDto) {
+  public async emitGetAllSensorsMessage(result: GetAllDevicesDto) {
     try {
       // Emit WebSocket event for discovery
       this.server.emit('ws/message/query/devices/all/response', result);

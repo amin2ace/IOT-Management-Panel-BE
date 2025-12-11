@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -9,7 +8,6 @@ import {
 import { QueryDeviceDto } from './dto/query-device.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Sensor } from './repository/sensor.entity';
 import { Repository } from 'typeorm';
 import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
@@ -25,18 +23,19 @@ import { RedisService } from 'src/redis/redis.service';
 import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 import { PublishTelemetryDto } from './dto/messages/Publish-telemetry.dto';
 import { publishHardwareStatusDto } from './dto/messages/publish-hardware-status';
-import { GetAllDevicesResponseDto } from './dto/get-all-devices.response.dto';
+import { GetAllDevicesDto } from './dto/get-all-devices.dto';
 import { SensorDto } from './dto/sensor.dto';
 import { ConfigService } from '@nestjs/config';
-import { QuerySensorDto } from './dto/query-sensor.dto';
-import PublishGetDeviceConfigDto from './dto/messages/publish-get-device-config.dto';
-import { PublishSetDeviceConfigDto } from './dto/messages/publish-set-device-config.dto';
-
+import { Sensor } from './repository/sensor.entity';
+import { SensorConfig } from './repository/sensor-config.entity';
+import { SensorConfigDto } from './dto/sensor-config.dto';
+import { v4 as uuid } from 'uuid';
 @Injectable()
 export class DeviceService {
   private readonly ttl: number;
   constructor(
-    @InjectRepository(Sensor) private readonly sensorRepo: Repository<Sensor>,
+    @InjectRepository(Sensor)
+    private readonly sensorRepo: Repository<Sensor>,
     private readonly mqttService: MqttClientService,
     private readonly topicService: TopicService,
     private readonly redisCache: RedisService,
@@ -46,9 +45,7 @@ export class DeviceService {
   }
 
   private readonly logger = new Logger(DeviceService.name, { timestamp: true });
-  async getAllSensors(
-    query: QueryDeviceDto,
-  ): Promise<GetAllDevicesResponseDto> {
+  async getAllSensors(query: QueryDeviceDto): Promise<GetAllDevicesDto> {
     const { deviceId, provisionState, functionality } = query;
 
     // Build dynamic filter object: Mongo db doesn't support query builder
@@ -56,7 +53,7 @@ export class DeviceService {
 
     if (deviceId) filter.deviceId = deviceId;
     if (provisionState) filter.provisionState = provisionState;
-    if (functionality) filter.functionality = functionality;
+    if (functionality) filter.assignedFunctionality = functionality;
 
     const devices = await this.sensorRepo.find({
       where: filter,
@@ -64,6 +61,7 @@ export class DeviceService {
 
     return {
       data: devices,
+      total: devices.length,
     };
   }
 
@@ -107,26 +105,24 @@ export class DeviceService {
     }
 
     if (isBroadcast) {
+      const payload: PublishDiscoveryBroadcastDto = {
+        ...discoverRequest,
+        requestId: uuid(),
+      };
       // cache the request id for validation with response id
-      await this.setCache(discoverRequest);
+      await this.setCache(payload);
 
       const topic = await this.topicService.storeTopic(
         'Mqtt_Broker',
         `${broadcastTopic.topic}/${TopicUseCase.DISCOVERY}`,
         TopicUseCase.BROADCAST,
       );
-      // console.log(topic);
 
       // Then publish message
-      // this.logger.log({ broadcastTopic });
-      await this.mqttService.publish(
-        topic.topic,
-        JSON.stringify(discoverRequest),
-        {
-          qos: 0,
-          retain: false,
-        },
-      );
+      await this.mqttService.publish(topic.topic, JSON.stringify(payload), {
+        qos: 0,
+        retain: false,
+      });
 
       await this.mqttService.subscribe(topic.topic);
       this.logger.debug(`Discovery broadcast sent successfully`);
@@ -159,7 +155,7 @@ export class DeviceService {
     this.logger.debug('Broadcast discovery request sent successfully');
   }
 
-  async getUnassignedSensor(): Promise<QuerySensorDto[]> {
+  async getUnassignedSensor(): Promise<Sensor[]> {
     const sensors = await this.sensorRepo.find({
       where: {
         provisionState: ProvisionState.DISCOVERED,
@@ -299,7 +295,7 @@ export class DeviceService {
     this.logger.log(`Sensor ${device.deviceId} deleted successfully`);
   }
 
-  async getDeviceConfiguration(deviceId: string) {
+  async getDeviceConfiguration(deviceId: string): Promise<SensorConfig> {
     const storedDevice = await this.sensorRepo.findOne({
       where: {
         deviceId,
@@ -307,28 +303,16 @@ export class DeviceService {
       },
     });
 
-    const { topic } = await this.topicService.getDeviceTopicByUseCase(
-      deviceId,
-      TopicUseCase.GET_SENSOR_CONFIGURATION,
-    );
+    if (!storedDevice) {
+      throw new NotFoundException('Device not Found');
+    }
+    const config = storedDevice.configuration;
 
-    const data: PublishGetDeviceConfigDto = {
-      deviceId,
-      requestCode: RequestMessageCode.REQUEST_GET_SENSOR_CONFIG,
-      timestamp: Date.now(),
-      userId: 'dfvdfv',
-      requestId: 'sdfgdf',
-    };
-
-    await this.mqttService.publish(topic, JSON.stringify(data), {
-      qos: 1,
-      retain: false,
-    });
+    return config;
   }
 
-  async setDeviceConfiguration(configData: PublishSetDeviceConfigDto) {
-    const { deviceId, requestCode } = configData;
-    if (requestCode != RequestMessageCode.REQUEST_SET_SENSOR_CONFIG) return;
+  async setDeviceConfiguration(configData: SensorConfigDto) {
+    const { deviceId } = configData;
 
     const storedDevice = await this.sensorRepo.findOne({
       where: {
@@ -350,6 +334,8 @@ export class DeviceService {
       qos: 1,
       retain: false,
     });
+
+    await this.sensorRepo.update({ deviceId }, { configuration: configData });
   }
 
   getDeviceHistory(id: string) {

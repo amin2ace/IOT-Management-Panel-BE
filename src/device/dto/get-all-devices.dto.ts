@@ -1,13 +1,15 @@
+import { SensorDto } from '@/device/dto/sensor.dto';
 import { ApiProperty } from '@nestjs/swagger';
+import { Expose } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsOptional, IsNumber } from 'class-validator';
-import { SensorDto } from './sensor.dto';
 
 /**
  * Get All Devices Response DTO
  * Used for serializing the response when fetching all devices/sensors
  * Includes array of devices and optional pagination metadata
  */
-export class GetAllDevicesResponseDto {
+export class GetAllDevicesDto {
+  @Expose()
   @ApiProperty({
     description: 'Array of device/sensor records',
     type: [SensorDto],
@@ -16,6 +18,7 @@ export class GetAllDevicesResponseDto {
   @IsNotEmpty()
   data: SensorDto[];
 
+  @Expose()
   @ApiProperty({
     description: 'Total number of devices in the system',
     example: 42,
@@ -24,6 +27,7 @@ export class GetAllDevicesResponseDto {
   @IsOptional()
   total?: number;
 
+  @Expose()
   @ApiProperty({
     description: 'Current page number (for pagination)',
     example: 1,
@@ -32,6 +36,7 @@ export class GetAllDevicesResponseDto {
   @IsOptional()
   page?: number;
 
+  @Expose()
   @ApiProperty({
     description: 'Number of devices per page',
     example: 10,
@@ -40,6 +45,7 @@ export class GetAllDevicesResponseDto {
   @IsOptional()
   limit?: number;
 
+  @Expose()
   @ApiProperty({
     description: 'Total number of pages',
     example: 5,
@@ -48,6 +54,7 @@ export class GetAllDevicesResponseDto {
   @IsOptional()
   totalPages?: number;
 
+  @Expose()
   @ApiProperty({
     description: 'Whether there are more pages available',
     example: false,

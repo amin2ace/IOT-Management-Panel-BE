@@ -20,7 +20,6 @@ import {
 import { DeviceService } from './device.service';
 import { QueryDeviceDto } from './dto/query-device.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
-import { Sensor } from './repository/sensor.entity';
 import {
   PublishDiscoveryBroadcastDto,
   PublishDiscoveryUnicastDto,
@@ -32,13 +31,14 @@ import { SessionAuthGuard } from '@/common/guard/session-auth.guard';
 import { RolesGuard } from '@/common/guard/roles.guard';
 import { Roles } from '@/config/decorator/roles.decorator';
 import { Role } from '@/config/types/roles.types';
-import { GetAllDevicesResponseDto } from './dto/get-all-devices.response.dto';
 import { SensorDto } from './dto/sensor.dto';
 import { Serialize } from '@/common';
 import { QuerySensorDto } from './dto/query-sensor.dto';
-import PublishGetDeviceConfigDto from './dto/messages/publish-get-device-config.dto';
 import { PublishSetDeviceConfigDto } from './dto/messages/publish-set-device-config.dto';
-import { SensorConfigDto } from '@/responser/dto';
+import { GetAllDevicesDto } from '@/device/dto/get-all-devices.dto';
+import { SensorConfigDto } from './dto/sensor-config.dto';
+import { SensorConfig } from './repository/sensor-config.entity';
+import { Sensor } from './repository/sensor.entity';
 
 @ApiTags('Devices')
 @Controller('devices')
@@ -46,6 +46,7 @@ export class DeviceController {
   constructor(private readonly deviceService: DeviceService) {}
 
   @Get('all')
+  @Serialize(GetAllDevicesDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get all devices' })
@@ -53,11 +54,12 @@ export class DeviceController {
   @ApiResponse({ status: 200, description: 'List of devices' })
   async getAllSensors(
     @Query() query: QueryDeviceDto,
-  ): Promise<GetAllDevicesResponseDto> {
+  ): Promise<GetAllDevicesDto> {
     return await this.deviceService.getAllSensors(query);
   }
 
   @Get(':id')
+  @Serialize(SensorDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get single device' })
@@ -74,7 +76,7 @@ export class DeviceController {
   @ApiCookieAuth()
   async discoverDevicesBroadcast(
     @Body() discoverRequest: PublishDiscoveryBroadcastDto,
-  ) {
+  ): Promise<void> {
     return await this.deviceService.discoverDevicesBroadcast(discoverRequest);
   }
 
@@ -85,17 +87,17 @@ export class DeviceController {
   @ApiCookieAuth()
   async discoverDeviceUnicast(
     @Body() discoverRequest: PublishDiscoveryUnicastDto,
-  ) {
+  ): Promise<void> {
     return await this.deviceService.discoverDeviceUnicast(discoverRequest);
   }
 
   @Get('unassigned')
-  @Serialize(QuerySensorDto)
+  @Serialize(SensorDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get unassigned devices' })
   @ApiCookieAuth()
-  async getUnassignedSensor(): Promise<QuerySensorDto[]> {
+  async getUnassignedSensor(): Promise<Sensor[]> {
     return await this.deviceService.getUnassignedSensor();
   }
 
@@ -135,7 +137,9 @@ export class DeviceController {
   @Roles(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get device configuration' })
   @ApiCookieAuth()
-  async getDeviceConfiguration(@Param('id') deviceId: string) {
+  async getDeviceConfiguration(
+    @Param('id') deviceId: string,
+  ): Promise<SensorConfig> {
     return await this.deviceService.getDeviceConfiguration(deviceId);
   }
 

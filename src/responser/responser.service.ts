@@ -24,20 +24,20 @@ import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import { UpgradeStatus } from 'src/config/enum/upgrade-status.enum';
 import { RebootStatus } from 'src/config/enum/reboot-status.enum';
 import { TopicService } from 'src/topic/topic.service';
-import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
 import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Sensor } from '@/device/repository/sensor.entity';
 import { HardwareStatus } from '@/device/repository/hardware-status.entity';
 import { Telemetry } from '@/device/repository/sensor-telemetry.entity';
 import { DeviceService } from '@/device/device.service';
 import { ResponseMessageCode } from '@/common';
 import { GatewayService } from '@/gateway/gateway.service';
+import { Sensor } from '@/device/repository/sensor.entity';
 
 @Injectable()
 export class ResponserService {
   constructor(
-    @InjectRepository(Sensor) private readonly sensorRepo: Repository<Sensor>,
+    @InjectRepository(Sensor)
+    private readonly sensorRepo: Repository<Sensor>,
     @InjectRepository(HardwareStatus)
     private readonly hardwareStatusRepo: Repository<HardwareStatus>,
 
@@ -69,28 +69,24 @@ export class ResponserService {
   }
 
   public async handleDiscoveryResponse(payload: DiscoveryResponseDto) {
-    const { deviceId, ...discoveredData } = payload;
+    const { deviceId, sensorData } = payload;
 
     const storedDevice = await this.sensorRepo.findOne({
-      where: { deviceId: deviceId },
+      where: { deviceId },
     });
 
     // try {
     if (storedDevice?.isDeleted) {
-      await this.sensorRepo.update(
-        { deviceId: deviceId },
-        { isDeleted: false },
-      );
+      await this.sensorRepo.update({ deviceId }, { isDeleted: false });
     }
     const { topic } = await this.topicService.createDeviceBaseTopic(deviceId);
 
     if (!storedDevice) {
       try {
         const deviceRecord = this.sensorRepo.create({
-          ...discoveredData,
-          deviceId: deviceId,
+          ...sensorData,
+          deviceId,
           provisionState: ProvisionState.DISCOVERED,
-          deviceBaseTopic: topic,
           isActuator: false,
           isDeleted: false,
         });
@@ -136,9 +132,7 @@ export class ResponserService {
     await this.deviceService.validateSensorTypes(deviceId, functionality);
 
     await this.sensorRepo.update(
-      {
-        deviceId: deviceId,
-      },
+      { deviceId },
       {
         assignedFunctionality: functionality,
         provisionState: ProvisionState.ASSIGNED,
@@ -163,9 +157,7 @@ export class ResponserService {
 
     if (status === UpgradeStatus.SUCCESS) {
       await this.sensorRepo.update(
-        {
-          deviceId: deviceId,
-        },
+        { deviceId },
         {
           lastUpgrade: new Date(timestamp),
         },
@@ -185,9 +177,7 @@ export class ResponserService {
     if (responseCode != ResponseMessageCode.RESPONSE_HEARTBEAT) return;
 
     const sensor = await this.sensorRepo.findOne({
-      where: {
-        deviceId: deviceId,
-      },
+      where: { deviceId },
     });
 
     if (!sensor) {
@@ -195,7 +185,7 @@ export class ResponserService {
     }
 
     await this.sensorRepo.update(
-      { deviceId: deviceId },
+      { deviceId },
       {
         connectionState,
       },
@@ -217,7 +207,7 @@ export class ResponserService {
     }
 
     await this.sensorRepo.update(
-      { deviceId: deviceId },
+      { deviceId },
       {
         lastReboot: new Date(timestamp),
       },

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, ValidateNested } from 'class-validator';
-import { DeviceLocationDto } from './device-location.dto';
+import { DeviceLocationDto } from './config-device-location.dto';
 import { Type } from 'class-transformer';
 
 export class TelemetryMetaDto {

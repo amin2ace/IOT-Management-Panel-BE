@@ -1,7 +1,7 @@
-import { DeviceLocationDto } from '@/device/dto/device-location.dto';
-import { LoggingConfigDto } from '@/device/dto/logging-config.dto';
-import { NetworkConfigDto } from '@/device/dto/network-config.dto';
-import { OtaConfigDto } from '@/device/dto/ota-config.dto';
+import { DeviceLocationDto } from '@/device/dto/config-device-location.dto';
+import { LoggingConfigDto } from '@/device/dto/config-logging-config.dto';
+import { NetworkConfigDto } from '@/device/dto/config-network.dto';
+import { OtaConfigDto } from '@/device/dto/config-ota.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -16,7 +16,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Protocol } from '@/config/enum/protocol.enum';
-import { ThresholdDto } from '@/device/dto/threshold.dto';
+import { ThresholdDto } from '@/device/dto/config-threshold.dto';
 
 export class SensorConfigDto {
   @ApiProperty({
@@ -27,16 +27,6 @@ export class SensorConfigDto {
   @IsString()
   @IsNotEmpty()
   deviceId: string; // Request from specific device
-
-  @ApiProperty({
-    description: 'Unique identifier of related controllers',
-    type: 'array',
-    example: ['controller-22', 'controller-55'],
-    required: false,
-  })
-  @IsArray()
-  @IsOptional()
-  controllersId?: string[];
 
   @ApiProperty({
     description: 'Device high and low set points',
@@ -136,4 +126,45 @@ export class SensorConfigDto {
 
 /**
   Example:
+    {
+      "deviceId": "esp32-env-sensor-001",
+      "threshold": {
+        "high": 35.0,
+        "low": 10.0,
+        "unit": "°C"
+      },
+      "baseTopic": "greenhouse/production/tomato-section/sensor/environment",
+      "network": {
+        "wifiSsid": "Greenhouse_WiFi_2.4G",
+        "wifiPassword": "SecurePassword123!",
+        "dhcp": false,
+        "ip": "192.168.1.150",
+        "subnetMask": "255.255.255.0",
+        "gateway": "192.168.1.1",
+        "dnsServer1": "192.168.1.1",
+        "dnsServer2": "8.8.8.8",
+        "accessPointSsid": "ESP32-Config-AP-001",
+        "accessPointPassword": "ConfigMode123"
+      },
+      "timezone": "Asia/Tehran",
+      "logging": {
+        "level": "INFO",
+        "enableSerial": true,
+        "buadrate": 115200,
+        "externalServer": "https://logs.company.com:8080"
+      },
+      "ota": {
+        "enabled": true,
+        "url": "https://ota-server.company.com/firmware/esp32-v2.5.1.bin",
+        "checkInterval": 3600000
+      },
+      "interval": 10000,
+      "location": {
+        "site": "greenhouse-main",
+        "floor": 1,
+        "unit": "tomato-section-a"
+      },
+      "protocol": "MQTT",
+      "configVersion": 3
+    }
  */

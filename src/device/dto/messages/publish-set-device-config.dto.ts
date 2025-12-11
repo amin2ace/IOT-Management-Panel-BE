@@ -1,11 +1,11 @@
 import { RequestMessageCode } from '@/common';
 import { Protocol } from '@/config/enum/protocol.enum';
-import { DeviceLocationDto } from '@/device/dto/device-location.dto';
-import { LoggingConfigDto } from '@/device/dto/logging-config.dto';
-import { NetworkConfigDto } from '@/device/dto/network-config.dto';
-import { OtaConfigDto } from '@/device/dto/ota-config.dto';
+import { DeviceLocationDto } from '@/device/dto/config-device-location.dto';
+import { LoggingConfigDto } from '@/device/dto/config-logging-config.dto';
+import { NetworkConfigDto } from '@/device/dto/config-network.dto';
+import { OtaConfigDto } from '@/device/dto/config-ota.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import {
   IsEnum,
   IsNotEmpty,
@@ -17,6 +17,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
+import { SensorConfigDto } from '../sensor-config.dto';
 
 export class PublishSetDeviceConfigDto {
   @ApiProperty({
@@ -59,103 +60,11 @@ export class PublishSetDeviceConfigDto {
   @IsNotEmpty()
   timestamp: number;
 
+  @Expose()
   @ApiProperty({
-    description: 'Base MQTT topic for the device',
-    example: 'greenHouse_jolfa/tomato-section/sensor/temperature',
+    description: 'Device configuration',
   })
-  @IsString()
-  @IsOptional()
-  baseTopic?: string; // like "greenHouse_jolfa/tomato-section/sensor/temperature"
-
-  @ApiProperty({ description: 'Network configuration', type: NetworkConfigDto })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => NetworkConfigDto)
-  network?: NetworkConfigDto;
-
-  @ApiProperty({
-    description: 'Device timezone',
-    required: false,
-    example: 'Asia/Tehran',
-  })
-  @IsOptional()
-  @IsTimeZone()
-  timezone?: string;
-
-  @ApiProperty({
-    description: 'Logging configuration',
-    required: false,
-    type: LoggingConfigDto,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => LoggingConfigDto)
-  logging?: LoggingConfigDto;
-
-  @ApiProperty({
-    description: 'OTA configuration',
-    required: false,
-    type: OtaConfigDto,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => OtaConfigDto)
-  ota?: OtaConfigDto;
-
-  @ApiProperty({
-    description: 'Data publishing interval in milliseconds',
-    example: 5000,
-  })
-  @IsOptional()
-  @IsNumber()
-  interval?: number; // e.g. 5000 for 5 seconds
-
-  @ApiProperty({
-    description: 'Device location',
-    required: false,
-    type: DeviceLocationDto,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => DeviceLocationDto)
-  location?: DeviceLocationDto;
-
-  @ApiProperty({
-    description: 'Protocol name to use',
-    required: false,
-    enum: Protocol,
-    enumName: 'Protocol',
-    example: Protocol.MQTT,
-  })
-  @IsOptional()
-  @IsEnum(Protocol)
-  protocol?: Protocol;
-
-  @ApiProperty()
-  @IsOptional()
-  @IsString()
-  apSsid?: string;
-
-  @ApiProperty()
-  @IsOptional()
-  @IsString()
-  @IsStrongPassword({
-    minLength: 8,
-    minLowercase: 0,
-    minNumbers: 0,
-    minSymbols: 0,
-    minUppercase: 0,
-  })
-  apPassword?: string; // TODO: Access point password policy
-
-  @ApiProperty({
-    description: 'Configuration version for update tracking',
-    required: false,
-    example: 1,
-  })
-  @IsOptional()
-  @IsNumber()
-  configVersion?: number;
+  configuration: SensorConfigDto;
 }
 
 /**
