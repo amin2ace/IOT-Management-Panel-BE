@@ -4,6 +4,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
+import { GlobalExceptionFilter } from './common/filter/global-exception-filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,6 +18,9 @@ async function bootstrap() {
       // transform: true, // transform payloads to DTO instances
     }),
   );
+
+  // Use global filters to avoid app crash
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Security middleware
   app.use(helmet());
