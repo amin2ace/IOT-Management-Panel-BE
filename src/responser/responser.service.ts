@@ -69,8 +69,10 @@ export class ResponserService {
   }
 
   public async handleDiscoveryResponse(payload: DiscoveryResponseDto) {
-    const { sensorData } = payload;
-    const { deviceId } = sensorData;
+    const {
+      sensorData,
+      sensorData: { deviceId },
+    } = payload;
 
     const storedDevice = await this.sensorRepo.findOne({
       where: { deviceId },
