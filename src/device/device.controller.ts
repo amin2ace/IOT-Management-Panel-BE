@@ -20,20 +20,14 @@ import {
 import { DeviceService } from './device.service';
 import { QueryDeviceDto } from './dto/query-device.dto';
 import { ControlDeviceDto } from './dto/control-device.dto';
-import {
-  PublishDiscoveryBroadcastDto,
-  PublishDiscoveryUnicastDto,
-  PublishSensorFunctionalityDto,
-} from './dto/messages';
+import { PublishSensorFunctionalityDto } from './dto/messages';
 import { PublishTelemetryDto } from './dto/messages/Publish-telemetry.dto';
-import { publishHardwareStatusDto } from './dto/messages/publish-hardware-status';
 import { SessionAuthGuard } from '@/common/guard/session-auth.guard';
 import { RolesGuard } from '@/common/guard/roles.guard';
 import { Roles } from '@/config/decorator/roles.decorator';
 import { Role } from '@/config/types/roles.types';
 import { SensorDto } from './dto/sensor.dto';
 import { Serialize } from '@/common';
-import { QuerySensorDto } from './dto/query-sensor.dto';
 import { PublishSetDeviceConfigDto } from './dto/messages/publish-set-device-config.dto';
 import { GetAllDevicesDto } from '@/device/dto/get-all-devices.dto';
 import { SensorConfigDto } from './dto/sensor-config.dto';
@@ -94,9 +88,9 @@ export class DeviceController {
   })
   @ApiCookieAuth()
   async discoverDevicesBroadcast(
-    @CurrentUser() currentUser: User,
+    @CurrentUser('userId') userId: string,
   ): Promise<void> {
-    return await this.deviceService.discoverDevicesBroadcast(currentUser);
+    return await this.deviceService.discoverDevicesBroadcast(userId);
   }
 
   @Post('discover-unicast/:id')
@@ -109,13 +103,10 @@ export class DeviceController {
   })
   @ApiCookieAuth()
   async discoverDeviceUnicast(
-    @CurrentUser() currentUser: User,
+    @CurrentUser('userId') userId: string,
     @Param('id') deviceId: string,
   ): Promise<void> {
-    return await this.deviceService.discoverDeviceUnicast(
-      currentUser,
-      deviceId,
-    );
+    return await this.deviceService.discoverDeviceUnicast(userId, deviceId);
   }
 
   @Get('unassigned')

@@ -12,8 +12,6 @@ import { Repository } from 'typeorm';
 import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import {
-  PublishDiscoveryBroadcastDto,
-  PublishDiscoveryUnicastDto,
   RequestMessageCode,
   PublishSensorFunctionalityDto,
 } from './dto/messages';
@@ -31,6 +29,8 @@ import { SensorConfig } from './repository/sensor-config.entity';
 import { SensorConfigDto } from './dto/sensor-config.dto';
 import { v4 as uuid } from 'uuid';
 import { User } from '@/users/entities/user.entity';
+import { PublishDiscoveryBroadcastDto } from './dto/messages/publish-discovery-broadcast.dto';
+import { PublishDiscoveryUnicastDto } from './dto/messages/publish-discovery-unicast.dto';
 @Injectable()
 export class DeviceService {
   private readonly ttl: number;
@@ -48,7 +48,14 @@ export class DeviceService {
   private readonly logger = new Logger(DeviceService.name, { timestamp: true });
 
   async getAllSensors(): Promise<GetAllDevicesDto> {
-    const devices = await this.sensorRepo.find();
+    const devices = await this.sensorRepo.find({
+      where: {
+        isDeleted: false,
+      },
+      relations: {
+        configuration: true,
+      },
+    });
 
     const result: GetAllDevicesDto = {
       data: devices,
@@ -106,12 +113,12 @@ export class DeviceService {
     this.redisCache.setex(key, Value, this.ttl);
   }
 
-  async discoverDevicesBroadcast(currentUser: User): Promise<void> {
+  async discoverDevicesBroadcast(userId: string): Promise<void> {
     const broadcastTopic = await this.topicService.getBroadcastTopic();
 
     const payload: PublishDiscoveryBroadcastDto = {
       isBroadcast: true,
-      userId: currentUser.userId,
+      userId: userId,
       requestId: uuid(),
       requestCode: RequestMessageCode.REQUEST_DISCOVERY,
       timestamp: Date.now(),
@@ -135,12 +142,12 @@ export class DeviceService {
     this.logger.debug(`Discovery broadcast sent successfully`);
   }
 
-  async discoverDeviceUnicast(currentUser: User, deviceId: string) {
+  async discoverDeviceUnicast(userId: string, deviceId: string) {
     const broadcastTopic = await this.topicService.getBroadcastTopic();
 
     const payload: PublishDiscoveryUnicastDto = {
       deviceId,
-      userId: currentUser.userId,
+      userId: userId,
       isBroadcast: false,
       requestCode: RequestMessageCode.REQUEST_DISCOVERY,
       requestId: uuid(),
