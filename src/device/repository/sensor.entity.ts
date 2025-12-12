@@ -3,9 +3,10 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Index,
+  JoinColumn,
   ObjectIdColumn,
   OneToOne,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { ProvisionState } from '@/config/enum/provision-state.enum';
@@ -16,66 +17,46 @@ import { SensorConfig } from './sensor-config.entity';
 // Main SensorConfig entity (embedded)
 @Entity('sensors')
 export class Sensor {
-  @ObjectIdColumn()
-  _id: ObjectId;
+  // @ObjectIdColumn()
+  // _id: ObjectId;
 
   // ============ Identification & Basic Info ============
-  @Column()
-  @Index({ unique: true })
+  @PrimaryGeneratedColumn()
   deviceId: string;
 
   @Column()
-  @Index()
   deviceHardware: string;
 
   // ============ Capabilities & Functionality ============
-  @Column({ type: 'enum', enum: DeviceCapabilities, array: true })
+  @Column()
   capabilities: DeviceCapabilities[];
 
-  @Column({ type: 'array', nullable: true })
-  @Index()
+  @Column({ nullable: true })
   controllers?: string[];
 
-  @Column({
-    type: 'enum',
-    enum: DeviceCapabilities,
-    array: true,
-    nullable: true,
-  })
+  @Column({ nullable: true })
   assignedFunctionality?: DeviceCapabilities[];
 
-  @Column({
-    type: 'enum',
-    enum: ProvisionState,
-    default: ProvisionState.DISCOVERED,
-  })
-  @Index()
+  @Column()
   provisionState: ProvisionState;
 
-  @Column({
-    type: 'enum',
-    enum: ConnectionState,
-    default: ConnectionState.OFFLINE,
-  })
-  @Index()
+  @Column()
   connectionState: ConnectionState;
 
   @Column({ default: false })
   isActuator: boolean;
 
   @Column({ default: false })
-  @Index()
   hasError: boolean;
 
   @Column({ nullable: true })
   errorMessage?: string;
 
   // ============ Measurements ============
-  @Column({ type: 'float', nullable: true })
+  @Column({ nullable: true })
   lastValue?: number;
 
-  @Column({ type: 'bigint', nullable: true })
-  @Index()
+  @Column({ nullable: true })
   lastValueAt?: number;
 
   // ============ Device Information ============
@@ -87,27 +68,30 @@ export class Sensor {
 
   // ============ System Fields ============
   @Column({ default: false })
-  @Index()
   isDeleted: boolean;
 
   @Column({ default: true })
-  @Index()
   isActive: boolean = true;
 
   // ============ Maintenance & Updates ============
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ nullable: true })
   lastReboot?: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ nullable: true })
   lastUpgrade?: Date;
 
   @CreateDateColumn()
-  @Index()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToOne(() => SensorConfig, (config) => config.deviceId)
+  // Sensor entity
+  @OneToOne(() => SensorConfig, {
+    cascade: true,
+    eager: true,
+    createForeignKeyConstraints: false,
+  })
+  @JoinColumn()
   configuration: SensorConfig;
 }

@@ -7,8 +7,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  Index,
   OneToOne,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { MeasurementUnit } from '@/config/enum/measurement-unit.enum';
 import { Sensor } from './sensor.entity';
@@ -47,17 +47,13 @@ class NetworkConfigEntity {
 }
 
 class LoggingConfigEntity {
-  @Column({
-    type: 'enum',
-    enum: LogLevel,
-    default: LogLevel.INFO,
-  })
+  @Column()
   level: LogLevel = LogLevel.INFO;
 
   @Column({ default: false })
   enableSerial: boolean = false;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ nullable: true })
   baudrate?: number;
 
   @Column({ nullable: true })
@@ -71,7 +67,7 @@ class OtaConfigEntity {
   @Column({ nullable: true })
   url?: string;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ nullable: true })
   checkInterval?: number;
 }
 
@@ -79,7 +75,7 @@ class DeviceLocationEntity {
   @Column({ nullable: true })
   site?: string;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ nullable: true })
   floor?: number;
 
   @Column({ nullable: true })
@@ -87,36 +83,28 @@ class DeviceLocationEntity {
 }
 
 class ThresholdEntity {
-  @Column({ type: 'float' })
+  @Column()
   high: number;
 
-  @Column({ type: 'float' })
+  @Column()
   low: number;
 
-  @Column({
-    nullable: true,
-    type: 'enum',
-    enum: MeasurementUnit,
-    default: MeasurementUnit.CELSIUS,
-  })
+  @Column({ nullable: true })
   unit?: MeasurementUnit;
 }
 
 @Entity('config')
 export class SensorConfig {
-  @ObjectIdColumn()
-  _id: ObjectId;
+  // @ObjectIdColumn()
+  // _id: ObjectId;
 
-  @Column()
-  @Index()
+  @PrimaryGeneratedColumn()
   deviceId: string;
 
   @Column({ nullable: true })
-  @Index()
   controllerId?: string;
 
-  @Column({ type: 'bigint' })
-  @Index()
+  @Column()
   timestamp: number;
 
   @Column({ nullable: true })
@@ -134,7 +122,7 @@ export class SensorConfig {
   @Column(() => OtaConfigEntity)
   ota?: OtaConfigEntity;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ nullable: true })
   interval?: number;
 
   @Column(() => DeviceLocationEntity)
@@ -143,17 +131,13 @@ export class SensorConfig {
   @Column(() => ThresholdEntity)
   threshold?: ThresholdEntity;
 
-  @Column({
-    type: 'enum',
-    enum: Protocol,
-    default: Protocol.MQTT,
-  })
+  @Column()
   protocol: Protocol = Protocol.MQTT;
 
-  @Column({ type: 'int', default: 1 })
+  @Column({ default: 1 })
   configVersion: number = 1;
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ nullable: true })
   customSettings?: Record<string, any>;
 
   @CreateDateColumn()
@@ -164,7 +148,4 @@ export class SensorConfig {
 
   @Column({ default: true })
   isActive: boolean = true;
-
-  @OneToOne(() => Sensor, (sensor) => sensor.deviceId)
-  sensor: Sensor;
 }
