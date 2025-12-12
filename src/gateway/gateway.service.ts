@@ -12,8 +12,6 @@ import { IncomeMessageDto, MessageFormat } from './dto/message-income.dto';
 import { SensorDataDto, DataQuality } from './dto/sensor-data.dto';
 import { DeviceService } from '@/device/device.service';
 import {
-  PublishDiscoveryBroadcastDto,
-  PublishDiscoveryUnicastDto,
   RequestMessageCode,
   PublishSensorFunctionalityDto,
 } from '@/device/dto/messages';
@@ -25,8 +23,6 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { SensorFunctionAssignDto } from '@/device/dto/sensor-function-assign.dto';
-import { QuerySensorDto } from '@/device/dto/query-sensor.dto';
 import { DiscoveryResponseDto } from '@/responser/dto';
 import { GetAllDevicesDto } from '@/device/dto/get-all-devices.dto';
 import { SensorDto } from '@/device/dto/sensor.dto';
@@ -126,21 +122,19 @@ export class GatewayService
   // UI ---> Web Socket Gateway ---> MQTT Broker
   @SubscribeMessage('react/message/discovery/broadcast/request')
   private async handleDiscoveryBroadcast(
-    @CurrentUser() user: User,
     client: Socket,
-    payload: PublishDiscoveryBroadcastDto,
+    payload: { userId: string; timeStamp: number },
   ) {
-    await this.deviceService.discoverDevicesBroadcast(user);
+    await this.deviceService.discoverDevicesBroadcast(payload.userId);
   }
 
   @SubscribeMessage('react/message/discovery/unicast/request')
   private async handleDiscoveryUnicast(
-    @CurrentUser() currentUser: User,
     client: Socket,
-    deviceId: string,
+    payload: { userId: string; deviceId: string; timeStamp: number },
   ) {
-    this.logger.log(deviceId);
-    await this.deviceService.discoverDeviceUnicast(currentUser, deviceId);
+    const { deviceId, userId } = payload;
+    await this.deviceService.discoverDeviceUnicast(userId, deviceId);
   }
 
   @SubscribeMessage('react/message/device/query/unassinged/request')
@@ -172,8 +166,8 @@ export class GatewayService
     client: Socket,
     payload: PublishSensorFunctionalityDto,
   ) {
-    const query = await this.deviceService.querySensors({});
-    await this.emitGetAllSensorsMessage(query);
+    const result = await this.deviceService.getAllSensors();
+    await this.emitGetAllSensorsMessage(result);
   }
 
   /**
@@ -287,6 +281,7 @@ export class GatewayService
   public async emitGetAllSensorsMessage(result: GetAllDevicesDto) {
     try {
       // Emit WebSocket event for discovery
+      console.log(result);
       this.server.emit('ws/message/query/devices/all/response', result);
 
       this.logger.log(`Devices query message passed to react`);
