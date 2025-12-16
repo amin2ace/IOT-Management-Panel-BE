@@ -15,6 +15,9 @@ import { Sensor } from './sensor.entity';
 
 // Embedded classes
 class NetworkConfigEntity {
+  @Column()
+  macAddress?: string;
+
   @Column({ nullable: true })
   wifiSsid?: string;
 
@@ -95,10 +98,10 @@ class ThresholdEntity {
 
 @Entity('config')
 export class SensorConfig {
-  // @ObjectIdColumn()
-  // _id: ObjectId;
+  @ObjectIdColumn()
+  _id: ObjectId;
 
-  @PrimaryGeneratedColumn()
+  @Column()
   deviceId: string;
 
   @Column({ nullable: true })
@@ -136,9 +139,6 @@ export class SensorConfig {
 
   @Column({ default: 1 })
   configVersion: number = 1;
-
-  @Column({ nullable: true })
-  customSettings?: Record<string, any>;
 
   @CreateDateColumn()
   createdAt: Date;

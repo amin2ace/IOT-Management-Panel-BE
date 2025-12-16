@@ -18,7 +18,7 @@ export class NetworkConfigDto {
   })
   @IsOptional()
   @IsString()
-  mac?: string;
+  macAddress?: string;
 
   @ApiProperty({ description: 'WiFi SSID' })
   @IsString()
@@ -53,7 +53,7 @@ export class NetworkConfigDto {
     required: false,
     example: '255.255.255.0',
   })
-  @IsSubnetMask({ message: 'Invalid subnet mask' })
+  // @IsSubnetMask({ message: 'Invalid subnet mask' })
   @IsOptional()
   subnetMask?: string;
 

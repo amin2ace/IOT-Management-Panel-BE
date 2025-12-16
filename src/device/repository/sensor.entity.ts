@@ -17,11 +17,11 @@ import { SensorConfig } from './sensor-config.entity';
 // Main SensorConfig entity (embedded)
 @Entity('sensors')
 export class Sensor {
-  // @ObjectIdColumn()
-  // _id: ObjectId;
+  @ObjectIdColumn()
+  _id: ObjectId;
 
   // ============ Identification & Basic Info ============
-  @PrimaryGeneratedColumn()
+  @Column()
   deviceId: string;
 
   @Column()
@@ -87,7 +87,7 @@ export class Sensor {
   updatedAt: Date;
 
   // Sensor entity
-  @OneToOne(() => SensorConfig, {
+  @OneToOne((type) => SensorConfig, {
     cascade: true,
     eager: true,
     createForeignKeyConstraints: false,
