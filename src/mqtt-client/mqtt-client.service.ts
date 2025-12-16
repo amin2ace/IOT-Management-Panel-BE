@@ -147,7 +147,14 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
           'Mqtt_Broker',
           TopicUseCase.BROADCAST,
         );
-        await this.subscribe(broadcastTopic.topic);
+        const storedTopics = (
+          await this.topicService.getAllSubscribedTopics()
+        ).map((topic) => topic.topic);
+        if (!storedTopics) {
+          await this.subscribe(broadcastTopic.topic);
+        }
+
+        await this.subscribe([...storedTopics, broadcastTopic.topic]);
         this.eventEmitter.emit('mqtt/event/connected', {
           broker,
           status: true,
@@ -232,7 +239,7 @@ export class MqttClientService implements OnModuleInit, OnModuleDestroy {
 
     try {
       await this.mqtt.subscribe(topics);
-      this.logger.debug(`Subscribed to ${topics}`);
+      this.logger.debug(`Subscribed to ${topics}\n`);
       return {
         success: true,
         topics,
