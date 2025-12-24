@@ -31,13 +31,14 @@ import { Serialize } from '@/common/decorator/serialize.decorator';
 import type { Request, Response } from 'express';
 import { RolesResponseDto } from './dto/roles-response.dto';
 import { plainToInstance } from 'class-transformer';
+import { CurrentUser } from '@/config/decorator/current-user.decorator';
 
 @ApiTags('Users')
 @Controller('/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
+  @Post('/create')
   @Serialize(UserResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
@@ -54,7 +55,7 @@ export class UsersController {
     return await this.usersService.createUserManually(createUserDto);
   }
 
-  @Get()
+  @Get('/all')
   @Serialize(UserResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
@@ -66,7 +67,7 @@ export class UsersController {
     return await this.usersService.findAllUsers();
   }
 
-  @Get(':id')
+  @Get('/find/:id')
   @Serialize(UserResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
@@ -82,24 +83,17 @@ export class UsersController {
     return await this.usersService.findUserById(id);
   }
 
-  @Get('profile')
-  // @Serialize(UserResponseDto)
+  @Get('/profile/get')
+  @Serialize(UserResponseDto)
   @UseGuards(SessionAuthGuard)
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiCookieAuth()
-  @ApiResponse({
-    status: 200,
-    description: 'User profile',
-    // type: UserResponseDto,
-  })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async getUserProfile(@Req() req: Request) {
-    const userId = req['user'];
-    console.log({ req });
+  async getUserProfile(@CurrentUser('userId') userId: string) {
     return await this.usersService.findUserById(userId);
   }
 
-  @Patch('profile')
+  @Patch('/profile/update')
   @Serialize(UserResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.ENGINEER, Role.TEST, Role.VIEWER)
@@ -119,7 +113,7 @@ export class UsersController {
     return await this.usersService.updateUser(userId, userData);
   }
 
-  @Patch(':id')
+  @Patch('/update/:id')
   @Serialize(UserResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
@@ -131,11 +125,14 @@ export class UsersController {
     type: UserResponseDto,
   })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  async updateUser(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     return await this.usersService.updateUser(id, updateUserDto);
   }
 
-  @Delete(':id')
+  @Delete('/delete/:id')
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
   @ApiOperation({ summary: 'Delete user (SuperAdmin only)' })
@@ -146,7 +143,7 @@ export class UsersController {
     return await this.usersService.deleteUser(id);
   }
 
-  @Patch(':id/roles')
+  @Patch('/roles/update/:id')
   @Serialize(RolesResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
@@ -178,7 +175,7 @@ export class UsersController {
    * Get user roles (Admin+)
    * Returns the list of roles assigned to a specific user
    */
-  @Get(':id/roles')
+  @Get('/roles/get/:id')
   @Serialize(RolesResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
@@ -211,7 +208,7 @@ export class UsersController {
    * Add roles to user (SuperAdmin only)
    * Appends new roles to the user's existing roles without removing others
    */
-  @Post(':id/roles/add')
+  @Post('/roles/add/:id')
   @Serialize(RolesResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
@@ -245,7 +242,7 @@ export class UsersController {
    * Remove roles from user (SuperAdmin only)
    * Removes specified roles from the user, ensuring at least one role remains
    */
-  @Post(':id/roles/remove')
+  @Post('/roles/remove/:id')
   @Serialize(RolesResponseDto)
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
