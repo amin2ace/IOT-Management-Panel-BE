@@ -79,7 +79,7 @@ export class SessionAuthGuard implements CanActivate {
       // Attach user data to request for use in controllers
       (request as any).user = {
         userId: sessionData.userId,
-        userName: sessionData.username,
+        username: sessionData.username,
         roles: sessionData.roles,
         loginTime: sessionData.loginTime,
         lastActivity: sessionData.lastActivity,
