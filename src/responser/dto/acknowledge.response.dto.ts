@@ -1,54 +1,34 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsDate,
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsString,
-} from 'class-validator';
-import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
-import { ResponseMessageCode } from '../../common/enum/response-message-code.enum';
+import {
+  DeviceIdProperty,
+  RequestIdProperty,
+  RequiredStringApiProperty,
+  ResponseCodeProperty,
+  ResponseIdProperty,
+  TimeStampProperty,
+  UserIdProperty,
+} from '@/common/decorator/api-properties';
 
 export class AckResponseDto {
-  @ApiProperty({
-    description: 'Unique identifier of the user who initiated the request',
-    example: 'user-001',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @UserIdProperty()
   userId: string;
 
-  @ApiProperty({
-    description: 'Unique identifier for the response',
-    example: 'res-12346',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @ResponseIdProperty()
   responseId: string;
 
-  @ApiProperty({
-    description: 'Numeric code representing the response type',
-    example: ResponseMessageCode.RESPONSE_SET_SENSOR_CONFIG,
-  })
-  @IsNumber()
-  @IsNotEmpty()
+  @ResponseCodeProperty()
   responseCode: number; // Request Message Code
 
-  @ApiProperty({
-    description: 'Unique identifier for requested message',
-    example: 'req-12345',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @RequestIdProperty()
   requestId: string; //"assign-20251104-0002",
 
-  @ApiProperty({
-    description: 'Unique identifier of the sensor',
-    example: 'sensor-67890',
-  })
-  @IsString()
+  @DeviceIdProperty()
   deviceId: string; // Request from specific device
+
+  @TimeStampProperty()
+  timestamp: number;
 
   @ApiProperty({
     description: 'The acknowledgement state of the request',
@@ -60,20 +40,11 @@ export class AckResponseDto {
   @IsNotEmpty()
   ackStatus: AckStatus; //"ACCEPTED",
 
-  @ApiProperty({
-    description: 'Time of the request in epoch milli second',
-    example: '1762379573804',
-  })
-  @IsValidTimestampMillis() // 5min behind, 30sec ahead
-  timestamp: number;
-
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'Response message',
     example:
       'assigned TEMPERATURE, publishing to sensors/client-123/temperature/sensor-001',
   })
-  @IsString()
-  @IsNotEmpty()
   details: string; //"assigned TEMPERATURE, publishing to sensors/client-123/temperature/sensor-001"
 }
 

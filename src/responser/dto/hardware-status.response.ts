@@ -1,90 +1,57 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
-import { ResponseMessageCode } from '../../common/enum/response-message-code.enum';
-
+import {
+  DeviceIdProperty,
+  RequestIdProperty,
+  RequiredNumberApiProperty,
+  ResponseCodeProperty,
+  ResponseIdProperty,
+  TimeStampProperty,
+  UserIdProperty,
+} from '@/common/decorator/api-properties';
 export class HardwareStatusResponseDto {
-  @ApiProperty({
-    description: 'Unique identifier of the user who initiated the request',
-    example: 'user-001',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @UserIdProperty()
   userId: string;
 
-  @ApiProperty({
-    description: 'Unique identifier for the response',
-    example: 'fw-20251104-status',
-  })
-  @IsNotEmpty()
-  @IsString()
+  @ResponseIdProperty()
   responseId: string;
 
-  @ApiProperty({
-    description: 'Response code from the device or system',
-    example: ResponseMessageCode.RESPONSE_HARDWARE_METRICS,
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  responseCode: number;
+  @ResponseCodeProperty()
+  responseCode: number; // Request Message Code
 
-  @ApiProperty({
-    description: 'Unique identifier for the request',
-    example: 'req-hs-35',
-  })
-  @IsNotEmpty()
-  @IsString()
-  requestId: string;
+  @RequestIdProperty()
+  requestId: string; //"assign-20251104-0002",
 
-  @ApiProperty({
-    description: 'Device ID that performed the diagnostic',
-    example: 'sensor-67890',
-  })
-  @IsString()
-  @IsNotEmpty()
-  deviceId: string;
+  @DeviceIdProperty()
+  deviceId: string; // Request from specific device
 
-  @ApiProperty({
+  @TimeStampProperty()
+  timestamp: number;
+
+  @RequiredNumberApiProperty({
     description: 'Memory usage in KB',
     example: '232500',
   })
-  @IsNumber()
-  @IsNotEmpty()
   memoryUsage: number;
 
-  @ApiProperty({
+  @RequiredNumberApiProperty({
     description: 'CPU usage in percent',
     example: '32',
   })
-  @IsNumber()
-  @IsNotEmpty()
   cpuUsage: number;
 
   @IsValidEpochMillis({ message: 'Uptime must be valid epoch milliseconds' })
   uptime: number;
 
-  @ApiProperty({
-    description: 'Time of the request in epoch milli second',
-    example: '1762379573804',
-  })
-  @IsValidTimestampMillis() // 5min behind, 30sec ahead
-  timestamp: number;
-
-  @ApiProperty({
+  @RequiredNumberApiProperty({
     description: 'Hardware internal temperature in celcius degree',
     example: '78',
   })
-  @IsNumber()
-  @IsNotEmpty()
   internalTemp: number;
 
-  @ApiProperty({
+  @RequiredNumberApiProperty({
     description: 'Wifi Received Signal Strength Indicator',
     example: '-52',
   })
-  @IsString()
-  @IsNotEmpty()
   wifiRssi: number;
 }
 

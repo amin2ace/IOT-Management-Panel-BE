@@ -1,56 +1,32 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNumber,
-  IsArray,
-  IsNotEmpty,
-  IsBoolean,
-  IsEnum,
-} from 'class-validator';
+import { IsArray, IsNotEmpty, IsEnum } from 'class-validator';
 import { AckStatus } from 'src/config/enum/ack-status.enum';
 import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
-import { ResponseMessageCode } from '../../common/enum/response-message-code.enum';
-
+import {
+  DeviceIdProperty,
+  RequestIdProperty,
+  ResponseCodeProperty,
+  ResponseIdProperty,
+  UserIdProperty,
+} from '@/common/decorator/api-properties';
 export class SensorFunctionalityResponseDto {
-  @ApiProperty({
-    description: 'Unique identifier of the user who initiated the request',
-    example: 'user-001',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @UserIdProperty()
   userId: string;
 
-  @ApiProperty({
-    description: 'Unique identifier for the response',
-    example: 'fw-20251104-status',
-  })
-  @IsNotEmpty()
-  @IsString()
+  @ResponseIdProperty()
   responseId: string;
 
-  @ApiProperty({
-    description: 'Response code from the device or system',
-    example: ResponseMessageCode.RESPONSE_ASSIGN_DEVICE_FUNCTION,
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  responseCode: number;
+  @ResponseCodeProperty()
+  responseCode: number; // Request Message Code
 
-  @ApiProperty({
-    description: 'Unique identifier for the request',
-    example: 'req-sf-39',
-  })
-  @IsNotEmpty()
-  @IsString()
-  requestId: string;
+  @RequestIdProperty()
+  requestId: string; //"assign-20251104-0002",
 
-  @ApiProperty({
-    description: 'Device ID that performed the diagnostic',
-    example: 'sensor-67890',
-  })
-  @IsString()
-  @IsNotEmpty()
-  deviceId: string;
+  @DeviceIdProperty()
+  deviceId: string; // Request from specific device
+
+  // @IsTimeStampProperty()
+  // timestamp: number;
 
   @ApiProperty({
     description: 'Provisioned functionalities',

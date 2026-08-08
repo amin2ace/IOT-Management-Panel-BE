@@ -1,74 +1,44 @@
-import {
-  IsString,
-  IsOptional,
-  IsObject,
-  IsNotEmpty,
-  IsNumber,
-  IsBoolean,
-} from 'class-validator';
+import { IsOptional, IsObject, IsNotEmpty, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
-import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { ResponseMessageCode } from '../../common/enum/response-message-code.enum';
-import { SensorDto } from '@/device/dto/sensor.dto';
+import { SensorDto } from '@/device/dto/configure/sensor.dto';
 
+import {
+  OptionalStringApiProperty,
+  RequestIdProperty,
+  ResponseCodeProperty,
+  ResponseIdProperty,
+  TimeStampProperty,
+  UserIdProperty,
+} from '@/common/decorator/api-properties';
 export class AdditionalInfoDto {
-  @ApiProperty()
-  @IsOptional()
-  @IsString()
+  @OptionalStringApiProperty()
   manufacturer?: string;
 
-  @ApiProperty()
-  @IsOptional()
-  @IsString()
+  @OptionalStringApiProperty()
   model?: string;
 }
 
 export class DiscoveryResponseDto {
-  @ApiProperty({
-    description: 'Unique identifier of the user who initiated the request',
-    example: 'user-001',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @UserIdProperty()
   userId: string;
 
-  @ApiProperty({
-    description: 'Unique identifier for the response',
-    example: 'fw-20251104-status',
-  })
-  @IsNotEmpty()
-  @IsString()
+  @ResponseIdProperty()
   responseId: string;
 
-  @ApiProperty({
-    description: 'Response code from the device or system',
-    example: ResponseMessageCode.RESPONSE_DISCOVERY,
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  responseCode: number;
+  @ResponseCodeProperty()
+  responseCode: number; // Request Message Code
 
-  @ApiProperty({
-    description: 'Unique identifier for the request',
-    example: 'req-d-79',
-  })
-  @IsNotEmpty()
-  @IsString()
-  requestId: string;
+  @RequestIdProperty()
+  requestId: string; //"assign-20251104-0002",
+
+  @TimeStampProperty()
+  timestamp: number;
 
   @ApiProperty()
   @IsBoolean()
   @IsNotEmpty()
   isBroadcast: boolean;
-
-  @ApiProperty({
-    description: 'Time of diagnostic completion in epoch milliseconds',
-    example: 1762379573804,
-  })
-  @IsValidTimestampMillis()
-  @IsNotEmpty()
-  timestamp: number;
 
   @ApiProperty()
   @IsOptional()

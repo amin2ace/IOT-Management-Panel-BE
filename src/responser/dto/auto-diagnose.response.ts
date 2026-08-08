@@ -1,19 +1,19 @@
 // src/device/dto/auto-diagnostic-response.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNotEmpty,
-  IsNumber,
-  IsEnum,
-  IsArray,
-  IsOptional,
-  ValidateNested,
-} from 'class-validator';
+import { IsEnum, IsArray, IsOptional, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { DiagnosticComponent } from 'src/config/enum/diagnostic-component.enum';
-import { IsValidEpochMillis } from 'src/config/decorator/uptime-validation.decorator';
 import { DiagnosticLevel } from 'src/config/enum/diagnostic-Level.enum';
-import { ResponseMessageCode } from '../../common/enum/response-message-code.enum';
+
+import {
+  DeviceIdProperty,
+  OptionalStringApiProperty,
+  RequestIdProperty,
+  ResponseCodeProperty,
+  ResponseIdProperty,
+  TimeStampProperty,
+  UserIdProperty,
+} from '@/common/decorator/api-properties';
 
 export enum DiagnosticStatus {
   SUCCESS = 'success',
@@ -33,62 +33,30 @@ export class ComponentDiagnosticResultDto {
   @IsEnum(DiagnosticStatus)
   status: DiagnosticStatus;
 
-  @ApiProperty({
+  @OptionalStringApiProperty({
     description: 'Optional details or error messages',
     required: false,
   })
-  @IsOptional()
-  @IsString()
   details?: string;
 }
 
 export class AutoDiagnosticResponseDto {
-  @ApiProperty({
-    description: 'Unique identifier of the user who initiated the request',
-    example: 'user-001',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @UserIdProperty()
   userId: string;
 
-  @ApiProperty({
-    description: 'Unique identifier for the response',
-    example: 'fw-20251104-status',
-  })
-  @IsNotEmpty()
-  @IsString()
+  @ResponseIdProperty()
   responseId: string;
 
-  @ApiProperty({
-    description: 'Response code from the device or system',
-    example: ResponseMessageCode.RESPONSE_AUTO_DIAGNOSTIC,
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  responseCode: number;
+  @ResponseCodeProperty()
+  responseCode: number; // Request Message Code
 
-  @ApiProperty({
-    description: 'Unique identifier for the request',
-    example: 'req-ad-852',
-  })
-  @IsNotEmpty()
-  @IsString()
-  requestId: string;
+  @RequestIdProperty()
+  requestId: string; //"assign-20251104-0002",
 
-  @ApiProperty({
-    description: 'Device ID that performed the diagnostic',
-    example: 'sensor-67890',
-  })
-  @IsString()
-  @IsNotEmpty()
-  deviceId: string;
+  @DeviceIdProperty()
+  deviceId: string; // Request from specific device
 
-  @ApiProperty({
-    description: 'Time of diagnostic completion in epoch milliseconds',
-    example: 1762379573804,
-  })
-  @IsValidEpochMillis()
-  @IsNotEmpty()
+  @TimeStampProperty()
   timestamp: number;
 
   @ApiProperty({
