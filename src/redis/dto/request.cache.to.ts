@@ -1,29 +1,25 @@
 import { RequestMessageCode } from '@/common';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  RequiredNumberApiProperty,
+  RequiredStringApiProperty,
+} from '@/common/decorator/api-properties';
 
 export class RequestCacheDto {
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'Unique identifier of the user who initiated the request',
     example: 'user-001',
   })
-  @IsString()
-  @IsNotEmpty()
   userId: string;
 
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'Unique identifier for the request',
     example: 'req-fu-41',
   })
-  @IsString()
-  @IsNotEmpty()
   requestId: string;
 
-  @ApiProperty({
+  @RequiredNumberApiProperty({
     description: 'Numeric code representing the request type',
     example: RequestMessageCode.REQUEST_FIRMWARE_UPDATE,
   })
-  @IsNumber()
-  @IsNotEmpty()
   requestCode: number; // Request Message Code
 }
