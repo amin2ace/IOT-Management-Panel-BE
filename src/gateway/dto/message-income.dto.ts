@@ -1,16 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsJSON,
-  IsNotEmpty,
-  IsString,
-  IsObject,
-  IsEnum,
-  IsNumber,
-  ValidateNested,
-  IsOptional,
-} from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsEnum, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { SensorDataDto, DataQuality } from './sensor-data.dto';
+import { SensorDataDto } from './sensor-data.dto';
+import { RequiredStringApiProperty } from '@/common/decorator/api-properties';
+import { OptionalNumberApiProperty } from '@/common/decorator/api-properties/optional-number-property.decorator';
 
 export enum MessageFormat {
   JSON = 'json',
@@ -19,20 +12,16 @@ export enum MessageFormat {
 }
 
 export class IncomeMessageDto {
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'MQTT topic where message was received',
     example: 'sensors/temperature/room1',
   })
-  @IsString()
-  @IsNotEmpty()
   topic!: string;
 
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'Raw message data as string',
     example: '{"value": 25.5, "unit": "°C", "deviceId": "temp1"}',
   })
-  @IsString()
-  @IsNotEmpty()
   rawData!: string;
 
   @ApiProperty({
@@ -58,21 +47,17 @@ export class IncomeMessageDto {
   @IsEnum(MessageFormat)
   messageFormat!: MessageFormat;
 
-  @ApiPropertyOptional({
+  @OptionalNumberApiProperty({
     description: 'Size of the message in bytes',
     example: 128,
   })
-  @IsNumber()
-  @IsOptional()
   messageSize?: number;
 
-  @ApiPropertyOptional({
+  @OptionalNumberApiProperty({
     description: 'Quality score based on data validation',
     minimum: 0,
     maximum: 1,
     example: 0.95,
   })
-  @IsNumber()
-  @IsOptional()
   qualityScore?: number;
 }

@@ -1,8 +1,10 @@
+import { RequiredStringApiProperty } from '@/common/decorator/api-properties';
+import { OptionalNumberApiProperty } from '@/common/decorator/api-properties/optional-number-property.decorator';
+import { OptionalStringApiProperty } from '@/common/decorator/api-properties/optional-string-property.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEnum,
   IsNotEmpty,
-  IsString,
   IsNumber,
   IsOptional,
   Min,
@@ -19,20 +21,16 @@ export enum DataQuality {
 }
 
 export class SensorDataDto {
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'Unique identifier for the sensor',
     example: 'sensor-temperature-room1',
   })
-  @IsString()
-  @IsNotEmpty()
   deviceId!: string;
 
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'Type of sensor measurement',
     example: 'temperature',
   })
-  @IsString()
-  @IsNotEmpty()
   sensorType!: string;
 
   @ApiProperty({
@@ -45,12 +43,10 @@ export class SensorDataDto {
   @IsNotEmpty()
   value!: number | string;
 
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'Unit of measurement',
     example: '°C',
   })
-  @IsString()
-  @IsNotEmpty()
   unit!: string;
 
   @ApiProperty({
@@ -61,12 +57,10 @@ export class SensorDataDto {
   @IsEnum(DataQuality)
   quality!: DataQuality;
 
-  @ApiPropertyOptional({
+  @OptionalStringApiProperty({
     description: 'Sensor location if available',
     example: 'Room 1',
   })
-  @IsString()
-  @IsOptional()
   location?: string;
 
   @ApiPropertyOptional({
@@ -81,12 +75,10 @@ export class SensorDataDto {
   @IsOptional()
   battery?: number;
 
-  @ApiPropertyOptional({
+  @OptionalNumberApiProperty({
     description: 'Signal strength in dBm',
     example: -65,
   })
-  @IsNumber()
-  @IsOptional()
   signalStrength?: number;
 
   @ApiPropertyOptional({
@@ -97,11 +89,9 @@ export class SensorDataDto {
   @IsOptional()
   additionalData?: Record<string, any>;
 
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'Original timestamp from sensor if available',
     example: '2023-12-07T10:30:00.000Z',
   })
-  @IsString()
-  @IsNotEmpty()
   timestamp!: string;
 }
