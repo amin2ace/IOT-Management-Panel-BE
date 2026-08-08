@@ -8,49 +8,29 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { RequestMessageCode } from '@/common';
 import { DiscoverFilterDto } from './publish-discovery-broadcast.dto';
+import {
+  DeviceIdProperty,
+  RequestCodeProperty,
+  RequestIdProperty,
+  TimeStampProperty,
+  UserIdProperty,
+} from '@/common/decorator/api-properties';
 
 export class PublishDiscoveryUnicastDto {
-  @ApiProperty({
-    description: 'Unique identifier of the user who initiated the request',
-    example: 'user-001',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @UserIdProperty()
   userId: string;
 
-  @ApiProperty({
-    description: 'Unique identifier for the request',
-    example: 'req-d-79',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @RequestIdProperty()
   requestId: string;
 
-  @ApiProperty({
-    description: 'Numeric code representing the request type',
-    example: RequestMessageCode.REQUEST_DISCOVERY,
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  requestCode: number; // Request Message Code
+  @RequestCodeProperty()
+  requestCode: string; // Request Message Code
 
-  @ApiProperty({
-    description: 'Unique identifier of the device',
-    example: 'sensor-67890',
-  })
-  @IsString()
-  @IsNotEmpty()
-  deviceId: string; // Request from specific device
+  @DeviceIdProperty()
+  deviceId: string;
 
-  @ApiProperty({
-    description: 'Time of the request in epoch milli second',
-    example: '1762379573804',
-  })
-  @IsValidTimestampMillis() // 5min behind, 30sec ahead
-  @IsNotEmpty()
+  @TimeStampProperty()
   timestamp: number;
 
   @ApiProperty()

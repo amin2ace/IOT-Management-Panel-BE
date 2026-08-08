@@ -4,50 +4,33 @@ import {
   IsBoolean,
   IsEnum,
   IsNotEmpty,
-  IsNumber,
   IsString,
 } from 'class-validator';
-import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
 import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
-import { RequestMessageCode } from '../../../common/enum/request-message-code.enum';
+import {
+  DeviceIdProperty,
+  RequestCodeProperty,
+  RequestIdProperty,
+  RequiredNumberApiProperty,
+  RequiredStringApiProperty,
+  TimeStampProperty,
+  UserIdProperty,
+} from '@/common/decorator/api-properties';
 
 export class PublishSensorFunctionalityDto {
-  @ApiProperty({
-    description: 'Unique identifier of the user who initiated the request',
-    example: 'user-001',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @UserIdProperty()
   userId: string;
 
-  @ApiProperty({
-    description: 'Unique identifier for the request',
-    example: 'req-sf-39',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @RequestIdProperty()
   requestId: string;
 
-  @ApiProperty({
-    description: 'Numeric code representing the request type',
-    example: RequestMessageCode.REQUEST_ASSIGN_DEVICE_FUNCTION,
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  requestCode: number; // Request Message Code
+  @RequestCodeProperty()
+  requestCode: string; // Request Message Code
 
-  @ApiProperty({
-    description: 'Unique identifier of the device',
-    example: 'sensor-67890',
-  })
-  @IsString()
-  deviceId: string; // Request from specific device
+  @DeviceIdProperty()
+  deviceId: string;
 
-  @ApiProperty({
-    description: 'Time of the request in epoch milli second',
-    example: '1762379573804',
-  })
-  @IsValidTimestampMillis() // 5min behind, 30sec ahead
+  @TimeStampProperty()
   timestamp: number;
 
   @ApiProperty({
@@ -62,20 +45,16 @@ export class PublishSensorFunctionalityDto {
   @IsNotEmpty()
   functionality: DeviceCapabilities[]; // e.g. ["temperature", "humidity"]
 
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'MQTT topic to publish sensor data to',
     example: 'sensors/deviceId/assign',
   })
-  @IsString()
-  @IsNotEmpty()
   publishTopic: string; // like "sensors/<client>/temperature/<device>"
 
-  @ApiProperty({
+  @RequiredNumberApiProperty({
     description: 'Data publishing interval in milliseconds',
     example: 5000,
   })
-  @IsNumber()
-  @IsNotEmpty()
   interval: number; // e.g. 5000 for 5 seconds
 
   @ApiProperty({

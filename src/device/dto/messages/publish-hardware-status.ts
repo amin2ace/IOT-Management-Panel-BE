@@ -1,46 +1,25 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsNotEmpty } from 'class-validator';
-import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { RequestMessageCode } from '../../../common/enum/request-message-code.enum';
+import {
+  DeviceIdProperty,
+  RequestCodeProperty,
+  RequestIdProperty,
+  TimeStampProperty,
+  UserIdProperty,
+} from '@/common/decorator/api-properties';
 
 export class publishHardwareStatusDto {
-  @ApiProperty({
-    description: 'Unique identifier of the user who initiated the request',
-    example: 'user-001',
-  })
-  @IsNotEmpty()
-  @IsString()
+  @UserIdProperty()
   userId: string;
 
-  @ApiProperty({
-    description: 'Numeric code representing the request type',
-    example: RequestMessageCode.REQUEST_HARDWARE_METRICS,
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  requestCode: number; // Request Message Code
-
-  @ApiProperty({
-    description: 'Unique identifier for the request',
-    example: 'req-hs-35',
-  })
-  @IsNotEmpty()
-  @IsString()
+  @RequestIdProperty()
   requestId: string;
 
-  @ApiProperty({
-    description: 'Device ID that performed the diagnostic',
-    example: 'sensor-67890',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @RequestCodeProperty()
+  requestCode: string; // Request Message Code
+
+  @DeviceIdProperty()
   deviceId: string;
 
-  @ApiProperty({
-    description: 'Time of the request in epoch milli second',
-    example: '1762379573804',
-  })
-  @IsValidTimestampMillis() // 5min behind, 30sec ahead
+  @TimeStampProperty()
   timestamp: number;
 }
 

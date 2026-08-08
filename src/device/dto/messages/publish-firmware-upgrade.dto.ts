@@ -1,62 +1,37 @@
 // src/device/dto/firmware-upgrade.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsOptional, IsUrl, IsBoolean } from 'class-validator';
 import {
-  IsString,
-  IsOptional,
-  IsUrl,
-  IsBoolean,
-  IsNotEmpty,
-  IsNumber,
-} from 'class-validator';
-import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { RequestMessageCode } from '../../../common/enum/request-message-code.enum';
+  DeviceIdProperty,
+  RequestCodeProperty,
+  RequestIdProperty,
+  RequiredNumberApiProperty,
+  RequiredStringApiProperty,
+  TimeStampProperty,
+  UserIdProperty,
+} from '@/common/decorator/api-properties';
+import { OptionalStringApiProperty } from '@/common/decorator/api-properties/optional-string-property.decorator';
 
 export class PublishFwUpgradeDto {
-  @ApiProperty({
-    description: 'Unique identifier of the user who initiated the request',
-    example: 'user-001',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @UserIdProperty()
   userId: string;
 
-  @ApiProperty({
-    description: 'Unique identifier for the request',
-    example: 'req-fu-41',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @RequestIdProperty()
   requestId: string;
 
-  @ApiProperty({
-    description: 'Numeric code representing the request type',
-    example: RequestMessageCode.REQUEST_FIRMWARE_UPDATE,
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  requestCode: number; // Request Message Code
+  @RequestCodeProperty()
+  requestCode: string; // Request Message Code
 
-  @ApiProperty({
-    description: 'Unique identifier of the device',
-    example: 'sensor-67890',
-  })
-  @IsString()
-  @IsNotEmpty()
-  deviceId: string; // Request from specific device
+  @DeviceIdProperty()
+  deviceId: string;
 
-  @ApiProperty({
-    description: 'Time of the request in epoch milli second',
-    example: '1762379573804',
-  })
-  @IsValidTimestampMillis() // 5min behind, 30sec ahead
-  @IsNotEmpty()
+  @TimeStampProperty()
   timestamp: number;
 
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'Target firmware version for the device',
     example: 'v1.2.3',
   })
-  @IsString()
   version: string;
 
   @ApiProperty({
@@ -66,37 +41,29 @@ export class PublishFwUpgradeDto {
   @IsUrl({}, { message: 'Invalid URL format' })
   url: string;
 
-  @ApiProperty({
+  @RequiredNumberApiProperty({
     description: 'Size of firmware binary file in KB',
     example: 'http://server.com/firmware/v1.2.3.bin',
   })
-  @IsNumber()
-  @IsNotEmpty()
   size: number;
 
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'Firmware binary file checksum in CRC32',
     example: '3F4A9B2C',
   })
-  @IsString()
-  @IsNotEmpty()
   checksum: string;
 
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'A base64 signature to validate request source',
     example: 'U29tZVJhbmRvbUJhc2U2NFZhbHVl',
   })
-  @IsString()
-  @IsNotEmpty()
   signature: string;
 
-  @ApiProperty({
+  @OptionalStringApiProperty({
     description: 'Optional release notes for this firmware version',
     required: false,
     example: 'Fixed sensor drift and improved connectivity.',
   })
-  @IsOptional()
-  @IsString()
   releaseNotes?: string;
 
   @ApiProperty({

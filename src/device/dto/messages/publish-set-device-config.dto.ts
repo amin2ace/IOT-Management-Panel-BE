@@ -1,63 +1,28 @@
-import { RequestMessageCode } from '@/common';
-import { Protocol } from '@/config/enum/protocol.enum';
-import { DeviceLocationDto } from '@/device/dto/config-device-location.dto';
-import { LoggingConfigDto } from '@/device/dto/config-logging.dto';
-import { NetworkConfigDto } from '@/device/dto/config-network.dto';
-import { OtaConfigDto } from '@/device/dto/config-ota.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose } from 'class-transformer';
+import { SensorConfigDto } from '../configure/config-sensor.dto';
 import {
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsStrongPassword,
-  IsTimeZone,
-  ValidateNested,
-} from 'class-validator';
-import { IsValidTimestampMillis } from 'src/config/decorator/timestamp-validation.decorator';
-import { SensorConfigDto } from '../sensor-config.dto';
+  DeviceIdProperty,
+  RequestCodeProperty,
+  RequestIdProperty,
+  TimeStampProperty,
+  UserIdProperty,
+} from '@/common/decorator/api-properties';
 
 export class PublishSetDeviceConfigDto {
-  @ApiProperty({
-    description: 'Unique identifier of the user who initiated the request',
-    example: 'user-001',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @UserIdProperty()
   userId: string;
 
-  @ApiProperty({
-    description: 'Unique identifier for the request',
-    example: 'req-sc-86',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @RequestIdProperty()
   requestId: string;
 
-  @ApiProperty({
-    description: 'Numeric code representing the request type',
-    example: RequestMessageCode.REQUEST_SET_SENSOR_CONFIG,
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  requestCode: number; // Request Message Code
+  @RequestCodeProperty()
+  requestCode: string; // Request Message Code
 
-  @ApiProperty({
-    description: 'Unique identifier of the device',
-    example: 'sensor-67890',
-  })
-  @IsString()
-  @IsNotEmpty()
-  deviceId: string; // Request from specific device
+  @DeviceIdProperty()
+  deviceId: string;
 
-  @ApiProperty({
-    description: 'Time of the request in epoch milli second',
-    example: '1762379573804',
-  })
-  @IsValidTimestampMillis() // 5min behind, 30sec ahead
-  @IsNotEmpty()
+  @TimeStampProperty()
   timestamp: number;
 
   @Expose()
