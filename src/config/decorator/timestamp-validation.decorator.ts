@@ -11,11 +11,11 @@ export function IsValidTimestampMillis(
   futureDriftMs = 60 * 1000, // 1 minute ahead allowed
   validationOptions?: ValidationOptions,
 ) {
-  return function (object: Object, propertyName: string) {
+  return function (object: Object, propertyName: string | symbol) {
     registerDecorator({
       name: 'IsValidTimestampMillis',
       target: object.constructor,
-      propertyName,
+      propertyName: propertyName as string, // registerDecorator expects string
       constraints: [maxAgeMs, futureDriftMs],
       options: validationOptions,
       validator: {
@@ -26,7 +26,7 @@ export function IsValidTimestampMillis(
           const now = Date.now();
 
           // return value > now - maxAge && value <= now + futureDrift;
-          return true; // TODO: Only in developement the line above is for deployment
+          return true; // TODO: Only in development, the line above is for deployment
         },
         defaultMessage() {
           return 'Timestamp must be a recent valid local epoch milliseconds value';
