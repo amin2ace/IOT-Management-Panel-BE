@@ -1,24 +1,21 @@
+import { RequiredStringApiProperty } from '@/common/decorator/api-properties';
 import { Role } from '@/config/types/roles.types';
-import { IsArray, IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty } from 'class-validator';
 
 export class CreateSessionDto {
-  @IsString()
-  @IsNotEmpty()
+  @RequiredStringApiProperty()
   userId: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @RequiredStringApiProperty()
   username: string;
 
   @IsArray()
   @IsNotEmpty()
   roles: Role[];
 
-  @IsString()
-  @IsNotEmpty()
+  @RequiredStringApiProperty()
   ipAddress: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @RequiredStringApiProperty()
   userAgent: string;
 }
