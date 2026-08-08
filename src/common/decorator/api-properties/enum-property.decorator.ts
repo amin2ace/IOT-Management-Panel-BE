@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptions } from '@nestjs/swagger';
-import { EnumAllowedTypes } from '@nestjs/swagger/dist/interfaces/schema-object-metadata.interface';
 import { IsEnum, IsNotEmpty } from 'class-validator';
+import { EnumAllowedTypes } from 'node_modules/@nestjs/swagger/dist/interfaces/schema-object-metadata.interface';
 
 /**
  * @todo must implement this and update dtos
