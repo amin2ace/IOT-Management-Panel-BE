@@ -11,10 +11,7 @@ import { Repository } from 'typeorm';
 import { IncomeMessageDto, MessageFormat } from './dto/message-income.dto';
 import { SensorDataDto, DataQuality } from './dto/sensor-data.dto';
 import { DeviceService } from '@/device/device.service';
-import {
-  RequestMessageCode,
-  PublishSensorFunctionalityDto,
-} from '@/device/dto/messages';
+import { PublishSensorFunctionalityDto } from '@/device/dto/messages';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -24,10 +21,12 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { DiscoveryResponseDto } from '@/responser/dto';
-import { GetAllDevicesDto } from '@/device/dto/get-all-devices.dto';
-import { SensorDto } from '@/device/dto/sensor.dto';
+import { GetAllDevicesDto } from '@/device/dto/configure/get-all-devices.dto';
+import { SensorDto } from '@/device/dto/configure/sensor.dto';
 import { User } from '@/users/entities/user.entity';
 import { CurrentUser } from '@/config/decorator/current-user.decorator';
+import { Sensor } from '@/device/repository/sensor.entity';
+import { RequestMessageCode } from '@/common';
 
 /**
  * MqttGatewayService
@@ -100,7 +99,8 @@ export class GatewayService
     //   const recentData = await this.mqttGatewayService.getRecentSensorData();
     //   client.emit('sensor-data-batch', recentData);
     // } catch (error) {
-    //   this.logger.error(`Error during client connection: ${error.message}`);
+    // const errorMessage = this.getErrorMessage(error)
+    //   this.logger.error(`Error during client connection: ${errorMessage}`);
     //   client.emit('connection-error', {
     //     error: 'Failed to initialize connection',
     //     timestamp: new Date(),
@@ -238,7 +238,9 @@ export class GatewayService
 
       this.logger.log(`Discovery message passed to react`);
     } catch (error) {
-      this.logger.error(`Error handling discovery message: ${error.message}`);
+      this.logger.error(
+        `Error handling discovery message: ${this.getErrorMessage(error)}`,
+      );
     }
   }
 
@@ -253,7 +255,9 @@ export class GatewayService
 
       this.logger.log(`Discovery message passed to react`);
     } catch (error) {
-      this.logger.error(`Error handling discovery message: ${error.message}`);
+      this.logger.error(
+        `Error handling discovery message: ${this.getErrorMessage(error)}`,
+      );
     }
   }
 
@@ -262,14 +266,16 @@ export class GatewayService
    *
    * @param result Array of unassigned devices
    */
-  public async emitQueryUnassignedDeviceMessage(result: SensorDto[]) {
+  public async emitQueryUnassignedDeviceMessage(result: Sensor[]) {
     try {
       // Emit WebSocket event for discovery
       this.server.emit('ws/message/unassinged/query/response', result);
 
       this.logger.log(`Discovery message passed to react`);
     } catch (error) {
-      this.logger.error(`Error handling discovery message: ${error.message}`);
+      this.logger.error(
+        `Error handling discovery message: ${this.getErrorMessage(error)}`,
+      );
     }
   }
 
@@ -281,13 +287,12 @@ export class GatewayService
   public async emitGetAllSensorsMessage(result: GetAllDevicesDto) {
     try {
       // Emit WebSocket event for discovery
-      console.log(result);
       this.server.emit('ws/message/query/devices/all/response', result);
 
       this.logger.log(`Devices query message passed to react`);
     } catch (error) {
       this.logger.error(
-        `Error handling query devices message: ${error.message}`,
+        `Error handling query devices message: ${this.getErrorMessage(error)}`,
       );
     }
   }
@@ -313,8 +318,9 @@ export class GatewayService
 
       this.logger.log(`Assignment message processed from ${topic}`);
     } catch (error) {
-      this.logger.error(`Error handling assignment message: ${error.message}`);
-      await this.storeErrorInDatabase(topic, payload, error.message);
+      const errorMessage = this.getErrorMessage(error);
+      this.logger.error(`Error handling assignment message: ${errorMessage}`);
+      await this.storeErrorInDatabase(topic, payload, errorMessage);
     }
   }
 
@@ -335,8 +341,9 @@ export class GatewayService
 
       this.logger.log(`ACK message processed from ${topic}`);
     } catch (error) {
-      this.logger.error(`Error handling ACK message: ${error.message}`);
-      await this.storeErrorInDatabase(topic, payload, error.message);
+      const errorMessage = this.getErrorMessage(error);
+      this.logger.error(`Error handling ACK message: ${errorMessage}`);
+      await this.storeErrorInDatabase(topic, payload, errorMessage);
     }
   }
 
@@ -361,10 +368,11 @@ export class GatewayService
 
       this.logger.log(`Firmware upgrade message processed from ${topic}`);
     } catch (error) {
+      const errorMessage = this.getErrorMessage(error);
       this.logger.error(
-        `Error handling firmware upgrade message: ${error.message}`,
+        `Error handling firmware upgrade message: ${errorMessage}`,
       );
-      await this.storeErrorInDatabase(topic, payload, error.message);
+      await this.storeErrorInDatabase(topic, payload, errorMessage);
     }
   }
 
@@ -389,8 +397,9 @@ export class GatewayService
 
       this.logger.log(`Heartbeat message processed from ${topic}`);
     } catch (error) {
-      this.logger.error(`Error handling heartbeat message: ${error.message}`);
-      await this.storeErrorInDatabase(topic, payload, error.message);
+      const errorMessage = this.getErrorMessage(error);
+      this.logger.error(`Error handling heartbeat message: ${errorMessage}`);
+      await this.storeErrorInDatabase(topic, payload, errorMessage);
     }
   }
 
@@ -415,8 +424,9 @@ export class GatewayService
 
       this.logger.log(`Reboot message processed from ${topic}`);
     } catch (error) {
-      this.logger.error(`Error handling reboot message: ${error.message}`);
-      await this.storeErrorInDatabase(topic, payload, error.message);
+      const errorMessage = this.getErrorMessage(error);
+      this.logger.error(`Error handling reboot message: ${errorMessage}`);
+      await this.storeErrorInDatabase(topic, payload, errorMessage);
     }
   }
 
@@ -441,8 +451,9 @@ export class GatewayService
 
       this.logger.log(`Telemetry message processed from ${topic}`);
     } catch (error) {
-      this.logger.error(`Error handling telemetry message: ${error.message}`);
-      await this.storeErrorInDatabase(topic, payload, error.message);
+      const errorMessage = this.getErrorMessage(error);
+      this.logger.error(`Error handling telemetry message: ${errorMessage}`);
+      await this.storeErrorInDatabase(topic, payload, errorMessage);
     }
   }
 
@@ -467,10 +478,11 @@ export class GatewayService
 
       this.logger.log(`Hardware status message processed from ${topic}`);
     } catch (error) {
+      const errorMessage = this.getErrorMessage(error);
       this.logger.error(
-        `Error handling hardware status message: ${error.message}`,
+        `Error handling hardware status message: ${errorMessage}`,
       );
-      await this.storeErrorInDatabase(topic, payload, error.message);
+      await this.storeErrorInDatabase(topic, payload, errorMessage);
     }
   }
 
@@ -495,8 +507,9 @@ export class GatewayService
 
       this.logger.log(`Alert message processed from ${topic}`);
     } catch (error) {
-      this.logger.error(`Error handling alert message: ${error.message}`);
-      await this.storeErrorInDatabase(topic, payload, error.message);
+      const errorMessage = this.getErrorMessage(error);
+      this.logger.error(`Error handling alert message: ${errorMessage}`);
+      await this.storeErrorInDatabase(topic, payload, errorMessage);
     }
   }
 
@@ -651,7 +664,7 @@ export class GatewayService
         );
       } catch (error) {
         this.logger.error(
-          `Failed to subscribe to topic ${topic}: ${error.message}`,
+          `Failed to subscribe to topic ${topic}: ${this.getErrorMessage(error)}`,
         );
       }
     }
@@ -670,7 +683,7 @@ export class GatewayService
         this.logger.log(`Unsubscribed from topic: ${topic}`);
       } catch (error) {
         this.logger.error(
-          `Failed to unsubscribe from topic ${topic}: ${error.message}`,
+          `Failed to unsubscribe from topic ${topic}: ${this.getErrorMessage(error)}`,
         );
       }
     }
@@ -704,8 +717,9 @@ export class GatewayService
       );
       this.logger.log(`Command published to ${topic}: ${command}`);
     } catch (error) {
-      this.logger.error(`Failed to publish command: ${error.message}`);
-      throw error;
+      const errorMessage = this.getErrorMessage(error);
+      this.logger.error(`Failed to publish command: ${errorMessage}`);
+      throw new Error(errorMessage);
     }
   }
 
@@ -776,11 +790,23 @@ export class GatewayService
       await this.messageRepo.save(errorEntity);
     } catch (dbError) {
       this.logger.error(
-        `Failed to store error in database: ${dbError.message}`,
+        `Failed to store error in database: ${this.getErrorMessage(dbError)}`,
       );
     }
   }
-
+  private getErrorMessage(error: unknown): string {
+    if (typeof error === 'string') {
+      return error;
+    }
+    if (error instanceof Error) {
+      return error.message;
+    }
+    try {
+      return JSON.stringify(error) || String(error);
+    } catch {
+      return 'Unknown error';
+    }
+  }
   /**
    * Store recent data in in-memory cache
    */
