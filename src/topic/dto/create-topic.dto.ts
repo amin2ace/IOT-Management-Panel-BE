@@ -1,30 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsEnum } from 'class-validator';
 import { TopicUseCase } from '../enum/topic-usecase.enum';
+import { RequiredStringApiProperty } from '@/common/decorator/api-properties';
 
 export class CreateTopicDto {
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'MQTT broker URL to connect',
     example: 'mqtt://broker.hivemq.com:1883',
   })
-  @IsString()
-  @IsNotEmpty()
   brokerUrl: string;
 
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'Unique identifier of the device',
     example: 'device-00123',
   })
-  @IsString()
-  @IsNotEmpty()
   deviceId: string;
 
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'MQTT topic the device publishes or subscribes to',
     example: 'home/device-00123/telemetry',
   })
-  @IsString()
-  @IsNotEmpty()
   topic: string;
 
   @ApiProperty({
