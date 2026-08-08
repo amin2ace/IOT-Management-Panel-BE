@@ -18,19 +18,19 @@ import {
   ApiCookieAuth,
 } from '@nestjs/swagger';
 import { DeviceService } from './device.service';
-import { QueryDeviceDto } from './dto/query-device.dto';
-import { ControlDeviceDto } from './dto/control-device.dto';
+import { QueryDeviceDto } from './dto/configure/query-device.dto';
+import { ControlDeviceDto } from './dto/configure/control-command-device.dto';
 import { PublishSensorFunctionalityDto } from './dto/messages';
 import { PublishTelemetryDto } from './dto/messages/Publish-telemetry.dto';
 import { SessionAuthGuard } from '@/common/guard/session-auth.guard';
 import { RolesGuard } from '@/common/guard/roles.guard';
 import { Roles } from '@/config/decorator/roles.decorator';
 import { Role } from '@/config/types/roles.types';
-import { SensorDto } from './dto/sensor.dto';
+import { SensorDto } from './dto/configure/sensor.dto';
 import { Serialize } from '@/common';
 import { PublishSetDeviceConfigDto } from './dto/messages/publish-set-device-config.dto';
-import { GetAllDevicesDto } from '@/device/dto/get-all-devices.dto';
-import { SensorConfigDto } from './dto/sensor-config.dto';
+import { GetAllDevicesDto } from '@/device/dto/configure/get-all-devices.dto';
+import { SensorConfigDto } from './dto/configure/config-sensor.dto';
 import { SensorConfig } from './repository/sensor-config.entity';
 import { Sensor } from './repository/sensor.entity';
 import { CurrentUser } from '@/config/decorator/current-user.decorator';

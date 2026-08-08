@@ -5,32 +5,31 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { QueryDeviceDto } from './dto/query-device.dto';
-import { ControlDeviceDto } from './dto/control-device.dto';
+import { QueryDeviceDto } from './dto/configure/query-device.dto';
+import { ControlDeviceDto } from './dto/configure/control-command-device.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MqttClientService } from 'src/mqtt-client/mqtt-client.service';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
-import {
-  RequestMessageCode,
-  PublishSensorFunctionalityDto,
-} from './dto/messages';
+import { PublishSensorFunctionalityDto } from './dto/messages';
 import { TopicService } from 'src/topic/topic.service';
 import { TopicUseCase } from 'src/topic/enum/topic-usecase.enum';
 import { RedisService } from 'src/redis/redis.service';
 import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 import { PublishTelemetryDto } from './dto/messages/Publish-telemetry.dto';
 import { publishHardwareStatusDto } from './dto/messages/publish-hardware-status';
-import { GetAllDevicesDto } from './dto/get-all-devices.dto';
-import { SensorDto } from './dto/sensor.dto';
+import { GetAllDevicesDto } from './dto/configure/get-all-devices.dto';
+import { SensorDto } from './dto/configure/sensor.dto';
 import { ConfigService } from '@nestjs/config';
 import { Sensor } from './repository/sensor.entity';
 import { SensorConfig } from './repository/sensor-config.entity';
-import { SensorConfigDto } from './dto/sensor-config.dto';
+import { SensorConfigDto } from './dto/configure/config-sensor.dto';
 import { v4 as uuid } from 'uuid';
 import { User } from '@/users/entities/user.entity';
 import { PublishDiscoveryBroadcastDto } from './dto/messages/publish-discovery-broadcast.dto';
 import { PublishDiscoveryUnicastDto } from './dto/messages/publish-discovery-unicast.dto';
+import { plainToInstance } from 'class-transformer';
+import { RequestMessageCode } from '@/common';
 @Injectable()
 export class DeviceService {
   private readonly ttl: number;
@@ -52,15 +51,17 @@ export class DeviceService {
       where: {
         isDeleted: false,
       },
-      relations: {
-        configuration: true,
-      },
     });
 
     const result: GetAllDevicesDto = {
-      data: devices,
+      data: plainToInstance(SensorDto, devices),
       total: devices.length,
     };
+
+    if (!result.total) {
+      throw new NotFoundException('There is no device yet.');
+    }
+    // console.log({ result: result.data[0] });
 
     return result;
   }
@@ -80,7 +81,7 @@ export class DeviceService {
     });
 
     return {
-      data: devices,
+      data: plainToInstance(SensorDto, devices),
       total: devices.length,
     };
   }
@@ -97,7 +98,8 @@ export class DeviceService {
       throw new NotFoundException(`Device with ID ${deviceId} not found`);
     }
 
-    return device;
+    const result = plainToInstance(SensorDto, device);
+    return result;
   }
 
   private async setCache(dto: any) {
@@ -329,7 +331,7 @@ export class DeviceService {
       },
     });
 
-    if (!storedDevice) {
+    if (!storedDevice?.configuration) {
       throw new NotFoundException('Device not Found');
     }
     const config = storedDevice.configuration;
