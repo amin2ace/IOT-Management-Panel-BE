@@ -1,19 +1,12 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString } from "class-validator";
+import { RequiredStringApiProperty } from '@/common/decorator/api-properties/required-string-property.decorator';
 
 export class ChangePasswordDto {
-  @ApiProperty({ default: "123456789" })
-  @IsString()
-  @IsNotEmpty()
+  @RequiredStringApiProperty({ default: '123456789' })
   oldPassword: string;
 
-  @ApiProperty({ default: "a123456789s" })
-  @IsString()
-  @IsNotEmpty()
+  @RequiredStringApiProperty({ default: 'a123456789s' })
   newPassword: string;
 
-  @ApiProperty({ default: "a123456789s" })
-  @IsString()
-  @IsNotEmpty()
+  @RequiredStringApiProperty({ default: 'a123456789s' })
   retypePassword: string;
 }

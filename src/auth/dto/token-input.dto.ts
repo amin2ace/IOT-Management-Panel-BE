@@ -1,11 +1,9 @@
-import { IsNotEmpty, IsString } from "class-validator";
+import { RequiredStringApiProperty } from '@/common/decorator/api-properties/required-string-property.decorator';
 
 export class TokenInputDto {
-  @IsString()
-  @IsNotEmpty()
+  @RequiredStringApiProperty()
   accessToken: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @RequiredStringApiProperty()
   refreshToken: string;
 }

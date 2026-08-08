@@ -1,5 +1,6 @@
+import { RequiredStringApiProperty } from '@/common/decorator/api-properties/required-string-property.decorator';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty } from 'class-validator';
 
 export class loginInputDto {
   @ApiProperty({ default: 'john@wick.com' })
@@ -7,8 +8,6 @@ export class loginInputDto {
   @IsNotEmpty()
   email: string;
 
-  @ApiProperty({ default: '123456789' })
-  @IsString()
-  @IsNotEmpty()
+  @RequiredStringApiProperty({ default: '123456789' })
   password: string;
 }
