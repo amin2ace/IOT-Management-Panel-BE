@@ -1,6 +1,10 @@
+import {
+  RequiredNumberApiProperty,
+  RequiredStringApiProperty,
+} from '@/common/decorator/api-properties';
 import { QoS } from '@/config/types/mqtt-qos.types';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty } from 'class-validator';
 
 /**
  * DTO for publishing messages to MQTT topics
@@ -8,9 +12,7 @@ import { IsBoolean, IsNotEmpty, IsNumber, IsString } from 'class-validator';
  * to a specified MQTT topic with defined QoS and retain settings
  */
 export class MqttPublishDto {
-  @ApiProperty({ default: 'test/topic' })
-  @IsString()
-  @IsNotEmpty()
+  @RequiredStringApiProperty({ default: 'test/topic' })
   topic: string;
 
   @ApiProperty({
@@ -26,9 +28,7 @@ export class MqttPublishDto {
   @IsNotEmpty()
   message: string | Record<string, any>;
 
-  @ApiProperty({ enum: QoS, default: QoS.AtMostOnce })
-  @IsNumber()
-  @IsNotEmpty()
+  @RequiredNumberApiProperty({ enum: QoS, default: QoS.AtMostOnce })
   qos: QoS;
 
   @ApiProperty({ type: 'boolean', default: false })

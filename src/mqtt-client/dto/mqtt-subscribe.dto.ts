@@ -1,3 +1,4 @@
+import { DeviceIdProperty } from '@/common/decorator/api-properties';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, IsString } from 'class-validator';
 
@@ -25,14 +26,6 @@ export class MqttSubscribeDto {
   @IsNotEmpty()
   topics: string[];
 
-  @ApiProperty({
-    description: 'Unique identifier of the device to subscribe for',
-    type: String,
-    minLength: 1,
-    maxLength: 255,
-    example: 'device-001',
-  })
-  @IsString()
-  @IsNotEmpty()
+  @DeviceIdProperty()
   deviceId: string;
 }

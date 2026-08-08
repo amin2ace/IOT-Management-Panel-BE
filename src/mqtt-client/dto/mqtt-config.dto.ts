@@ -1,13 +1,11 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsString,
-  IsNumber,
-  IsBoolean,
-  IsNotEmpty,
-  IsOptional,
-  Min,
-  Max,
-} from 'class-validator';
+  RequiredNumberApiProperty,
+  RequiredStringApiProperty,
+} from '@/common/decorator/api-properties';
+import { OptionalNumberApiProperty } from '@/common/decorator/api-properties/optional-number-property.decorator';
+import { OptionalStringApiProperty } from '@/common/decorator/api-properties/optional-string-property.decorator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsOptional, Min, Max } from 'class-validator';
 
 /**
  * DTO for configuring MQTT broker connection options
@@ -15,75 +13,61 @@ import {
  * broker URL, port, authentication, and connection behavior settings
  */
 export class MqttConfigDto {
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'MQTT broker hostname or IP address',
     type: String,
     example: 'localhost',
     minLength: 1,
   })
-  @IsString()
-  @IsNotEmpty()
   host: string;
 
-  @ApiProperty({
+  @RequiredNumberApiProperty({
     description: 'MQTT broker port number',
     type: Number,
     example: 1883,
     minimum: 1,
     maximum: 65535,
   })
-  @IsNumber()
   @Min(1)
   @Max(65535)
-  @IsNotEmpty()
   port: number;
 
-  @ApiPropertyOptional({
+  @OptionalStringApiProperty({
     description: 'Protocol to use for connection (mqtt, mqtts, tcp, ws, wss)',
     type: String,
     example: 'mqtt',
     enum: ['mqtt', 'mqtts', 'tcp', 'ws', 'wss'],
   })
-  @IsString()
-  @IsOptional()
   protocol?: string;
 
-  @ApiPropertyOptional({
+  @OptionalStringApiProperty({
     description: 'Username for MQTT broker authentication',
     type: String,
     example: 'admin',
   })
-  @IsString()
-  @IsOptional()
   username?: string;
 
-  @ApiPropertyOptional({
+  @OptionalStringApiProperty({
     description: 'Password for MQTT broker authentication',
     type: String,
     example: 'password123',
   })
-  @IsString()
-  @IsOptional()
   password?: string;
 
-  @ApiPropertyOptional({
+  @OptionalStringApiProperty({
     description: 'Client ID for the MQTT connection',
     type: String,
     example: 'iot-panel-client-001',
   })
-  @IsString()
-  @IsOptional()
   clientId?: string;
 
-  @ApiPropertyOptional({
+  @OptionalNumberApiProperty({
     description: 'Keep alive interval in seconds',
     type: Number,
     example: 60,
     minimum: 1,
   })
-  @IsNumber()
   @Min(1)
-  @IsOptional()
   keepalive?: number;
 
   @ApiPropertyOptional({
@@ -95,53 +79,43 @@ export class MqttConfigDto {
   @IsOptional()
   ssl?: boolean;
 
-  @ApiPropertyOptional({
+  @OptionalStringApiProperty({
     description: 'Path to CA certificate file (for SSL)',
     type: String,
     example: '/path/to/ca.crt',
   })
-  @IsString()
-  @IsOptional()
   ca?: string;
 
-  @ApiPropertyOptional({
+  @OptionalStringApiProperty({
     description: 'Path to client certificate file',
     type: String,
     example: '/path/to/client.crt',
   })
-  @IsString()
-  @IsOptional()
   cert?: string;
 
-  @ApiPropertyOptional({
+  @OptionalStringApiProperty({
     description: 'Path to client key file',
     type: String,
     example: '/path/to/client.key',
   })
-  @IsString()
-  @IsOptional()
   key?: string;
 
-  @ApiPropertyOptional({
+  @OptionalNumberApiProperty({
     description: 'Connection timeout in milliseconds',
     type: Number,
     example: 10000,
     minimum: 1000,
   })
-  @IsNumber()
   @Min(1000)
-  @IsOptional()
   connectTimeout?: number;
 
-  @ApiPropertyOptional({
+  @OptionalNumberApiProperty({
     description: 'Reconnection interval in milliseconds',
     type: Number,
     example: 5000,
     minimum: 1000,
   })
-  @IsNumber()
   @Min(1000)
-  @IsOptional()
   reconnectPeriod?: number;
 
   @ApiPropertyOptional({
@@ -162,46 +136,38 @@ export class MqttConfigDto {
   @IsOptional()
   autoReconnect?: boolean;
 
-  @ApiPropertyOptional({
+  @OptionalNumberApiProperty({
     description: 'Maximum number of reconnection attempts',
     type: Number,
     example: 10,
     minimum: 1,
   })
-  @IsNumber()
   @Min(1)
-  @IsOptional()
   maxReconnectAttempts?: number;
 
-  @ApiPropertyOptional({
+  @OptionalStringApiProperty({
     description: 'Will topic for last will message',
     type: String,
     example: 'device/status/offline',
   })
-  @IsString()
-  @IsOptional()
   willTopic?: string;
 
-  @ApiPropertyOptional({
+  @OptionalStringApiProperty({
     description: 'Will message content',
     type: String,
     example: 'Device offline',
   })
-  @IsString()
-  @IsOptional()
   willMessage?: string;
 
-  @ApiPropertyOptional({
+  @OptionalNumberApiProperty({
     description: 'Will message QoS',
     type: Number,
     example: 1,
     minimum: 0,
     maximum: 2,
   })
-  @IsNumber()
   @Min(0)
   @Max(2)
-  @IsOptional()
   willQos?: number;
 
   @ApiPropertyOptional({
