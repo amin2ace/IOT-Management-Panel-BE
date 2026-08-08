@@ -10,7 +10,7 @@ import { MqttClientModule } from './mqtt-client/mqtt-client.module';
 import { GatewayModule } from './gateway/gateway.module';
 import jwtModuleOptions from './config/jwt-module.config';
 import typeOrmModuleConfig from './config/typeorm-module-config';
-import configModuleOptions from './config/config-module.config';
+import configModuleOptions from './config/config-module';
 import { DeviceModule } from './device/device.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TopicModule } from './topic/topic.module';
