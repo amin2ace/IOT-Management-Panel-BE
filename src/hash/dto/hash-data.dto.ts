@@ -1,16 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
-
+import { OptionalStringApiProperty } from '@/common/decorator/api-properties/optional-string-property.decorator';
 export class HashDto {
-  @ApiProperty({ default: 'John Wick' })
-  @IsString()
+  @OptionalStringApiProperty({ default: 'John Wick' })
   userName?: string;
 
-  @ApiProperty({ default: 'john@wick.com' })
-  @IsString()
+  @OptionalStringApiProperty({ default: 'john@wick.com' })
   email?: string;
 
-  @ApiProperty({ default: '123456789' })
-  @IsString()
+  @OptionalStringApiProperty({ default: '123456789' })
   password?: string;
 }
