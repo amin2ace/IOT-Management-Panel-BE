@@ -3,10 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
   ObjectIdColumn,
-  OneToOne,
-  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { ProvisionState } from '@/config/enum/provision-state.enum';
@@ -86,12 +83,7 @@ export class Sensor {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // Sensor entity
-  @OneToOne((type) => SensorConfig, {
-    cascade: true,
-    eager: true,
-    createForeignKeyConstraints: false,
-  })
-  @JoinColumn()
-  configuration: SensorConfig;
+  // Sensor configuration - embedded document
+  @Column(() => SensorConfig, { prefix: false })
+  configuration?: SensorConfig;
 }

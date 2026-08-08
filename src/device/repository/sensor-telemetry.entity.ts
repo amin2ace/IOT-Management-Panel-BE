@@ -6,7 +6,7 @@ import {
   Column,
   CreateDateColumn,
 } from 'typeorm';
-import { DeviceLocationDto } from '../dto/config-device-location.dto';
+import { DeviceLocationDto } from '../dto/configure/device-location.dto';
 
 @Entity('Telemetry')
 export class Telemetry {
