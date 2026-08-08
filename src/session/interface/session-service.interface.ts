@@ -31,36 +31,35 @@ export interface ISessionService {
    * @returns Session ID
    */
   createSession(sessionData: CreateSessionDto): Promise<string>;
-
   /**
    * Get session data from Redis
    * @param sessionId - Session ID
    * @returns Session data or null if not found
    */
   getSession(sessionId: string): Promise<ISessionData | null>;
-
-  getTrackSession(sessionId: string, userId: string): Promise<ISessionData>;
-
   /**
-   * Validate session exists and is not expired
+   *
+   * @param sessionId
+   * @param userId
+   */
+  getTrackSession(sessionId: string, userId: string): Promise<ISessionData>;
+  /**
+   * Validate that if session exists and is not expired
    * @param sessionId - Session ID
    * @returns true if valid, false otherwise
    */
   validateSession(sessionId: string): Promise<boolean>;
-
   /**
-   * Destroy a session (logout)
+   * Destroy a session used in logout
    * @param sessionId - Session ID
    */
   destroySession(sessionId: string): Promise<void>;
-
   /**
-   * Extend session TTL (refresh activity)
+   * Extend session TTL, used in refresh activities
    * @param sessionId - Session ID
    * @returns Updated session data
    */
   extendSession(sessionId: string): Promise<ISessionData | null>;
-
   /**
    * Invalidate all sessions for a user
    * Used when password changes
