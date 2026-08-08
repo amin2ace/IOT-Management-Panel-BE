@@ -15,11 +15,18 @@ import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
 import { Protocol } from 'src/config/enum/protocol.enum';
-import { DeviceLocationDto } from './config-device-location.dto';
+import { DeviceLocationDto } from './device-location.dto';
+import {
+  DeviceIdProperty,
+  RequiredNumberApiProperty,
+  RequiredStringApiProperty,
+} from '@/common/decorator/api-properties';
+import { OptionalStringApiProperty } from '@/common/decorator/api-properties/optional-string-property.decorator';
+import { OptionalNumberApiProperty } from '@/common/decorator/api-properties/optional-number-property.decorator';
 
 export class QuerySensorDto {
   @Expose()
-  @IsString()
+  @DeviceIdProperty()
   deviceId: string;
 
   @Expose()
@@ -38,8 +45,7 @@ export class QuerySensorDto {
   assignedFunctionality?: DeviceCapabilities[];
 
   @Expose()
-  @IsOptional()
-  @IsString()
+  @OptionalStringApiProperty()
   deviceBaseTopic?: string;
 
   @Expose()
@@ -53,8 +59,7 @@ export class QuerySensorDto {
   provisionState: ProvisionState;
 
   @Expose()
-  @IsOptional()
-  @IsString()
+  @OptionalStringApiProperty()
   clientId?: string;
 
   @Expose()
@@ -62,8 +67,7 @@ export class QuerySensorDto {
   lastValue: number;
 
   @Expose()
-  @IsOptional()
-  @IsNumber()
+  @OptionalNumberApiProperty()
   lastValueAt?: number;
 
   @Expose()
@@ -76,15 +80,15 @@ export class QuerySensorDto {
   isActuator: boolean;
 
   @Expose()
-  @IsNumber()
+  @RequiredNumberApiProperty()
   highSetPoint: number;
 
   @Expose()
-  @IsNumber()
+  @RequiredNumberApiProperty()
   lowSetPoint: number;
 
   @Expose()
-  @IsNumber()
+  @RequiredNumberApiProperty()
   interval: number;
 
   @Expose()
@@ -92,18 +96,15 @@ export class QuerySensorDto {
   hasError: boolean;
 
   @Expose()
-  @IsOptional()
-  @IsString()
+  @OptionalStringApiProperty()
   firmware?: string;
 
   @Expose()
-  @IsOptional()
-  @IsString()
+  @OptionalStringApiProperty()
   mac?: string;
 
   @Expose()
-  @IsOptional()
-  @IsString()
+  @OptionalStringApiProperty()
   ip?: string;
 
   @Expose()
@@ -111,7 +112,7 @@ export class QuerySensorDto {
   protocol: Protocol;
 
   @Expose()
-  @IsString()
+  @RequiredStringApiProperty()
   broker: string;
 
   @Expose()

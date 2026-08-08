@@ -1,13 +1,6 @@
+import { IsValidTimestampMillis } from '@/config/decorator/timestamp-validation.decorator';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsBoolean,
-  IsIP,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsStrongPassword,
-} from 'class-validator';
-import { IsSubnetMask } from 'src/config/decorator/subnetmask-validation.decrator';
+import { IsBoolean, IsIP, IsOptional, IsString } from 'class-validator';
 
 // Nested DTOs
 export class NetworkConfigDto {

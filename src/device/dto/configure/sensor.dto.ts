@@ -2,9 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEnum,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
-  IsString,
   IsBoolean,
   IsArray,
 } from 'class-validator';
@@ -12,7 +10,13 @@ import { Exclude, Expose } from 'class-transformer';
 import { ConnectionState } from 'src/config/enum/connection-state.enum';
 import { ProvisionState } from 'src/config/enum/provision-state.enum';
 import { DeviceCapabilities } from 'src/config/enum/sensor-type.enum';
-import { SensorConfigDto } from './sensor-config.dto';
+import { SensorConfigDto } from './config-sensor.dto';
+import {
+  DeviceIdProperty,
+  RequiredStringApiProperty,
+} from '@/common/decorator/api-properties';
+import { OptionalStringApiProperty } from '@/common/decorator/api-properties/optional-string-property.decorator';
+import { OptionalNumberApiProperty } from '@/common/decorator/api-properties/optional-number-property.decorator';
 
 /**
  * Sensor Response DTO
@@ -21,13 +25,7 @@ import { SensorConfigDto } from './sensor-config.dto';
  */
 export class SensorDto {
   @Expose()
-  @ApiProperty({
-    description: 'Unique sensor identifier (ESP MAC or custom ID)',
-    example: 'sensor-67890',
-    required: true,
-  })
-  @IsString()
-  @IsNotEmpty()
+  @DeviceIdProperty()
   deviceId: string;
 
   @Expose()
@@ -43,13 +41,11 @@ export class SensorDto {
   capabilities: DeviceCapabilities[];
 
   @Expose()
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'Device hardware model or type',
     example: 'ESP32-WROOM',
     required: true,
   })
-  @IsString()
-  @IsNotEmpty()
   deviceHardware: string;
 
   @Expose()
@@ -126,52 +122,42 @@ export class SensorDto {
   hasError: boolean;
 
   @Expose()
-  @ApiProperty({
+  @OptionalStringApiProperty({
     description: 'Device error Description if any has',
     required: false,
   })
-  @IsOptional()
-  @IsString()
   errorMessage?: string;
 
   @Expose()
-  @ApiProperty({
+  @OptionalNumberApiProperty({
     description: 'Last measured/reported value from the device',
     example: 25.5,
     required: false,
   })
-  @IsNumber()
-  @IsOptional()
   lastValue?: number;
 
   @Expose()
-  @ApiProperty({
+  @OptionalNumberApiProperty({
     description: 'Timestamp of the last value update (epoch milliseconds)',
     example: 1762379573804,
     required: false,
   })
-  @IsOptional()
-  @IsNumber()
   lastValueAt?: number;
 
   @Expose()
-  @ApiProperty({
+  @OptionalStringApiProperty({
     description: 'Firmware version',
     example: 'v2.1.0',
     required: false,
   })
-  @IsOptional()
-  @IsString()
   firmware?: string;
 
   @Expose()
-  @ApiProperty({
+  @RequiredStringApiProperty({
     description: 'MQTT broker address',
     example: 'mqtt.example.com:1883',
     required: true,
   })
-  @IsString()
-  @IsNotEmpty()
   broker: string;
 
   @Expose()

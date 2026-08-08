@@ -1,31 +1,23 @@
-import { DeviceLocationDto } from '@/device/dto/config-device-location.dto';
-import { LoggingConfigDto } from '@/device/dto/config-logging.dto';
-import { NetworkConfigDto } from '@/device/dto/config-network.dto';
-import { OtaConfigDto } from '@/device/dto/config-ota.dto';
+import { DeviceLocationDto } from '@/device/dto/configure/device-location.dto';
+import { LoggingConfigDto } from '@/device/dto/configure/logging.dto';
+import { NetworkConfigDto } from '@/device/dto/configure/network.dto';
+import { OtaConfigDto } from '@/device/dto/configure/ota.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  IsArray,
   IsEnum,
-  IsNotEmpty,
-  IsNumber,
   IsOptional,
-  IsString,
-  IsStrongPassword,
   IsTimeZone,
   ValidateNested,
 } from 'class-validator';
 import { Protocol } from '@/config/enum/protocol.enum';
-import { ThresholdDto } from '@/device/dto/config-threshold.dto';
+import { ThresholdDto } from '@/device/dto/configure/threshold.dto';
+import { DeviceIdProperty } from '@/common/decorator/api-properties';
+import { OptionalStringApiProperty } from '@/common/decorator/api-properties/optional-string-property.decorator';
+import { OptionalNumberApiProperty } from '@/common/decorator/api-properties/optional-number-property.decorator';
 
 export class SensorConfigDto {
-  @ApiProperty({
-    description: 'Unique identifier of the sensor',
-    example: 'sensor-67890',
-    required: true,
-  })
-  @IsString()
-  @IsNotEmpty()
+  @DeviceIdProperty()
   deviceId: string; // Request from specific device
 
   @ApiProperty({
@@ -37,12 +29,10 @@ export class SensorConfigDto {
   @IsOptional()
   threshold?: ThresholdDto;
 
-  @ApiProperty({
+  @OptionalStringApiProperty({
     description: 'Base MQTT topic for the device',
     example: 'greenHouse_jolfa/tomato-section/sensor/temperature',
   })
-  @IsString()
-  @IsOptional()
   baseTopic?: string; // like "greenHouse_jolfa/tomato-section/sensor/temperature"
 
   @ApiProperty({
@@ -84,13 +74,11 @@ export class SensorConfigDto {
   @Type(() => OtaConfigDto)
   ota?: OtaConfigDto;
 
-  @ApiProperty({
+  @OptionalNumberApiProperty({
     description: 'Data publishing interval in milliseconds',
     example: 5000,
     required: false,
   })
-  @IsOptional()
-  @IsNumber()
   interval?: number; // e.g. 5000 for 5 seconds
 
   @ApiProperty({
@@ -114,13 +102,11 @@ export class SensorConfigDto {
   @IsEnum(Protocol)
   protocol?: Protocol;
 
-  @ApiProperty({
+  @OptionalNumberApiProperty({
     description: 'Configuration version for update tracking',
     example: 1,
     required: false,
   })
-  @IsOptional()
-  @IsNumber()
   configVersion?: number;
 }
 

@@ -1,7 +1,8 @@
-import { SensorDto } from '@/device/dto/sensor.dto';
+import { OptionalNumberApiProperty } from '@/common/decorator/api-properties/optional-number-property.decorator';
+import { SensorDto } from '@/device/dto/configure/sensor.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { IsArray, IsNotEmpty, IsOptional, IsNumber } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional } from 'class-validator';
 
 /**
  * Get All Devices Response DTO
@@ -19,39 +20,31 @@ export class GetAllDevicesDto {
   data: SensorDto[];
 
   @Expose()
-  @ApiProperty({
+  @OptionalNumberApiProperty({
     description: 'Total number of devices in the system',
     example: 42,
   })
-  @IsNumber()
-  @IsOptional()
   total?: number;
 
   @Expose()
-  @ApiProperty({
+  @OptionalNumberApiProperty({
     description: 'Current page number (for pagination)',
     example: 1,
   })
-  @IsNumber()
-  @IsOptional()
   page?: number;
 
   @Expose()
-  @ApiProperty({
+  @OptionalNumberApiProperty({
     description: 'Number of devices per page',
     example: 10,
   })
-  @IsNumber()
-  @IsOptional()
   limit?: number;
 
   @Expose()
-  @ApiProperty({
+  @OptionalNumberApiProperty({
     description: 'Total number of pages',
     example: 5,
   })
-  @IsNumber()
-  @IsOptional()
   totalPages?: number;
 
   @Expose()

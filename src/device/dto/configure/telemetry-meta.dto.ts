@@ -1,16 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, ValidateNested } from 'class-validator';
-import { DeviceLocationDto } from './config-device-location.dto';
+import { IsOptional, ValidateNested } from 'class-validator';
+import { DeviceLocationDto } from './device-location.dto';
 import { Type } from 'class-transformer';
+import { OptionalStringApiProperty } from '@/common/decorator/api-properties/optional-string-property.decorator';
 
 export class TelemetryMetaDto {
-  @ApiProperty({
+  @OptionalStringApiProperty({
     description: 'Firmware version of the device',
     example: 'v1.2.3',
     required: false,
   })
-  @IsOptional()
-  @IsString()
   firmwareVersion?: string;
 
   @ApiProperty({
@@ -23,12 +22,10 @@ export class TelemetryMetaDto {
   @Type(() => DeviceLocationDto)
   location?: DeviceLocationDto;
 
-  @ApiProperty({
+  @OptionalStringApiProperty({
     description: 'Optional comment',
     example: 'Near greenhouse',
     required: false,
   })
-  @IsOptional()
-  @IsString()
   comment?: string;
 }
