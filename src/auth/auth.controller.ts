@@ -14,6 +14,9 @@ import {
   ApiResponse,
   ApiCookieAuth,
   getSchemaPath,
+  ApiBadRequestResponse,
+  ApiOkResponse,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -25,8 +28,9 @@ import {
   loginDto,
   ResetPasswordDto,
   SignupDto,
-  UserResponseDto,
+  AuthResponseDto,
 } from './dto';
+import { ErrorResponseDto } from '@/common/errors/error-response.dto';
 
 /**
  * AuthController - Handles all authentication-related endpoints
@@ -69,33 +73,26 @@ export class AuthController {
    * @returns
    */
   @Post('signup')
-  @Serialize(UserResponseDto)
+  @Serialize(AuthResponseDto)
   @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({
-    status: 201,
+  @ApiOkResponse({
     description: 'User registered successfully',
-    type: UserResponseDto,
-    schema: {
-      $ref: getSchemaPath(UserResponseDto),
-      example: {
-        userId: 'uuid-123',
-        userName: 'John Doe',
-        email: 'john@example.com',
-        roles: ['viewer'],
-      },
-    },
+    type: AuthResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Invalid Request' })
-  @ApiResponse({
-    status: 409,
-    description: 'Email already exists. Login instead!',
+  @ApiBadRequestResponse({
+    description: 'Bad Request received',
+    type: ErrorResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Signup failed',
+    type: ErrorResponseDto,
   })
   async signup(
     @Body() signupData: SignupDto,
     @Req() req: Request,
-    @Res() res: Response,
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return await this.authService.signup(signupData, req, res);
+    return this.authService.signup(signupData, req, res);
   }
 
   /**
@@ -116,7 +113,7 @@ export class AuthController {
    * @returns
    */
   @Post('login')
-  @Serialize(UserResponseDto)
+  @Serialize(AuthResponseDto)
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({
     status: 200,

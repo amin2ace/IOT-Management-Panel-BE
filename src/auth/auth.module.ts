@@ -8,7 +8,7 @@ import { TokenService } from './token.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RedisModule } from '@/redis/redis.module';
-import { HashModule } from '@/hash/hash.module';
+import { EncryptModule } from '@/encrypt/encrypt.module';
 import { SessionModule } from '@/session/session.module';
 
 /**
@@ -25,7 +25,7 @@ import { SessionModule } from '@/session/session.module';
  * Exports:
  * - AuthService: Main authentication service
  * - SessionService: Session management
- * - HashService: Password hashing
+ * - EncryptService: Password hashing
  * - SessionAuthGuard: Session validation guard
  * - RolesGuard: Role validation guard
  */
@@ -35,7 +35,7 @@ import { SessionModule } from '@/session/session.module';
     TypeOrmModule.forFeature([Token, Blacklist]),
     UsersModule,
     RedisModule,
-    HashModule,
+    EncryptModule,
     SessionModule,
   ],
   controllers: [AuthController],

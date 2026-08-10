@@ -42,10 +42,8 @@ export class SessionService implements ISessionService {
     private readonly configService: ConfigService,
     private readonly redis: RedisService,
   ) {
-    // Session timeout from config (default 24 hours) in seconds
     this.sessionTimeout =
-      this.configService.getOrThrow<number>('SESSION_TIMEOUT') / 1000;
-    // Refresh interval for lastActivity (default 5 minutes)
+      this.configService.getOrThrow<number>('SESSION_TIMEOUT');
     this.refreshInterval = this.configService.getOrThrow<number>(
       'SESSION_REFRESH_INTERVAL',
     );

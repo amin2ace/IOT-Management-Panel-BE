@@ -12,14 +12,14 @@ import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { IUserService } from './interface/user-service.interface';
 import { Role } from '@/config/types/roles.types';
-import { HashService } from '@/hash/hash.service';
+import { EncryptService } from '@/encrypt/encrypt.service';
 import { RolesResponseDto } from './dto/roles-response.dto';
 
 @Injectable()
 export class UsersService implements IUserService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
-    private readonly hashService: HashService,
+    private readonly encryptService: EncryptService,
   ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
@@ -60,7 +60,7 @@ export class UsersService implements IUserService {
       throw new UnauthorizedException('Email in Use');
     }
 
-    const { password } = await this.hashService.hash({
+    const { password } = await this.encryptService.hash({
       password: userData.password,
     });
     // Create a new user record with the hashed data
@@ -139,7 +139,7 @@ export class UsersService implements IUserService {
 
     // Hash password only if provided
     if (filteredData.password) {
-      const { password } = await this.hashService.hash({
+      const { password } = await this.encryptService.hash({
         password: filteredData.password,
       });
       filteredData.password = password;

@@ -2,7 +2,7 @@ import { Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '@/config/types/roles.types';
 
-export class UserResponseDto {
+export class AuthResponseDto {
   @Expose()
   @ApiProperty({
     description: 'Unique user identifier',

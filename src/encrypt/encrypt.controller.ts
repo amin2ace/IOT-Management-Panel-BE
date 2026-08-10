@@ -3,5 +3,5 @@ import { EncryptService } from './encrypt.service';
 
 @Controller('hash')
 export class EncryptController {
-  constructor(private readonly hashService: EncryptService) {}
+  constructor(private readonly encryptService: EncryptService) {}
 }

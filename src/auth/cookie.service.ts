@@ -80,8 +80,8 @@ export class CookieService implements ICookieService {
   /**
    * Set secure session cookie
    */
-  async setSessionCookie(res: Response, sessionId: string): Promise<void> {
-    res.cookie(this.sessionCookieName, sessionId, {
+  async setSessionCookie(res: Response, sessionId: string) {
+    return res.cookie(this.sessionCookieName, sessionId, {
       httpOnly: true, // Prevent XSS (JS cannot access)
       secure:
         this.configService.getOrThrow<string>('NODE_ENV') === 'production', // HTTPS only in production
@@ -90,7 +90,7 @@ export class CookieService implements ICookieService {
       expires: this.EXPIRE_DATE,
       path: '/', // Available for all routes
     });
-    this.logger.debug(`Session cookie set for session id: ${sessionId}`);
+    // this.logger.debug(`Session cookie set for session id: ${sessionId}`);
   }
 
   /**

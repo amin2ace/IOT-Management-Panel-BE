@@ -33,7 +33,7 @@ export interface ICookieService {
    * @param res
    * @param sessionId
    */
-  setSessionCookie(res: Response, sessionId: string): Promise<void>;
+  setSessionCookie(res: Response, sessionId: string);
   /**
    * Clear session id from cookie
    * @param res

@@ -4,23 +4,28 @@ import {
   UnauthorizedException,
   BadRequestException,
   Logger,
+  HttpStatus,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
-import { SignupInputDto } from './dto/signup-input.dto';
-import { loginInputDto } from './dto/login-input.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { ForgetPasswordDto } from './dto/forget-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { SessionService } from '../session/session.service';
 import { UsersService } from 'src/users/users.service';
 import { Role } from 'src/config/types/roles.types';
 import { v4 as uuidv4 } from 'uuid';
-import { LoginResponseDto } from './dto/login-response.dto';
-import { SignupResponseDto } from './dto/signup-response.dto';
-import { HashService } from '@/hash/hash.service';
+import { EncryptService } from '@/encrypt/encrypt.service';
 import { CreateSessionDto } from '@/session/dto/create-session.dto';
 import { CookieService } from './cookie.service';
+import { SessionService } from '@/session/session.service';
+import {
+  ChangePasswordDto,
+  ForgetPasswordDto,
+  loginDto,
+  ResetPasswordDto,
+  SignupDto,
+  AuthResponseDto,
+} from './dto';
+import { AppException } from '@/common/errors/app.exception';
+import { EXCEPTIONS } from '@/common/errors/exceptions';
+import { User } from '@/users/entities/user.entity';
 
 /**
  * AuthService - Hybrid authentication service
@@ -43,7 +48,7 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   constructor(
     private readonly usersService: UsersService,
-    private readonly hashService: HashService,
+    private readonly encryptService: EncryptService,
     private readonly sessionService: SessionService,
     private readonly cookieService: CookieService,
     private readonly config: ConfigService,
@@ -60,37 +65,47 @@ export class AuthService {
    * 5. Create session in Redis
    * 6. Set secure httpOnly cookie
    * 7. Return user info (NO tokens)
+   * @param signupData
+   * @param req
+   * @param res
+   * @returns
    */
   async signup(
-    signupData: SignupInputDto,
+    signupData: SignupDto,
     req: Request,
     res: Response,
-  ): Promise<SignupResponseDto> {
+  ): Promise<User> {
     const { email, username, password } = signupData;
 
     // Validate input
     if (!email || !username || !password) {
-      throw new BadRequestException(
-        'Email, username, and password are required',
+      throw new AppException(
+        EXCEPTIONS.INVALID_REQUEST,
+        HttpStatus.BAD_REQUEST,
       );
     }
 
     // Check if email already exists
     const existingUser = await this.usersService.findUserByEmail(email);
     if (existingUser) {
-      throw new UnauthorizedException('Email already in use');
+      throw new AppException(
+        EXCEPTIONS.EMAIL_ALREADY_EXISTS,
+        HttpStatus.CONFLICT,
+      );
     }
 
     // Hash password
-    const { password: hashedPassword } = await this.hashService.hash({
+    const { password: hashedPassword } = await this.encryptService.hash({
       password,
     });
 
     if (!hashedPassword) {
-      throw new UnauthorizedException('Password hashing failed');
+      throw new AppException(
+        EXCEPTIONS.INVALID_CREDENTIALS,
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
-    // Create user with default role
     // Assign default role (VIEWER)
     const defaultRoles: Role[] = [Role.VIEWER];
 
@@ -110,17 +125,10 @@ export class AuthService {
     };
     // Create session
     const sessionId = await this.sessionService.createSession(sessionData);
-
+    console.log('here: auth');
     // Set secure httpOnly cookie
     await this.cookieService.setSessionCookie(res, sessionId);
-
-    this.logger.log(`User signed up: ${email} (${createdUser.userId})`);
-
-    return {
-      userId: createdUser.userId,
-      username,
-      roles: defaultRoles,
-    };
+    return createdUser;
   }
 
   /**
@@ -136,10 +144,10 @@ export class AuthService {
    * 7. Return user info + roles (NO tokens)
    */
   async login(
-    loginData: loginInputDto,
+    loginData: loginDto,
     req: Request,
     res: Response,
-  ): Promise<LoginResponseDto> {
+  ): Promise<AuthResponseDto> {
     try {
       const { email, password } = loginData;
 
@@ -151,7 +159,7 @@ export class AuthService {
       }
 
       // Compare password
-      const isPasswordValid = await this.hashService.compareHash(
+      const isPasswordValid = await this.encryptService.compareHash(
         user.password,
         password,
       );
@@ -248,7 +256,7 @@ export class AuthService {
     }
 
     // Verify old password
-    const isOldPasswordValid = await this.hashService.compareHash(
+    const isOldPasswordValid = await this.encryptService.compareHash(
       user.password,
       oldPassword,
     );
@@ -263,7 +271,7 @@ export class AuthService {
     }
 
     // Hash new password
-    const { password: hashedPassword } = await this.hashService.hash({
+    const { password: hashedPassword } = await this.encryptService.hash({
       password: newPassword,
     });
 
@@ -365,7 +373,7 @@ export class AuthService {
     }
 
     // Hash new password
-    const { password: hashedPassword } = await this.hashService.hash({
+    const { password: hashedPassword } = await this.encryptService.hash({
       password: newPassword,
     });
 
