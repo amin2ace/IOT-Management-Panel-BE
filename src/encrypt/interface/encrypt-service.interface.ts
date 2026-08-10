@@ -1,6 +1,6 @@
 import { SignupDto as HashDto } from '../../auth/dto/signup.dto';
 
-export interface IHashService {
+export interface IEncryptService {
   salt: string;
 
   hash(dataToHash: Partial<HashDto>): Promise<Partial<HashDto>>;

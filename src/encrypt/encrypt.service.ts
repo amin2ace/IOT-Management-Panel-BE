@@ -1,11 +1,13 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
-import { IHashService } from './interface/hash-service.interface';
-import { HashDto } from './dto/hash-data.dto';
+import { IEncryptService } from './interface/encrypt-service.interface';
+import { HashDto } from './dto/hash.dto';
+import { AppException } from '@/common/errors/app.exception';
+import { EXCEPTIONS } from '@/common/errors/exceptions';
 
 @Injectable()
-export class HashService implements IHashService {
+export class EncryptService implements IEncryptService {
   readonly salt: string;
 
   constructor(private readonly configService: ConfigService) {
@@ -33,7 +35,10 @@ export class HashService implements IHashService {
 
       return result;
     } catch (error) {
-      throw new ConflictException('Hash Failed');
+      throw new AppException(
+        EXCEPTIONS.ENCRYPTION_FAILED,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
@@ -49,7 +54,10 @@ export class HashService implements IHashService {
         hashedPassword: await bcrypt.hash(password, this.salt),
       };
     } catch (error) {
-      throw new ConflictException('Hash Failed');
+      throw new AppException(
+        EXCEPTIONS.ENCRYPTION_FAILED,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
@@ -57,7 +65,10 @@ export class HashService implements IHashService {
     try {
       return { hashedEmail: await bcrypt.hash(email, this.salt) };
     } catch (error) {
-      throw new ConflictException('Hash Failed');
+      throw new AppException(
+        EXCEPTIONS.ENCRYPTION_FAILED,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 

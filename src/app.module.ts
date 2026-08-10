@@ -17,7 +17,7 @@ import { TopicModule } from './topic/topic.module';
 import { RedisModule } from './redis/redis.module';
 import { LogHandlerModule } from './log-handler/log-handler.module';
 import { ResponserModule } from './responser/responser.module';
-import { HashModule } from './hash/hash.module';
+import { EncryptModule } from './encrypt/encrypt.module';
 import { SessionModule } from './session/session.module';
 
 @Module({
