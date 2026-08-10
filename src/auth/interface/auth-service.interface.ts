@@ -1,5 +1,5 @@
-import { SignupInputDto } from '../dto/signup-input.dto';
-import { loginInputDto } from '../dto/login-input.dto';
+import { SignupDto } from '../dto/signup.dto';
+import { loginDto } from '../dto/login.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { Request } from 'express';
 import { ForgetPasswordDto } from '../dto/forget-password.dto';
@@ -7,11 +7,11 @@ import { ResetPasswordDto } from '../dto/reset-password.dto';
 
 export interface IAuthService {
   signup(
-    createUserData: SignupInputDto,
+    createUserData: SignupDto,
   ): Promise<{ accessToken: string; refreshToken: string }>;
 
   login(
-    loginData: loginInputDto,
+    loginData: loginDto,
   ): Promise<{ accessToken: string; refreshToken: string }>;
 
   logout(refreshToken: string, req: Request): Promise<string>;

@@ -2,7 +2,7 @@ import { RequiredStringApiProperty } from '@/common/decorator/api-properties/req
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty } from 'class-validator';
 
-export class SignupInputDto {
+export class SignupDto {
   @RequiredStringApiProperty({ default: 'John Wick' })
   username: string;
 

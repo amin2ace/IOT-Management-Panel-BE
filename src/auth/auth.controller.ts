@@ -13,19 +13,20 @@ import {
   ApiOperation,
   ApiResponse,
   ApiCookieAuth,
+  getSchemaPath,
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
-import { loginInputDto } from './dto/login-input.dto';
-import { SignupInputDto } from './dto/signup-input.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { ForgetPasswordDto } from './dto/forget-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthService } from './auth.service';
 import { Serialize } from '@/common';
-import { UserResponseDto } from '@/users/dto/user-response.dto';
-import { LoginResponseDto } from './dto/login-response.dto';
-import { SignupResponseDto } from './dto/signup-response.dto';
 import { SessionAuthGuard } from '@/common/guard/session-auth.guard';
+import {
+  ChangePasswordDto,
+  ForgetPasswordDto,
+  loginDto,
+  ResetPasswordDto,
+  SignupDto,
+  UserResponseDto,
+} from './dto';
 
 /**
  * AuthController - Handles all authentication-related endpoints
@@ -44,7 +45,7 @@ import { SessionAuthGuard } from '@/common/guard/session-auth.guard';
  * - Cookies are automatically handled (httpOnly)
  */
 @ApiTags('Authentication')
-@Controller('/auth')
+@Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
@@ -62,14 +63,20 @@ export class AuthController {
    * - 201 Created: Signup successful
    * - 400 Bad Request: Invalid input
    * - 409 Conflict: Email already exists
+   * @param signupData
+   * @param req
+   * @param res
+   * @returns
    */
   @Post('signup')
-  @Serialize(SignupResponseDto)
+  @Serialize(UserResponseDto)
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({
     status: 201,
     description: 'User registered successfully',
+    type: UserResponseDto,
     schema: {
+      $ref: getSchemaPath(UserResponseDto),
       example: {
         userId: 'uuid-123',
         userName: 'John Doe',
@@ -78,20 +85,17 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 400, description: 'Invalid input' })
-  @ApiResponse({ status: 409, description: 'Email already exists' })
+  @ApiResponse({ status: 400, description: 'Invalid Request' })
+  @ApiResponse({
+    status: 409,
+    description: 'Email already exists. Login instead!',
+  })
   async signup(
-    @Body() signupData: SignupInputDto,
+    @Body() signupData: SignupDto,
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    try {
-      const result = await this.authService.signup(signupData, req, res);
-      return res.status(HttpStatus.CREATED).json(result);
-    } catch (error) {
-      this.logger.error(`Signup failed: ${error.message}`);
-      throw error;
-    }
+    return await this.authService.signup(signupData, req, res);
   }
 
   /**
@@ -106,9 +110,13 @@ export class AuthController {
    * - 200 OK: Login successful
    * - 400 Bad Request: Invalid input
    * - 401 Unauthorized: Invalid credentials
+   * @param loginData
+   * @param req
+   * @param res
+   * @returns
    */
   @Post('login')
-  @Serialize(LoginResponseDto)
+  @Serialize(UserResponseDto)
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({
     status: 200,
@@ -124,17 +132,11 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(
-    @Body() loginData: loginInputDto,
+    @Body() loginData: loginDto,
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    try {
-      const result = await this.authService.login(loginData, req, res);
-      return res.status(HttpStatus.OK).json(result);
-    } catch (error) {
-      this.logger.error(`Login failed: ${error.message}`);
-      throw error;
-    }
+    return await this.authService.login(loginData, req, res);
   }
 
   /**
@@ -150,6 +152,9 @@ export class AuthController {
    * Status Codes:
    * - 200 OK: Logout successful
    * - 401 Unauthorized: Invalid session
+   * @param req
+   * @param res
+   * @returns
    */
   @Post('logout')
   @UseGuards(SessionAuthGuard)
@@ -162,13 +167,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid session' })
   async logout(@Req() req: Request, @Res() res: Response) {
-    try {
-      const result = await this.authService.logout(req, res);
-      return res.status(HttpStatus.OK).json(result);
-    } catch (error) {
-      this.logger.error(`Logout failed: ${error.message}`);
-      throw error;
-    }
+    return await this.authService.logout(req, res);
   }
 
   /**
@@ -191,6 +190,10 @@ export class AuthController {
    * - 200 OK: Password changed
    * - 401 Unauthorized: Invalid session or incorrect old password
    * - 400 Bad Request: Password mismatch
+   * @param req
+   * @param changePasswordData
+   * @param res
+   * @returns
    */
   @Post('change-password')
   @UseGuards(SessionAuthGuard)
@@ -214,20 +217,16 @@ export class AuthController {
     @Body() changePasswordData: ChangePasswordDto,
     @Res() res: Response,
   ) {
-    try {
-      const sessionId = (req as any).sessionId;
-      const userId = (req as any).user?.userId;
-      console.log(sessionId, userId);
+    const sessionId = (req as any).sessionId;
+    const userId = (req as any).user?.userId;
+    console.log(sessionId, userId);
 
-      const result = await this.authService.changePassword(
-        req,
-        changePasswordData,
-      );
-      return res.status(HttpStatus.OK).json(result);
-    } catch (error) {
-      this.logger.error(`Change password failed: ${error.message}`);
-      throw error;
-    }
+    const result = await this.authService.changePassword(
+      req,
+      changePasswordData,
+    );
+
+    return result;
   }
 
   /**
@@ -244,6 +243,8 @@ export class AuthController {
    * Status Codes:
    * - 200 OK: Reset token generated
    * - 404 Not Found: Email not found (security: should return 200)
+   * @param forgetDto
+   * @returns
    */
   @Post('forget-password')
   @ApiOperation({ summary: 'Request password reset token' })
@@ -253,14 +254,8 @@ export class AuthController {
     schema: { example: { resetToken: 'uuid-token' } },
   })
   async forgetPassword(@Body() forgetDto: ForgetPasswordDto) {
-    try {
-      const result = await this.authService.requestPasswordReset(forgetDto);
-      return result;
-    } catch (error) {
-      this.logger.error(`Forget password failed: ${error.message}`);
-      // In production: don't throw, return generic success message
-      throw error;
-    }
+    const result = await this.authService.requestPasswordReset(forgetDto);
+    return result;
   }
 
   /**
@@ -279,6 +274,8 @@ export class AuthController {
    * - 200 OK: Password reset
    * - 401 Unauthorized: Invalid or expired token
    * - 400 Bad Request: Password mismatch
+   * @param resetDto
+   * @returns
    */
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password with reset token' })
@@ -294,12 +291,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid or expired token' })
   async resetPassword(@Body() resetDto: ResetPasswordDto) {
-    try {
-      const result = await this.authService.resetPassword(resetDto);
-      return result;
-    } catch (error) {
-      this.logger.error(`Reset password failed: ${error.message}`);
-      throw error;
-    }
+    const result = await this.authService.resetPassword(resetDto);
+    return result;
   }
 }

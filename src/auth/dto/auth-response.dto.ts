@@ -1,8 +1,8 @@
-import { Role } from '@/config/types/roles.types';
-import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+import { Role } from '@/config/types/roles.types';
 
-export class LoginResponseDto {
+export class UserResponseDto {
   @Expose()
   @ApiProperty({
     description: 'Unique user identifier',
