@@ -1,16 +1,21 @@
-import { Injectable, Logger, Inject, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  HttpStatus,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   ISessionService,
   ISessionData,
 } from './interface/session-service.interface';
-import { Role } from 'src/config/types/roles.types';
 import { v4 as uuidv4 } from 'uuid';
-import { Redis } from 'ioredis';
 import { RedisService } from '@/redis/redis.service';
 import { plainToInstance } from 'class-transformer';
 import { SessionCache } from '@/redis/dto/session.cache.dto';
 import { CreateSessionDto } from './dto/create-session.dto';
+import { AppException } from '@/common/errors/app.exception';
+import { EXCEPTIONS } from '@/common/errors/exceptions';
 
 /**
  * SessionService - Manages user sessions in Redis for offline/local authentication
@@ -54,12 +59,12 @@ export class SessionService implements ISessionService {
   async createSession(data: CreateSessionDto): Promise<string> {
     try {
       const sessionId = uuidv4();
-      const now = new Date();
+      const timestamp = new Date();
 
       const sessionData: ISessionData = {
         ...data,
-        loginTime: now,
-        lastActivity: now,
+        loginTime: timestamp,
+        lastActivity: timestamp,
       };
       // Store session in Redis with TTL
       const ttlSeconds = this.sessionTimeout;
@@ -75,15 +80,12 @@ export class SessionService implements ISessionService {
         'true',
         ttlSeconds,
       );
-
-      this.logger.log(
-        `Session created: ${sessionId} for user: ${sessionData.userId} with roles: ${sessionData.roles.join(', ')}`,
-      );
-
       return sessionId;
     } catch (error) {
-      this.logger.error(`Failed to create session: ${error.message}`);
-      throw error;
+      throw new AppException(
+        EXCEPTIONS.SESSION_ESTABLISH_FAILED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -110,7 +112,6 @@ export class SessionService implements ISessionService {
   async getSession(sessionId: string): Promise<ISessionData | null> {
     try {
       const data = await this.redis.get(`session:${sessionId}`);
-      // console.log('Session data from Redis:', data);
 
       if (!data) {
         this.logger.warn(`Session not found: ${sessionId}`);
@@ -119,10 +120,12 @@ export class SessionService implements ISessionService {
 
       // Handle both object and string formats
       const sessionData = typeof data === 'string' ? JSON.parse(data) : data;
-      // console.log('Parsed session data:', sessionData);
       return sessionData as ISessionData;
     } catch (error) {
-      this.logger.error(`Failed to get session: ${error.message}`);
+      throw new AppException(
+        EXCEPTIONS.SESSION_RETRIEVE_FAILED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
       return null;
     }
   }
@@ -135,8 +138,10 @@ export class SessionService implements ISessionService {
       const session = await this.getSession(sessionId);
       return session !== null;
     } catch (error) {
-      this.logger.error(`Failed to validate session: ${error.message}`);
-      return false;
+      throw new AppException(
+        EXCEPTIONS.SESSION_VALIDATION_FAILED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -158,8 +163,10 @@ export class SessionService implements ISessionService {
         this.logger.log(`Session destroyed: ${sessionId}`);
       }
     } catch (error) {
-      this.logger.error(`Failed to destroy session: ${error.message}`);
-      throw error;
+      throw new AppException(
+        EXCEPTIONS.SESSION_DESTROY_FAILED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -196,8 +203,10 @@ export class SessionService implements ISessionService {
       this.logger.debug(`Session extended: ${sessionId}`);
       return sessionData;
     } catch (error) {
-      this.logger.error(`Failed to extend session: ${error.message}`);
-      return null;
+      throw new AppException(
+        EXCEPTIONS.SESSION_EXTENSION_FAILED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -236,8 +245,10 @@ export class SessionService implements ISessionService {
 
       this.logger.log(`All sessions invalidated for user: ${userId}`);
     } catch (error) {
-      this.logger.error(`Failed to invalidate user sessions: ${error.message}`);
-      throw error;
+      throw new AppException(
+        EXCEPTIONS.SESSION_INVALIDATION_FAILED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }
