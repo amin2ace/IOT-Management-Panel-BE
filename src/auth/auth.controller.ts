@@ -5,7 +5,6 @@ import {
   Req,
   Res,
   UseGuards,
-  HttpStatus,
   Logger,
 } from '@nestjs/common';
 import {
@@ -13,7 +12,6 @@ import {
   ApiOperation,
   ApiResponse,
   ApiCookieAuth,
-  getSchemaPath,
   ApiBadRequestResponse,
   ApiOkResponse,
   ApiUnauthorizedResponse,
@@ -92,7 +90,8 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.signup(signupData, req, res);
+    const result = await this.authService.signup(signupData, req, res);
+    return result;
   }
 
   /**
@@ -115,25 +114,25 @@ export class AuthController {
   @Post('login')
   @Serialize(AuthResponseDto)
   @ApiOperation({ summary: 'Login with email and password' })
-  @ApiResponse({
-    status: 200,
-    description: 'Login successful',
-    schema: {
-      example: {
-        userId: 'uuid-123',
-        userName: 'John Doe',
-        email: 'john@example.com',
-        roles: ['viewer'],
-      },
-    },
+  @ApiOkResponse({
+    description: 'User logged in successfully',
+    type: AuthResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiBadRequestResponse({
+    description: 'Bad Request received',
+    type: ErrorResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Invalid credentials',
+    type: ErrorResponseDto,
+  })
   async login(
     @Body() loginData: loginDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return await this.authService.login(loginData, req, res);
+    const result = await this.authService.login(loginData, req, res);
+    return result;
   }
 
   /**
@@ -157,14 +156,13 @@ export class AuthController {
   @UseGuards(SessionAuthGuard)
   @ApiOperation({ summary: 'Logout current user' })
   @ApiCookieAuth()
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Logout successful',
-    schema: { example: { message: 'Logged out successfully' } },
   })
   @ApiResponse({ status: 401, description: 'Invalid session' })
-  async logout(@Req() req: Request, @Res() res: Response) {
-    return await this.authService.logout(req, res);
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.logout(req, res);
+    return result;
   }
 
   /**
@@ -196,23 +194,21 @@ export class AuthController {
   @UseGuards(SessionAuthGuard)
   @ApiOperation({ summary: 'Change password for authenticated user' })
   @ApiCookieAuth()
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Password changed successfully',
-    schema: {
-      example: {
-        message: 'Password changed successfully. Please login again.',
-      },
-    },
+    type: AuthResponseDto,
   })
-  @ApiResponse({
-    status: 401,
+  @ApiBadRequestResponse({
+    description: 'Bad Request received',
+    type: ErrorResponseDto,
+  })
+  @ApiUnauthorizedResponse({
     description: 'Invalid session or incorrect password',
+    type: ErrorResponseDto,
   })
   async changePassword(
     @Req() req: Request,
     @Body() changePasswordData: ChangePasswordDto,
-    @Res() res: Response,
   ) {
     const sessionId = (req as any).sessionId;
     const userId = (req as any).user?.userId;
@@ -245,10 +241,8 @@ export class AuthController {
    */
   @Post('forget-password')
   @ApiOperation({ summary: 'Request password reset token' })
-  @ApiResponse({
-    status: 200,
-    description: 'Reset token generated',
-    schema: { example: { resetToken: 'uuid-token' } },
+  @ApiOkResponse({
+    description: 'Password reset token generated',
   })
   async forgetPassword(@Body() forgetDto: ForgetPasswordDto) {
     const result = await this.authService.requestPasswordReset(forgetDto);
@@ -276,15 +270,8 @@ export class AuthController {
    */
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password with reset token' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Password reset successfully',
-    schema: {
-      example: {
-        message:
-          'Password reset successfully. Please login with your new password.',
-      },
-    },
   })
   @ApiResponse({ status: 401, description: 'Invalid or expired token' })
   async resetPassword(@Body() resetDto: ResetPasswordDto) {
