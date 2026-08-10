@@ -1,0 +1,29 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["./src/main.ts"],
+  "out": "doc",
+  "plugin": ["typedoc-github-theme"]
+  //   "themeColor": "#241052" used ni typedoc-material-theme
+  //   "excludeNotDocumented": true
+  //   "excludeNotDocumentedKinds": [
+  //     "Module",
+  //     "Namespace",
+  //     "Enum",
+  //     // "EnumMember", // Not enabled by default
+  //     "Variable",
+  //     "Function",
+  //     "Class",
+  //     "Interface",
+  //     "Constructor",
+  //     "Property",
+  //     "Method",
+  //     "CallSignature",
+  //     "IndexSignature",
+  //     "ConstructorSignature",
+  //     "Accessor",
+  //     "GetSignature",
+  //     "SetSignature",
+  //     "TypeAlias",
+  //     "Reference"
+  //   ]
+}

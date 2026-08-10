@@ -10,6 +10,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
+    "dev:fast": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules --watch src src/main.ts",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -17,7 +18,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "typedoc": "typedoc --watch"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -71,6 +73,9 @@
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "typedoc": "^0.28.20",
+    "typedoc-github-theme": "^0.4.0",
+    "typedoc-material-theme": "^1.4.1",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
   },
