@@ -116,18 +116,9 @@ export class AuthService {
       roles: defaultRoles,
     });
 
-    const sessionData: CreateSessionDto = {
-      userId: createdUser.userId,
-      username,
-      roles: defaultRoles,
-      ipAddress: this.getClientIp(req),
-      userAgent: this.getClientUserAgent(req),
-    };
-    // Create session
-    const sessionId = await this.sessionService.createSession(sessionData);
-    console.log('here: auth');
-    // Set secure httpOnly cookie
-    await this.cookieService.setSessionCookie(res, sessionId);
+    // Create Session and set cookie
+    await this.createSession(createdUser, req, res);
+
     return createdUser;
   }
 
@@ -143,55 +134,36 @@ export class AuthService {
    * 6. Set secure httpOnly cookie
    * 7. Return user info + roles (NO tokens)
    */
-  async login(
-    loginData: loginDto,
-    req: Request,
-    res: Response,
-  ): Promise<AuthResponseDto> {
-    try {
-      const { email, password } = loginData;
+  async login(loginData: loginDto, req: Request, res: Response): Promise<User> {
+    const { email, password } = loginData;
 
-      // Find user by email
-      const user = await this.usersService.findUserByEmail(email);
+    // Find user by email
+    const user = await this.usersService.findUserByEmail(email);
 
-      if (!user) {
-        throw new UnauthorizedException('Invalid email or password');
-      }
-
-      // Compare password
-      const isPasswordValid = await this.encryptService.compareHash(
-        user.password,
-        password,
+    if (!user) {
+      throw new AppException(
+        EXCEPTIONS.INVALID_CREDENTIALS,
+        HttpStatus.UNAUTHORIZED,
       );
-
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Invalid email or password');
-      }
-
-      const sessionData: CreateSessionDto = {
-        userId: user.userId,
-        username: user.username,
-        roles: user.roles,
-        ipAddress: this.getClientIp(req),
-        userAgent: this.getClientUserAgent(req),
-      };
-
-      // Create session
-      const sessionId = await this.sessionService.createSession(sessionData);
-
-      // Set secure httpOnly cookie
-      await this.cookieService.setSessionCookie(res, sessionId);
-
-      this.logger.log(`User logged in: ${email} (${user.userId})`);
-
-      return {
-        userId: user.userId,
-        username: user.username,
-        roles: user.roles,
-      };
-    } catch (error) {
-      throw new UnauthorizedException(error);
     }
+
+    // Compare password
+    const isPasswordValid = await this.encryptService.compareHash(
+      user.password,
+      password,
+    );
+
+    if (!isPasswordValid) {
+      throw new AppException(
+        EXCEPTIONS.INVALID_CREDENTIALS,
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    // Create Session and set cookie
+    await this.createSession(user, req, res);
+
+    return user;
   }
 
   /**
@@ -415,5 +387,21 @@ export class AuthService {
    */
   private getClientUserAgent(req: Request): string {
     return req.headers['user-agent'] || 'unknown';
+  }
+
+  private async createSession(user: User, req: Request, res: Response) {
+    const { userId, username, roles } = user;
+    const sessionData: CreateSessionDto = {
+      userId,
+      username,
+      roles,
+      ipAddress: this.getClientIp(req),
+      userAgent: this.getClientUserAgent(req),
+    };
+    // Create session
+    const sessionId = await this.sessionService.createSession(sessionData);
+
+    // Set secure httpOnly cookie
+    return this.cookieService.setSessionCookie(res, sessionId);
   }
 }
