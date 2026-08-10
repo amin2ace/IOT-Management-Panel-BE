@@ -19,6 +19,8 @@ import { LogHandlerModule } from './log-handler/log-handler.module';
 import { ResponserModule } from './responser/responser.module';
 import { EncryptModule } from './encrypt/encrypt.module';
 import { SessionModule } from './session/session.module';
+import { APP_FILTER } from '@nestjs/core';
+import { GlobalExceptionFilter } from './common/filter/global-exception-filter';
 
 @Module({
   imports: [
@@ -50,30 +52,17 @@ import { SessionModule } from './session/session.module';
     RedisModule,
     LogHandlerModule,
     ResponserModule,
-    HashModule,
+    EncryptModule,
     SessionModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
     GatewayModule,
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: RolesGuard, // Apply RolesGuard globally
-    // },
-    // NOTE: SessionAuthGuard should NOT be global because:
-    // - Signup and login endpoints must be public (no session yet)
-    // - Only protected routes need SessionAuthGuard
-    // - Use @UseGuards(SessionAuthGuard) on specific routes instead
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: SessionAuthGuard,
-    // },
-
-    // {
-    //   provide: APP_INTERCEPTOR,
-    //   useClass: ExceptionHandlerInterceptor, // Nest will instantiate it via DI
-    // },
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
   ],
 })
 export class AppModule {}

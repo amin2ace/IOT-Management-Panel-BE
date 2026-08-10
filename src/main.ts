@@ -20,8 +20,7 @@ async function bootstrap() {
   );
 
   // Use global filters to avoid app crash
-  app.useGlobalFilters(new GlobalExceptionFilter());
-
+  // app.useGlobalFilters(new GlobalExceptionFilter());
   // Security middleware
   app.use(helmet());
 
