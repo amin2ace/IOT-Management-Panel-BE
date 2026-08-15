@@ -3,30 +3,31 @@
 //   NotFoundException,
 //   UnauthorizedException,
 // } from '@nestjs/common';
-// import { SignupInputDto } from './dto/signup-input.dto';
-// import { loginInputDto } from './dto/login-input.dto';
 // import { IAuthService } from './interface/auth-service.interface';
-// import { HashService } from './hash.service';
 // import { TokenService } from './token.service';
-// import { TokenType } from 'src/config/enum/token-type.enum';
-// import { ChangePasswordDto } from './dto/change-password.dto';
 // import { Request } from 'express';
 // import { UsersService } from 'src/users/users.service';
-// import { ForgetPasswordDto } from './dto/forget-password.dto';
-// import { ResetPasswordDto } from './dto/reset-password.dto';
+// import { EncryptService } from '@/encrypt/encrypt.service';
+// import {
+//   ChangePasswordDto,
+//   ForgetPasswordDto,
+//   loginDto,
+//   ResetPasswordDto,
+//   SignupDto,
+// } from './dto';
 
 // @Injectable()
 // export class AuthService implements IAuthService {
 //   constructor(
 //     private readonly usersService: UsersService,
-//     private readonly hashService: HashService,
+//     private readonly encryptService: EncryptService,
 //     private readonly tokenService: TokenService,
 //   ) {}
 
 //   async signup(
-//     createUserData: SignupInputDto,
+//     createUserData: SignupDto,
 //   ): Promise<{ accessToken: string; refreshToken: string }> {
-//     const { email, userName, password } = createUserData;
+//     const { email, username, password } = createUserData;
 
 //     const user = await this.usersService.findUserByEmail(email);
 
@@ -35,7 +36,7 @@
 //     }
 
 //     // Hash the password only
-//     const { password: hashedPassword } = await this.hashService.hash({
+//     const { password: hashedPassword } = await this.encryptService.hash({
 //       password,
 //     });
 
@@ -46,7 +47,7 @@
 //     const userData = {
 //       email,
 //       password: hashedPassword,
-//       userName,
+//       username,
 //     };
 //     const createdUser = await this.usersService.createUser(userData);
 
@@ -60,7 +61,7 @@
 //   }
 
 //   async login(
-//     loginData: loginInputDto,
+//     loginData: loginDto,
 //   ): Promise<{ accessToken: string; refreshToken: string }> {
 //     const { email, password } = loginData;
 
@@ -72,7 +73,7 @@
 //     }
 
 //     // Compare the provided password with the stored hashed password
-//     const isPasswordValid = await this.hashService.compareHash(
+//     const isPasswordValid = await this.encryptService.compareHash(
 //       user.password,
 //       password,
 //     );
@@ -122,7 +123,7 @@
 //     const user = await this.usersService.findUserById(userId);
 
 //     // Compare the old password with the stored password
-//     const isOldPasswordValid = await this.hashService.compareHash(
+//     const isOldPasswordValid = await this.encryptService.compareHash(
 //       user.password,
 //       oldPassword,
 //     );
@@ -138,7 +139,7 @@
 //     }
 
 //     // Hash the new password
-//     const { password: hashedPassword } = await this.hashService.hash({
+//     const { password: hashedPassword } = await this.encryptService.hash({
 //       password: newPassword,
 //     });
 
@@ -197,7 +198,7 @@
 //     const userId = await this.tokenService.validatePasswordResetToken(token);
 
 //     // Hash the new password
-//     const { password: hashedPassword } = await this.hashService.hash({
+//     const { password: hashedPassword } = await this.encryptService.hash({
 //       password: newPassword,
 //     });
 
