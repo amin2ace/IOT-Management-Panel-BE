@@ -210,10 +210,6 @@ export class AuthController {
     @Req() req: Request,
     @Body() changePasswordData: ChangePasswordDto,
   ) {
-    const sessionId = (req as any).sessionId;
-    const userId = (req as any).user?.userId;
-    console.log(sessionId, userId);
-
     const result = await this.authService.changePassword(
       req,
       changePasswordData,

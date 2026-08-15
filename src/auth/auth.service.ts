@@ -1,8 +1,6 @@
 import {
   Injectable,
-  NotFoundException,
   UnauthorizedException,
-  BadRequestException,
   Logger,
   HttpStatus,
 } from '@nestjs/common';
@@ -21,7 +19,6 @@ import {
   loginDto,
   ResetPasswordDto,
   SignupDto,
-  AuthResponseDto,
 } from './dto';
 import { AppException } from '@/common/errors/app.exception';
 import { EXCEPTIONS } from '@/common/errors/exceptions';
@@ -214,17 +211,25 @@ export class AuthService {
     changePasswordData: ChangePasswordDto,
   ): Promise<{ message: string }> {
     const { oldPassword, newPassword, retypePassword } = changePasswordData;
+
+    if (newPassword !== retypePassword) {
+      throw new AppException(
+        EXCEPTIONS.PASSWORDS_DO_NOT_MATCH,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const userId = (req as any).user?.userId;
 
     if (!userId) {
-      throw new UnauthorizedException('User not found in session');
+      throw new AppException(EXCEPTIONS.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
     // Find user
     const user = await this.usersService.findUserById(userId);
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new AppException(EXCEPTIONS.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
     // Verify old password
@@ -234,12 +239,10 @@ export class AuthService {
     );
 
     if (!isOldPasswordValid) {
-      throw new UnauthorizedException('Current password is incorrect');
-    }
-
-    // Validate new passwords match
-    if (newPassword !== retypePassword) {
-      throw new BadRequestException('New passwords do not match');
+      throw new AppException(
+        EXCEPTIONS.INVALID_CREDENTIALS,
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     // Hash new password
@@ -248,7 +251,10 @@ export class AuthService {
     });
 
     if (!hashedPassword) {
-      throw new UnauthorizedException('Password hashing failed');
+      throw new AppException(
+        EXCEPTIONS.ENCRYPTION_FAILED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     // Update password
@@ -285,7 +291,7 @@ export class AuthService {
     if (!user) {
       // Don't reveal if email exists (security best practice)
       // But for now, throw for clarity
-      throw new NotFoundException('User not found');
+      throw new AppException(EXCEPTIONS.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
     // Generate reset token
@@ -320,12 +326,18 @@ export class AuthService {
     const { token, newPassword, retypePassword } = resetDto;
 
     if (!token) {
-      throw new BadRequestException('Reset token is required');
+      throw new AppException(
+        EXCEPTIONS.INVALID_REQUEST,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Validate new passwords match
     if (newPassword !== retypePassword) {
-      throw new BadRequestException('Passwords do not match');
+      throw new AppException(
+        EXCEPTIONS.PASSWORDS_DO_NOT_MATCH,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // TODO: Validate token exists in database and not expired
@@ -334,14 +346,17 @@ export class AuthService {
 
     // TODO: Remove this after implementing token validation
     if (userId === 'user-id-from-token') {
-      throw new UnauthorizedException('Invalid or expired reset token');
+      throw new AppException(
+        EXCEPTIONS.INVALID_REQUEST,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Find user
     const user = await this.usersService.findUserById(userId);
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new AppException(EXCEPTIONS.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
     // Hash new password
@@ -350,7 +365,10 @@ export class AuthService {
     });
 
     if (!hashedPassword) {
-      throw new UnauthorizedException('Password hashing failed');
+      throw new AppException(
+        EXCEPTIONS.ENCRYPTION_FAILED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     // Update password

@@ -1,6 +1,11 @@
 import { BaseExceptionDefinition } from './exceptions.types';
 
 export const EXCEPTIONS = {
+  PASSWORDS_DO_NOT_MATCH: {
+    code: 'PASSWORDS_DO_NOT_MATCH',
+    message: 'Passwords do not match',
+    logMessage: 'Password confirmation does not match the new password',
+  },
   INVALID_REQUEST: {
     code: 'INVALID_REQUEST',
     message: 'Invalid request',
